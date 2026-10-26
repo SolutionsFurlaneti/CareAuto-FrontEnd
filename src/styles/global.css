@@ -3083,6 +3083,36 @@ tbody tr:hover {
 .lp-footer a {
   color: var(--ink-dim);
 }
+
+.lp-whatsapp-float {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #25d366;
+  color: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  text-decoration: none;
+}
+
+.lp-whatsapp-float:hover {
+  background: #1ebe5d;
+}
+
+.lp-whatsapp-float:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.lp-whatsapp-float svg {
+  width: 28px;
+  height: 28px;
+}
 @media (max-width: 1199px) {
   .lp-features {
     grid-template-columns: repeat(2, minmax(0, 1fr));

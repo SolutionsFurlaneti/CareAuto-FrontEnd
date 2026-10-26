@@ -42,6 +42,31 @@ function useSeo() {
 
 const CADASTRO = '/primeiro-acesso';
 
+const WHATSAPP_HREF =
+  'https://wa.me/5511978504405?text=' +
+  encodeURIComponent('Quero mais informações sobre o CareAuto');
+
+function WhatsAppFloat() {
+  return (
+    <a
+      className="lp-whatsapp-float"
+      href={WHATSAPP_HREF}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Conversar com o CareAuto pelo WhatsApp"
+      title="Conversar pelo WhatsApp"
+      data-testid="lp-whatsapp"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          fill="currentColor"
+          d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.496.099-.198.05-.372-.025-.52-.075-.149-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.793.372-.272.297-1.04 1.016-1.04 2.479s1.064 2.875 1.213 3.074c.149.198 2.095 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.999-3.648-.235-.374a9.84 9.84 0 0 1-1.511-5.26c.002-5.45 4.438-9.884 9.888-9.884 2.64.001 5.12 1.03 6.984 2.897a9.825 9.825 0 0 1 2.891 6.989c-.003 5.45-4.439 9.884-9.879 9.884m8.4-18.286A11.815 11.815 0 0 0 12.054 0C5.492 0 .15 5.34.147 11.9c-.001 2.096.546 4.14 1.583 5.945L0 24l6.335-1.662a11.94 11.94 0 0 0 5.714 1.454h.005c6.557 0 11.899-5.341 11.902-11.903a11.815 11.815 0 0 0-3.48-8.39z"
+        />
+      </svg>
+    </a>
+  );
+}
+
 function Cta({ children, testId }: { children: string; testId: string }) {
   return (
     <Link to={CADASTRO} className="button button-primary lp-cta" data-testid={testId}>
@@ -386,6 +411,7 @@ export function AboutPage() {
           <Link to="/login">Já sou cliente: entrar</Link>
         </div>
       </footer>
+      <WhatsAppFloat />
     </div>
   );
 }
