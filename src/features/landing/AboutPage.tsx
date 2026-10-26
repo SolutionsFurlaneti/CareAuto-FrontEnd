@@ -14,7 +14,7 @@ import {
   type PlanoPublico,
 } from './plans';
 
-const TITULO = 'AutoCare | Sistema para estacionamento e lava-rápido · 7 dias grátis';
+const TITULO = 'CareAuto | Sistema para estacionamento e lava-rápido · 7 dias grátis';
 const DESCRICAO =
   'Controle entradas e saídas, leia placas por foto com IA, imprima tickets com QR Code, faça checklist de avarias e receba por Pix, boleto e cartão. Teste grátis por 7 dias.';
 
@@ -209,11 +209,11 @@ export function AboutPage() {
     <div className="lp">
       <header className="lp-header">
         <div className="lp-wrap lp-header-row">
-          <Link to="/sobrenos" className="brand" aria-label="AutoCare, início">
+          <Link to="/sobrenos" className="brand" aria-label="CareAuto, início">
             <span className="brand-symbol">
               <CarFront size={22} />
             </span>
-            <span>AutoCare</span>
+            <span>CareAuto</span>
           </Link>
           <nav className={'lp-nav' + (menu ? ' is-open' : '')} aria-label="Seções">
             {links.map(([href, nome]) => (
@@ -254,7 +254,7 @@ export function AboutPage() {
                 <em>tudo sob controle.</em>
               </h1>
               <p className="lp-lead">
-                O AutoCare registra entradas e saídas, lê a placa por foto, imprime o ticket, faz o
+                O CareAuto registra entradas e saídas, lê a placa por foto, imprime o ticket, faz o
                 checklist de avarias e cobra por Pix, boleto ou cartão. Tudo num só lugar, no
                 celular ou no computador.
               </p>
@@ -276,7 +276,7 @@ export function AboutPage() {
                 </li>
               </ul>
             </div>
-            <figure className="lp-mock" aria-label="Exemplo ilustrativo do painel do AutoCare">
+            <figure className="lp-mock" aria-label="Exemplo ilustrativo do painel do CareAuto">
               <div className="lp-mock-bar">
                 <span />
                 <span />
@@ -372,7 +372,7 @@ export function AboutPage() {
             <p className="eyebrow">PLANOS</p>
             <h2 id="lp-plans-title">Escolha como prefere pagar</h2>
             <p className="lp-sub">
-              Todos os planos têm o AutoCare completo e começam com 7 dias grátis.
+              Todos os planos têm o CareAuto completo e começam com 7 dias grátis.
             </p>
             <Planos />
           </div>
@@ -399,7 +399,7 @@ export function AboutPage() {
         <section className="lp-final">
           <div className="lp-wrap">
             <h2>Pronto para organizar seu estacionamento?</h2>
-            <p>Cadastre-se agora e use o AutoCare completo por 7 dias, sem custo.</p>
+            <p>Cadastre-se agora e use o CareAuto completo por 7 dias, sem custo.</p>
             <Cta testId="lp-final-cta">Criar minha conta grátis</Cta>
           </div>
         </section>
@@ -407,7 +407,7 @@ export function AboutPage() {
 
       <footer className="lp-footer">
         <div className="lp-wrap lp-footer-row">
-          <span>© {new Date().getFullYear()} AutoCare · Furlaneti Consultoria</span>
+          <span>© {new Date().getFullYear()} CareAuto · Furlaneti Consultoria</span>
           <Link to="/login">Já sou cliente: entrar</Link>
         </div>
       </footer>
