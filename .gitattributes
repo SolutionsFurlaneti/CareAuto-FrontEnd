@@ -1,0 +1,3 @@
+# Scripts e configurações de servidor Linux sempre com LF (bash e nginx falham com CRLF).
+*.sh text eol=lf
+deploy/** text eol=lf

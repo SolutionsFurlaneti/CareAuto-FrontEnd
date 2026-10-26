@@ -1,0 +1,14 @@
+import { readFileSync, readdirSync, mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { createCoverageMap } = require('istanbul-lib-coverage');
+const { createContext } = require('istanbul-lib-report');
+const reports = require('istanbul-reports');
+const map = createCoverageMap({});
+map.merge(JSON.parse(readFileSync('coverage/unit/coverage-final.json', 'utf8')));
+const browserFiles = readdirSync('coverage/e2e').filter((f) => f.endsWith('.json'));
+if (!browserFiles.length) throw new Error('Execute os testes E2E com cobertura antes de combinar.');
+for (const f of browserFiles) map.merge(JSON.parse(readFileSync('coverage/e2e/' + f, 'utf8')));
+mkdirSync('coverage/merged', { recursive: true });
+const ctx = createContext({ dir: 'coverage/merged', coverageMap: map });
+for (const name of ['html', 'lcovonly', 'text-summary']) reports.create(name).execute(ctx);

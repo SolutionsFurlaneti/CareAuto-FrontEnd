@@ -1,0 +1,8 @@
+{
+  "name": "AutoCare Manager",
+  "description": "Sistema completo de gestão para estacionamentos e estética automotiva com controle de estadias, serviços, clientes, mensalistas e backoffice.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

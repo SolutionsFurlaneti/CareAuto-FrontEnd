@@ -1,0 +1,6 @@
+# O wrapper roda no Linux do CI: precisa de LF mesmo quando o repositório é editado no Windows.
+gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.png binary
+*.webp binary
