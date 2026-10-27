@@ -1,10 +1,10 @@
-﻿# CareAuto para Android e iPhone
+# CareAuto para Android e iPhone
 
-O workflow reutilizável `.github/workflows/mobile.yml` é chamado pelo `cd.yml` depois que CI e deploy terminam com sucesso (ou quando o deploy de produção está desativado). Ele compila os pacotes e publica somente na pasta `AutoCareManager` dos repositórios de distribuição. Para publicar manualmente, execute `CD` na branch `main`, mantendo a sequência crescente do `versionCode`. Pull requests validam os builds, sem assinar nem publicar.
+O workflow reutilizável `.github/workflows/mobile.yml` é chamado pelo `cd.yml` depois que o CI passa. O CD aguarda os builds e a publicação mobile antes do deploy web. O workflow compila os pacotes e publica somente na pasta `AutoCareManager` dos repositórios de distribuição. Para publicar manualmente, execute `CD` na branch `main`, mantendo a sequência crescente do `versionCode`. Pull requests validam os builds, sem assinar nem publicar.
 
 ## Android
 
-O Capacitor fica em `frontend/android`, usa o pacote `br.com.furlaneti.autocare` e exige Android 7 (API 24) ou superior. O frontend é embarcado no APK; a API continua remota em `https://www.furlaneti.com.br/autocare-api`.
+O Capacitor fica em `android` na raiz do repositório, usa o pacote `br.com.furlaneti.autocare` e exige Android 7 (API 24) ou superior. O frontend é embarcado no APK; a API continua remota em `https://www.furlaneti.com.br/autocare-api`.
 
 Distribuição: [AndroidPackageKit/AutoCareManager](https://github.com/SolutionsFurlaneti/AndroidPackageKit/tree/main/AutoCareManager).
 
@@ -18,7 +18,7 @@ Distribuição: [iPhoneOperatingSystem/AutoCareManager](https://github.com/Solut
 
 ## Secrets do GitHub Actions
 
-Configure em `SolutionsFurlaneti/AutoCareManager` → **Settings → Secrets and variables → Actions → New repository secret**. Os cinco valores devem ser cadastrados como **secrets** do repositório:
+Configure em `SolutionsFurlaneti/CareAuto-FrontEnd` → **Settings → Secrets and variables → Actions → New repository secret**. Os cinco valores devem ser cadastrados como **secrets** do repositório:
 
 | Secret                      | Conteúdo                                                                                                 |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -28,7 +28,7 @@ Configure em `SolutionsFurlaneti/AutoCareManager` → **Settings → Secrets and
 | `ANDROID_KEY_PASSWORD`      | Senha da chave                                                                                           |
 | `MOBILE_DISTRIBUTION_TOKEN` | Token fine-grained com Contents: Read and write somente em `AndroidPackageKit` e `iPhoneOperatingSystem` |
 
-Os builds de pull request não precisam desses secrets. A publicação na branch `main` exige os quatro secrets Android para assinar o APK e `MOBILE_DISTRIBUTION_TOKEN` para gravar os pacotes nos dois repositórios. O workflow agora deixa os builds começarem sem secrets e indica no step de publicação exatamente qual secret está faltando.
+Como o workflow reutilizável é chamado pelo `CareAuto-FrontEnd`, cadastre os secrets neste repositório em `Settings → Secrets and variables → Actions`. Os builds de pull request não precisam deles. A publicação na branch `main` exige os quatro secrets Android para assinar o APK e `MOBILE_DISTRIBUTION_TOKEN` para gravar os pacotes nos dois repositórios. O workflow informa qual secret está faltando.
 
 O keystore de release é permanente: trocá-lo impede atualizar instalações anteriores. Guarde uma cópia segura e nunca o inclua no repositório. O token precisa estar aprovado pela organização e ser renovado antes do vencimento. PRs não usam esses secrets.
 
@@ -38,7 +38,7 @@ Requisitos Android: Node 22, Java 21, Android SDK 36 e build-tools 36.0.0.
 
 ```sh
 python3 -m unittest discover -s mobile -p 'test*.py' -v
-cd frontend
+# Execute a partir da raiz de CareAuto-FrontEnd
 npm ci
 npm run android:sync
 node scripts/build-apk.mjs
@@ -49,6 +49,8 @@ O comando local acima gera um APK de debug. Para compilar release assinado, conf
 Para conferir o build PWA usado no pacote iOS:
 
 ```sh
-cd frontend
+# Execute a partir da raiz de CareAuto-FrontEnd
 VITE_BASE_PATH=/autocare/ VITE_API_BASE_URL=/autocare-api npm run build
 ```
+
+

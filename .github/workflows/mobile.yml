@@ -67,7 +67,7 @@ jobs:
           missing=0
           for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
             if [[ -z "${!name:-}" ]]; then
-              echo "::error::Configure o secret $name em Actions para publicar o APK Android assinado. Consulte mobile/README.md."
+              echo "::error::Configure o secret $name em SolutionsFurlaneti/CareAuto-FrontEnd > Settings > Secrets and variables > Actions para publicar o APK Android assinado. Consulte mobile/README.md."
               missing=1
             fi
           done
@@ -106,7 +106,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "$MOBILE_DISTRIBUTION_TOKEN" ]]; then
-            echo '::error::Configure o secret MOBILE_DISTRIBUTION_TOKEN com permissão de escrita nos repositórios AndroidPackageKit e iPhoneOperatingSystem. Consulte mobile/README.md.'
+            echo '::error::Configure MOBILE_DISTRIBUTION_TOKEN em SolutionsFurlaneti/CareAuto-FrontEnd > Settings > Secrets and variables > Actions com permissão de escrita nos repositórios AndroidPackageKit e iPhoneOperatingSystem. Consulte mobile/README.md.'
             exit 1
           fi
 
@@ -173,7 +173,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "$MOBILE_DISTRIBUTION_TOKEN" ]]; then
-            echo '::error::Configure o secret MOBILE_DISTRIBUTION_TOKEN com permissão de escrita nos repositórios AndroidPackageKit e iPhoneOperatingSystem. Consulte mobile/README.md.'
+            echo '::error::Configure MOBILE_DISTRIBUTION_TOKEN em SolutionsFurlaneti/CareAuto-FrontEnd > Settings > Secrets and variables > Actions com permissão de escrita nos repositórios AndroidPackageKit e iPhoneOperatingSystem. Consulte mobile/README.md.'
             exit 1
           fi
 
@@ -197,5 +197,6 @@ jobs:
             git -C distribution commit -m "AutoCareManager iOS PWA 1.0.${GITHUB_RUN_NUMBER}"
             git -C distribution push origin HEAD:main
           fi
+
 
 
