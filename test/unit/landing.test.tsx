@@ -60,7 +60,7 @@ describe('sales page plans', () => {
     const fetcher = vi.fn().mockResolvedValue(json([plano({}), semestral]));
     vi.stubGlobal('fetch', fetcher);
     abrir();
-    expect(document.title).toMatch(/AutoCare/);
+    expect(document.title).toMatch(/CareAuto/);
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toMatch(
       /7 dias/,
     );
@@ -82,3 +82,4 @@ describe('sales page plans', () => {
     expect(bloco.textContent).toMatch(/R\$\s?99,00/);
   });
 });
+
