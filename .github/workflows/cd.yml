@@ -18,9 +18,12 @@ jobs:
     uses: ./.github/workflows/ci.yml
 
   mobile:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    name: Mobile packages
+    if: ${{ !cancelled() && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')) }}
     needs: ci
     uses: ./.github/workflows/mobile.yml
+    with:
+      publish_release: ${{ needs.ci.result == 'success' }}
     secrets: inherit
 
   deploy_web:

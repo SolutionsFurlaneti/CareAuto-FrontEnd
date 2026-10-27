@@ -2,6 +2,12 @@ name: Mobile packages
 
 on:
   workflow_call:
+    inputs:
+      publish_release:
+        description: Publica os pacotes somente quando o CI web termina com sucesso.
+        required: false
+        type: boolean
+        default: true
     secrets:
       ANDROID_KEYSTORE_BASE64:
         required: false
@@ -51,12 +57,12 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npm run android:sync
 
-      - name: Validar build Android em pull request
-        if: github.event_name == 'pull_request'
+      - name: Validar build Android sem publicação
+        if: ${{ github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !inputs.publish_release) }}
         run: node scripts/build-apk.mjs
 
       - name: Preparar assinatura e versão Android
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -80,7 +86,7 @@ jobs:
           echo "ANDROID_VERSION_NAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
       - name: Compilar e verificar APK assinado
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         env:
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/autocaremanager-release.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -93,14 +99,14 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose android/app/build/outputs/apk/release/app-release.apk
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         with:
           name: autocaremanager-android
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
       - name: Validar token de distribuição Android
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         env:
           MOBILE_DISTRIBUTION_TOKEN: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
         run: |
@@ -111,7 +117,7 @@ jobs:
           fi
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         with:
           repository: SolutionsFurlaneti/AndroidPackageKit
           ref: main
@@ -119,7 +125,7 @@ jobs:
           path: distribution
 
       - name: Publicar APK em AndroidPackageKit/AutoCareManager
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         run: |
           set -euo pipefail
           python3 mobile/publish_package.py --repository distribution --artifact android/app/build/outputs/apk/release/app-release.apk --platform android --version-code "$ANDROID_VERSION_CODE" --version-name "$ANDROID_VERSION_NAME" --commit "$GITHUB_SHA"
@@ -167,7 +173,7 @@ jobs:
           if-no-files-found: error
 
       - name: Validar token de distribuição iOS
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         env:
           MOBILE_DISTRIBUTION_TOKEN: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
         run: |
@@ -178,7 +184,7 @@ jobs:
           fi
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         with:
           repository: SolutionsFurlaneti/iPhoneOperatingSystem
           ref: main
@@ -186,7 +192,7 @@ jobs:
           path: distribution
 
       - name: Publicar PWA em iPhoneOperatingSystem/AutoCareManager
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         run: |
           set -euo pipefail
           python3 mobile/publish_package.py --repository distribution --artifact AutoCareManager-iOS.zip --platform ios --version-code "$((1000 + GITHUB_RUN_NUMBER))" --version-name "1.0.${GITHUB_RUN_NUMBER}" --commit "$GITHUB_SHA"
