@@ -26,29 +26,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: package-lock.json
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
           java-version: "21"
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
         with:
           packages: "platform-tools platforms;android-36 build-tools;36.0.0"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Testar preparação da publicação
         run: python3 -m unittest discover -s mobile -p 'test*.py' -v
 
       - name: Instalar dependências e sincronizar Capacitor
         run: |
-          npm ci --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           npm run android:sync
 
       - name: Validar build Android em pull request
@@ -92,7 +92,7 @@ jobs:
           node scripts/build-apk.mjs --release
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose android/app/build/outputs/apk/release/app-release.apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
           name: autocaremanager-android
@@ -110,7 +110,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
           repository: SolutionsFurlaneti/AndroidPackageKit
@@ -139,10 +139,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
           cache: npm
@@ -153,14 +153,14 @@ jobs:
           VITE_API_BASE_URL: /autocare-api
         run: |
           set -euo pipefail
-          npm ci --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           npm run build
           test -s dist/manifest.webmanifest
           test -s dist/sw.js
           test -s dist/icons/apple-touch-icon.png
           cd dist && zip -qr ../AutoCareManager-iOS.zip .
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: autocaremanager-ios-pwa
           path: AutoCareManager-iOS.zip
@@ -177,7 +177,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
           repository: SolutionsFurlaneti/iPhoneOperatingSystem
@@ -197,6 +197,13 @@ jobs:
             git -C distribution commit -m "AutoCareManager iOS PWA 1.0.${GITHUB_RUN_NUMBER}"
             git -C distribution push origin HEAD:main
           fi
+
+
+
+
+
+
+
 
 
 
