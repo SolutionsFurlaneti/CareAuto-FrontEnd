@@ -1,6 +1,6 @@
 # CareAuto para Android e iPhone
 
-O workflow reutilizável `.github/workflows/mobile.yml` é chamado pelo `cd.yml` depois que o CI passa. O CD aguarda os builds e a publicação mobile antes do deploy web. O workflow compila os pacotes e publica somente na pasta `AutoCareManager` dos repositórios de distribuição. Para publicar manualmente, execute `CD` na branch `main`, mantendo a sequência crescente do `versionCode`. Pull requests validam os builds, sem assinar nem publicar.
+O workflow reutilizável `.github/workflows/mobile.yml` é chamado pelo `cd.yml` após a conclusão do CI. O mobile valida os builds mesmo se o CI falhar, mas só assina e publica pacotes quando o CI passa. O CD aguarda o CI e o mobile antes do deploy web. O workflow compila os pacotes e publica somente na pasta `AutoCareManager` dos repositórios de distribuição. Para publicar manualmente, execute `CD` na branch `main`; o workflow incrementa o `versionCode` acima do valor publicado em `latest.json`. Pull requests validam os builds, sem assinar nem publicar.
 
 ## Android
 

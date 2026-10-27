@@ -57,6 +57,25 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npm run android:sync
 
+      - name: Validar token de distribuição Android
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+        env:
+          MOBILE_DISTRIBUTION_TOKEN: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MOBILE_DISTRIBUTION_TOKEN" ]]; then
+            echo '::error::Configure MOBILE_DISTRIBUTION_TOKEN em SolutionsFurlaneti/CareAuto-FrontEnd > Settings > Secrets and variables > Actions com permissão de escrita nos repositórios AndroidPackageKit e iPhoneOperatingSystem. Consulte mobile/README.md.'
+            exit 1
+          fi
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+        with:
+          repository: SolutionsFurlaneti/AndroidPackageKit
+          ref: main
+          token: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
+          path: distribution
+
       - name: Validar build Android sem publicação
         if: ${{ github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !inputs.publish_release) }}
         run: node scripts/build-apk.mjs
@@ -82,8 +101,22 @@ jobs:
           fi
           umask 077
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/autocaremanager-release.jks"
-          echo "ANDROID_VERSION_CODE=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
-          echo "ANDROID_VERSION_NAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          latest_version_code=0
+          latest_version_file="distribution/AutoCareManager/latest.json"
+          if [[ -f "$latest_version_file" ]]; then
+            latest_version_code="$(python3 -c 'import json,sys; print(int(json.load(open(sys.argv[1], encoding="utf-8"))["versionCode"]))' "$latest_version_file")"
+          fi
+          android_version_code=$((1000 + GITHUB_RUN_NUMBER))
+          if (( android_version_code <= latest_version_code )); then
+            android_version_code=$((latest_version_code + 1))
+          fi
+          if (( android_version_code > 2100000000 )); then
+            echo '::error::ANDROID_VERSION_CODE ultrapassou o limite aceito pelo Android.'
+            exit 1
+          fi
+          android_version_name="1.0.$((android_version_code - 1000))"
+          echo "ANDROID_VERSION_CODE=$android_version_code" >> "$GITHUB_ENV"
+          echo "ANDROID_VERSION_NAME=$android_version_name" >> "$GITHUB_ENV"
 
       - name: Compilar e verificar APK assinado
         if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
@@ -104,25 +137,6 @@ jobs:
           name: autocaremanager-android
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
-
-      - name: Validar token de distribuição Android
-        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-        env:
-          MOBILE_DISTRIBUTION_TOKEN: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [[ -z "$MOBILE_DISTRIBUTION_TOKEN" ]]; then
-            echo '::error::Configure MOBILE_DISTRIBUTION_TOKEN em SolutionsFurlaneti/CareAuto-FrontEnd > Settings > Secrets and variables > Actions com permissão de escrita nos repositórios AndroidPackageKit e iPhoneOperatingSystem. Consulte mobile/README.md.'
-            exit 1
-          fi
-
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-        with:
-          repository: SolutionsFurlaneti/AndroidPackageKit
-          ref: main
-          token: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
-          path: distribution
 
       - name: Publicar APK em AndroidPackageKit/AutoCareManager
         if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
