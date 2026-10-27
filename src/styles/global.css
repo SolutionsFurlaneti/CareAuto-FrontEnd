@@ -56,6 +56,10 @@
   --duration-entrance: 180ms;
   --duration-slow: 350ms;
   --duration-slower: 500ms;
+  --app-safe-area-inset-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --app-safe-area-inset-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --app-safe-area-inset-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --app-safe-area-inset-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
 }
 :root[data-theme='light'] {
   color-scheme: light;
@@ -106,7 +110,7 @@ html::before {
   content: '';
   position: fixed;
   inset: 0 0 auto;
-  height: env(safe-area-inset-top, 0px);
+  height: var(--app-safe-area-inset-top);
   background: #b5f3ba;
   pointer-events: none;
   z-index: 9999;
@@ -238,6 +242,8 @@ svg {
 }
 .sidebar .MuiDrawer-paper {
   overscroll-behavior: contain;
+  padding-top: var(--app-safe-area-inset-top);
+  padding-bottom: var(--app-safe-area-inset-bottom);
 }
 .sidebar-inner {
   min-height: 100%;
@@ -345,6 +351,8 @@ svg {
   margin-left: 244px;
   min-width: 0;
   min-height: 100dvh;
+  padding-top: var(--app-safe-area-inset-top);
+  padding-bottom: var(--app-safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
 }
@@ -1722,7 +1730,7 @@ tbody tr:hover {
 }
 .login-theme {
   position: absolute;
-  top: max(20px, calc(env(safe-area-inset-top, 0px) + 10px));
+  top: max(20px, calc(var(--app-safe-area-inset-top) + 10px));
   right: 24px;
 }
 .login-story > .brand {
@@ -1885,7 +1893,7 @@ tbody tr:hover {
   .topbar {
     height: 70px;
     position: sticky;
-    top: 0;
+    top: var(--app-safe-area-inset-top);
     z-index: 20;
   }
   .main-content {
@@ -2040,7 +2048,7 @@ tbody tr:hover {
   .app-modal .MuiDialog-paper {
     margin: 0;
     width: min(calc(100% - 24px), 560px);
-    max-height: calc(var(--modal-viewport-height, 100dvh) - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: calc(var(--modal-viewport-height, 100dvh) - 24px - var(--app-safe-area-inset-top) - var(--app-safe-area-inset-bottom));
   }
   .app-modal .MuiDialogTitle-root {
     padding: 14px 18px;
@@ -2150,14 +2158,14 @@ tbody tr:hover {
 }
 @supports (padding: max(0px)) {
   .app-footer {
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    padding-bottom: max(16px, var(--app-safe-area-inset-bottom));
   }
   .app-modal .MuiDialogActions-root {
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    padding-bottom: max(16px, var(--app-safe-area-inset-bottom));
   }
   .app-modal .MuiDialog-container {
-    padding-left: max(0px, env(safe-area-inset-left));
-    padding-right: max(0px, env(safe-area-inset-right));
+    padding-left: max(0px, var(--app-safe-area-inset-left));
+    padding-right: max(0px, var(--app-safe-area-inset-right));
   }
 }
 
@@ -2194,7 +2202,7 @@ tbody tr:hover {
     padding: 24px 18px;
   }
   .account-page {
-    padding: 16px 12px;
+    padding: max(16px, var(--app-safe-area-inset-top)) 12px max(16px, var(--app-safe-area-inset-bottom));
   }
 }
 
@@ -3086,8 +3094,8 @@ tbody tr:hover {
 
 .lp-whatsapp-float {
   position: fixed;
-  right: max(20px, env(safe-area-inset-right));
-  bottom: max(20px, env(safe-area-inset-bottom));
+  right: max(20px, var(--app-safe-area-inset-right));
+  bottom: max(20px, var(--app-safe-area-inset-bottom));
   z-index: 60;
   display: grid;
   place-items: center;
@@ -3247,10 +3255,10 @@ tbody tr:hover {
     align-content: start;
     min-height: 100dvh;
     gap: 12px;
-    padding: max(32px, calc(env(safe-area-inset-top, 0px) + 12px)) 14px max(16px, env(safe-area-inset-bottom, 0px));
+    padding: max(32px, calc(var(--app-safe-area-inset-top) + 12px)) 14px max(16px, var(--app-safe-area-inset-bottom));
   }
   .login-theme {
-    top: max(32px, calc(env(safe-area-inset-top, 0px) + 8px));
+    top: max(32px, calc(var(--app-safe-area-inset-top) + 8px));
     right: 10px;
   }
   .login-story > :not(.brand) {
@@ -3308,7 +3316,7 @@ tbody tr:hover {
   }
   .form-error {
     position: sticky;
-    top: max(8px, env(safe-area-inset-top));
+    top: max(8px, var(--app-safe-area-inset-top));
     z-index: 4;
     box-shadow: var(--shadow-panel);
   }

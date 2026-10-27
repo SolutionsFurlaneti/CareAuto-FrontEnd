@@ -11,7 +11,10 @@ const config: CapacitorConfig = {
   webDir: 'dist-android',
   server: { androidScheme: 'https', cleartext: false },
   android: { allowMixedContent: false },
-  plugins: { CapacitorHttp: { enabled: true } },
+  plugins: {
+    CapacitorHttp: { enabled: true },
+    SystemBars: { insetsHandling: 'css', initialViewportFitValueHint: 'cover' },
+  },
 };
 export default config;
 
