@@ -164,7 +164,7 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
             ? config.ultimoContatoAgenteEm
               ? `Último contato: ${dateTime(config.ultimoContatoAgenteEm)}.`
               : 'O agente ainda não se conectou com o token atual.'
-            : 'Gere um token e configure-o no agente (veja o guia de instalação em backend/src/AutoCareManager.PrintAgent/README.md).'}
+            : 'Gere um token e configure-o no agente local de impressão. Consulte o guia de instalação do agente.'}
         </p>
         <div className="integration-actions">
           <Button
@@ -203,7 +203,7 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
         <code className="agent-token">
           [Environment]::SetEnvironmentVariable("Agente__Token", "{token}", "Machine")
         </code>
-        <p className="muted">Depois reinicie o serviço “AutoCare Print Agent”.</p>
+        <p className="muted">Depois reinicie o serviço local de impressão no Windows.</p>
       </Modal>
     </section>
   );
@@ -479,3 +479,5 @@ export function PrintingPage() {
     </>
   );
 }
+
+

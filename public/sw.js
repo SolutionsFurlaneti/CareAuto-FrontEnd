@@ -2,9 +2,9 @@
 
 const OFFLINE_PAGE = `<!doctype html>
 <html lang="pt-BR">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101715"><title>AutoCare Manager</title></head>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101715"><title>CareAuto</title></head>
   <body style="font:16px system-ui,sans-serif;background:#101715;color:#f4f7f5;padding:2rem">
-    <main><h1>Sem conexão</h1><p>O AutoCare Manager precisa de conexão para consultar dados e registrar operações. Conecte-se e tente novamente.</p></main>
+    <main><h1>Sem conexão</h1><p>O CareAuto precisa de conexão para consultar dados e registrar operações. Conecte-se e tente novamente.</p></main>
   </body>
 </html>`;
 
@@ -33,3 +33,4 @@ self.addEventListener('fetch', (event) => {
     ),
   );
 });
+

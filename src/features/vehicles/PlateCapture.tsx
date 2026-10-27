@@ -277,7 +277,7 @@ export function PlateCapture() {
       )}
       <small>
         Ao tirar ou anexar uma foto, a leitura começa automaticamente com Claude. A foto reduzida é
-        enviada à Anthropic e não é armazenada pelo AutoCare.
+        enviada à Anthropic e não é armazenada pelo CareAuto.
       </small>
       <p role="status">{message}</p>
       <div className="plate-input-row">
@@ -309,3 +309,4 @@ export function PlateCapture() {
     </section>
   );
 }
+

@@ -56,7 +56,7 @@ test('Google visitor sees every feature, the plans published in the backoffice a
 
   await page.context().setExtraHTTPHeaders(headers);
   await page.goto('/sobrenos');
-  await expect(page).toHaveTitle(/AutoCare/);
+  await expect(page).toHaveTitle(/CareAuto/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('tudo sob controle');
   await expect(page.getByTestId('lp-features').locator('article')).toHaveCount(11);
   const planos = page.getByTestId('lp-plans');
@@ -85,3 +85,4 @@ test('Google visitor sees every feature, the plans published in the backoffice a
   await expect(page.getByTestId('field-estacionamento')).toBeVisible();
   await request.delete('http://127.0.0.1:5081/__test/session', { headers });
 });
+

@@ -1,4 +1,4 @@
-﻿import importlib.util
+import importlib.util
 import json
 from pathlib import Path
 import tempfile
@@ -61,5 +61,6 @@ class PublishTests(unittest.TestCase):
             folder = repo / "AutoCareManager"
             self.assertTrue((folder / "AutoCareManager-iOS.zip").is_file())
             instructions = (folder / "README.md").read_text(encoding="utf-8")
-            self.assertIn("AutoCare Manager no iPhone", instructions)
+            self.assertIn("CareAuto no iPhone", instructions)
             self.assertIn("Não é um IPA", instructions)
+

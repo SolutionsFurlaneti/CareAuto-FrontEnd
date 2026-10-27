@@ -128,7 +128,7 @@ export function AppShell() {
       .find(
         (i) =>
           i.to === location.pathname || (i.to !== '/' && location.pathname.startsWith(i.to + '/')),
-      )?.text || 'AutoCare';
+      )?.text || 'CareAuto';
   const navigation = (
     <div className="sidebar-inner">
       <NavLink to="/" onClick={() => setOpen(false)} className="brand" data-testid="brand">
@@ -136,7 +136,7 @@ export function AppShell() {
           <CarFront size={24} />
         </span>
         <span>
-          Auto<span className="brand-soft">Care</span>
+          CareAuto
           <small>GESTÃO AUTOMOTIVA</small>
         </span>
       </NavLink>
@@ -274,7 +274,7 @@ export function AppShell() {
           </Suspense>
         </m.main>
         <footer className="app-footer">
-          <span>AutoCare Manager</span>
+          <span>CareAuto</span>
           <span>Cuidado com os veículos. Clareza na gestão.</span>
         </footer>
       </div>
@@ -282,3 +282,6 @@ export function AppShell() {
     </div>
   );
 }
+
+
+

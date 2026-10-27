@@ -1,4 +1,4 @@
-﻿"""Prepare one atomic Git publication, restricted to AutoCareManager in the distribution checkout."""
+"""Prepare one atomic Git publication, restricted to AutoCareManager in the distribution checkout."""
 import argparse
 import hashlib
 import json
@@ -51,10 +51,10 @@ def prepare(repository, artifact, platform, version_code, version_name, commit):
                     commit=commit, sha256=digest, file=name, downloadUrl=url, installUrl=SITE)
     (folder / "latest.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     if platform == "android":
-        instructions = f"[Baixar AutoCareManager para Android]({url})\n\nAndroid 7 (API 24) ou superior. Abra o APK baixado e confirme a instalação. Precisa de internet. Atualizações usam a mesma assinatura e preservam a conta no servidor.\n"
+        instructions = f"[Baixar CareAuto para Android]({url})\n\nAndroid 7 (API 24) ou superior. Abra o APK baixado e confirme a instalação. Precisa de internet. Atualizações usam a mesma assinatura e preservam a conta no servidor.\n"
     else:
-        instructions = f"[Instalar o AutoCare Manager no iPhone]({SITE})\n\n1. Abra o AutoCare Manager no Safari.\n2. Toque em Compartilhar e escolha Adicionar à Tela de Início.\n3. Confirme o nome e toque em Adicionar.\n\nO ícone abre o sistema de gestão de estacionamento em modo de app. É necessária conexão com a internet; os dados e pagamentos continuam protegidos pela sessão do sistema. As atualizações chegam pelo próprio site.\n\nO ZIP desta pasta é uma cópia da versão web para distribuição e auditoria. **Não é um IPA**: a instalação no iPhone é feita pelo Safari.\n"
-    (folder / "README.md").write_text(f"# AutoCareManager · {platform.upper()}\n\nVersão {version_name}.\n\n{instructions}\nApenas o pacote atual fica nesta pasta. O histórico do Git preserva versões anteriores.\n", encoding="utf-8")
+        instructions = f"[Instalar o CareAuto no iPhone]({SITE})\n\n1. Abra o CareAuto no Safari.\n2. Toque em Compartilhar e escolha Adicionar à Tela de Início.\n3. Confirme o nome e toque em Adicionar.\n\nO ícone abre o sistema de gestão de estacionamento em modo de app. É necessária conexão com a internet; os dados e pagamentos continuam protegidos pela sessão do sistema. As atualizações chegam pelo próprio site.\n\nO ZIP desta pasta é uma cópia da versão web para distribuição e auditoria. **Não é um IPA**: a instalação no iPhone é feita pelo Safari.\n"
+    (folder / "README.md").write_text(f"# CareAuto · {platform.upper()}\n\nVersão {version_name}.\n\n{instructions}\nApenas o pacote atual fica nesta pasta. O histórico do Git preserva versões anteriores.\n", encoding="utf-8")
     return True
 
 
@@ -69,3 +69,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     changed = prepare(args.repository, args.artifact, args.platform, args.version_code, args.version_name, args.commit)
     print("Package prepared." if changed else "Newer version already published; preserved.")
+
+
+
+

@@ -45,7 +45,7 @@ export function LoginPage() {
           <span className="brand-symbol">
             <CarFront size={25} />
           </span>
-          <span>AutoCare</span>
+          <span>CareAuto</span>
         </span>
         <p className="eyebrow">SEU NEGÓCIO EM BOAS MÃOS</p>
         <h1>
@@ -65,7 +65,7 @@ export function LoginPage() {
         <span className="login-lock">
           <ShieldCheck size={24} />
         </span>
-        <p className="eyebrow">BEM-VINDO AO AUTOCARE</p>
+        <p className="eyebrow">BEM-VINDO AO CAREAUTO</p>
         <h2>Vamos começar?</h2>
         <p>Entre com seu e-mail e senha para acessar o estacionamento.</p>
         {state?.expired && (
@@ -164,3 +164,5 @@ export function LoginPage() {
     </main>
   );
 }
+
+

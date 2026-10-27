@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "AutoCare Manager",
-  "short_name": "AutoCare",
+  "name": "CareAuto",
+  "short_name": "CareAuto",
   "description": "Gestão de estacionamentos, veículos, estadias e pagamentos.",
   "start_url": "./",
   "scope": "./",
@@ -24,3 +24,5 @@
     }
   ]
 }
+
+

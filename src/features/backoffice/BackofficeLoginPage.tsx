@@ -48,7 +48,7 @@ export function BackofficeLoginPage() {
           <span className="brand-symbol">
             <Building2 size={25} />
           </span>
-          <span>AutoCare Backoffice</span>
+          <span>CareAuto Backoffice</span>
         </span>
         <p className="eyebrow">GESTÃO DA PLATAFORMA</p>
         <h1>
@@ -68,7 +68,7 @@ export function BackofficeLoginPage() {
         </span>
         <p className="eyebrow">ACESSO RESTRITO</p>
         <h2>Entrar no backoffice</h2>
-        <p>Área da equipe AutoCare. Estacionamentos entram pelo login principal.</p>
+        <p>Área da equipe CareAuto. Estacionamentos entram pelo login principal.</p>
         <form
           noValidate
           className="form-grid single"
@@ -112,3 +112,4 @@ export function BackofficeLoginPage() {
     </main>
   );
 }
+

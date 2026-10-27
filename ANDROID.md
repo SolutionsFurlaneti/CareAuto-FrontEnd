@@ -1,4 +1,4 @@
-# Build Android do AutoCare Manager
+# Build Android do CareAuto
 
 O projeto Capacitor versionado fica em `frontend/android`. O pacote Android é `br.com.furlaneti.autocare`, usa Android 7 (API 24) ou superior e embarca o frontend com acesso HTTPS à API `https://www.furlaneti.com.br/autocare-api`.
 
@@ -15,3 +15,4 @@ node scripts/build-apk.mjs
 ```
 
 O APK de debug fica em `android/app/build/outputs/apk/debug/app-debug.apk`. Para release assinado, configure `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `ANDROID_VERSION_CODE` e `ANDROID_VERSION_NAME`, e execute `node scripts/build-apk.mjs --release`.
+

@@ -420,7 +420,7 @@ function panels(d: Integracoes) {
     meta,
     credenciaisCompletas: meta.possuiAccessToken,
     descricao:
-      'Conta usada para divulgar o AutoCare a novos estacionamentos. Campanhas são otimizadas para Lead (trial) ou Purchase (assinatura) e sempre criadas pausadas. O servidor envia conversões com consentimento, usando e-mail/telefone em SHA-256 e IDs de clique disponíveis. A imagem precisa estar publicamente acessível por HTTPS. Sinônimos gerados pelo Claude são apenas variações de texto: Meta não usa palavras-chave de busca.',
+      'Conta usada para divulgar o CareAuto a novos estacionamentos. Campanhas são otimizadas para Lead (trial) ou Purchase (assinatura) e sempre criadas pausadas. O servidor envia conversões com consentimento, usando e-mail/telefone em SHA-256 e IDs de clique disponíveis. A imagem precisa estar publicamente acessível por HTTPS. Sinônimos gerados pelo Claude são apenas variações de texto: Meta não usa palavras-chave de busca.',
     schema: metaSchema,
     defaults: {
       ativo: meta.ativo,
@@ -523,3 +523,4 @@ export function BackofficeIntegrationsPage() {
     </>
   );
 }
+

@@ -320,7 +320,7 @@ export function BackofficeSubscribersPage() {
       <PageHeader
         eyebrow="PLATAFORMA"
         title="Assinantes"
-        description="Estabelecimentos cadastrados no AutoCare, seus planos e a situação da mensalidade."
+        description="Estabelecimentos cadastrados no CareAuto, seus planos e a situação da mensalidade."
       />
       <section className="panel">
         <div className="panel-toolbar bo-filters">
@@ -429,3 +429,4 @@ export function BackofficeSubscribersPage() {
     </>
   );
 }
+

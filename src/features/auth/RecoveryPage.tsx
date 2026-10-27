@@ -10,7 +10,7 @@ export function RecoveryPage() {
   return (
     <main className="account-page">
       <section className="panel account-panel">
-        <p className="eyebrow">AUTOCARE</p>
+        <p className="eyebrow">CAREAUTO</p>
         <h1>Esqueceu sua senha?</h1>
         <p>
           Informe o e-mail usado para entrar. Você receberá uma senha provisória e criará sua
@@ -52,3 +52,4 @@ export function RecoveryPage() {
     </main>
   );
 }
+

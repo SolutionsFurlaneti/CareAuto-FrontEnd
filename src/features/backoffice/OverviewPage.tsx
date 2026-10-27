@@ -21,7 +21,7 @@ export function BackofficeOverviewPage() {
       <PageHeader
         eyebrow="PLATAFORMA"
         title="Visão geral"
-        description="Assinantes do AutoCare, receita recorrente e a rotina diária de cobrança."
+        description="Assinantes do CareAuto, receita recorrente e a rotina diária de cobrança."
       />
       {resumo.isPending ? (
         <Skeleton />
@@ -135,3 +135,4 @@ export function BackofficeOverviewPage() {
     </>
   );
 }
+

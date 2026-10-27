@@ -68,7 +68,7 @@ function GenerateForm({
     resolver: zodResolver(schema),
     mode: 'onBlur',
     defaultValues: {
-      nome: 'AutoCare | novos estacionamentos',
+      nome: 'CareAuto | novos estacionamentos',
       briefing: '',
       regiao: 'Brasil',
       urlFinal: 'https://furlaneti.com.br/autocare/sobrenos',
@@ -604,3 +604,4 @@ export function BackofficeMetaAdsPage() {
     </>
   );
 }
+

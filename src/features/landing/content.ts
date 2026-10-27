@@ -22,13 +22,13 @@ export interface Funcionalidade {
   texto: string;
 }
 
-/** Só o que o produto entrega hoje: cada item corresponde a um módulo existente do AutoCare. */
+/** Só o que o produto entrega hoje: cada item corresponde a um módulo existente do CareAuto. */
 export const destaques: Funcionalidade[] = [
   {
     icone: ScanLine,
     titulo: 'Leitura de placa por foto com IA',
     texto:
-      'Tire a foto do veículo na entrada e o AutoCare lê a placa automaticamente. O operador confere e confirma em segundos, sem digitar.',
+      'Tire a foto do veículo na entrada e o CareAuto lê a placa automaticamente. O operador confere e confirma em segundos, sem digitar.',
   },
   {
     icone: Printer,
@@ -129,7 +129,7 @@ export const perguntas = [
   {
     pergunta: 'Como funciona o teste grátis?',
     resposta:
-      'Você usa o AutoCare completo por 7 dias, sem pagar nada. A primeira cobrança só acontece depois do período de teste, conforme o plano escolhido.',
+      'Você usa o CareAuto completo por 7 dias, sem pagar nada. A primeira cobrança só acontece depois do período de teste, conforme o plano escolhido.',
   },
   {
     pergunta: 'Qual a diferença entre pós-pago e pré-pago?',
@@ -144,7 +144,7 @@ export const perguntas = [
   {
     pergunta: 'Preciso instalar algum programa?',
     resposta:
-      'Não para operar: o AutoCare funciona no navegador do celular, tablet ou computador. Só a impressão de tickets usa um pequeno agente instalado no computador ligado à impressora térmica.',
+      'Não para operar: o CareAuto funciona no navegador do celular, tablet ou computador. Só a impressão de tickets usa um pequeno agente instalado no computador ligado à impressora térmica.',
   },
   {
     pergunta: 'Serve para lava-rápido?',
@@ -157,3 +157,4 @@ export const perguntas = [
       'A inteligência artificial lê a placa e o operador sempre confere antes de registrar. A foto não fica armazenada.',
   },
 ];
+

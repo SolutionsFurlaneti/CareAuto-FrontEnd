@@ -145,10 +145,11 @@ export function BackofficeShell() {
           </Suspense>
         </m.main>
         <footer className="app-footer">
-          <span>AutoCare Backoffice</span>
+          <span>CareAuto Backoffice</span>
           <span>Assinaturas, cobranças e crescimento da plataforma.</span>
         </footer>
       </div>
     </div>
   );
 }
+

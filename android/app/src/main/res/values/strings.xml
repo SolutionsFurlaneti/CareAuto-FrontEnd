@@ -1,7 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">AutoCare</string>
-    <string name="title_activity_main">AutoCare</string>
+    <string name="app_name">CareAuto</string>
+    <string name="title_activity_main">CareAuto</string>
     <string name="package_name">br.com.furlaneti.autocare</string>
     <string name="custom_url_scheme">br.com.furlaneti.autocare</string>
 </resources>
+
+
