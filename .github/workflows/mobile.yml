@@ -209,12 +209,26 @@ jobs:
         if: ${{ inputs.publish_release && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         run: |
           set -euo pipefail
-          python3 mobile/publish_package.py --repository distribution --artifact AutoCareManager-iOS.zip --platform ios --version-code "$((1000 + GITHUB_RUN_NUMBER))" --version-name "1.0.${GITHUB_RUN_NUMBER}" --commit "$GITHUB_SHA"
+          latest_version_code=0
+          latest_version_file="distribution/AutoCareManager/latest.json"
+          if [[ -f "$latest_version_file" ]]; then
+            latest_version_code="$(python3 -c 'import json,sys; print(int(json.load(open(sys.argv[1], encoding="utf-8"))["versionCode"]))' "$latest_version_file")"
+          fi
+          ios_version_code=$((1000 + GITHUB_RUN_NUMBER))
+          if (( ios_version_code <= latest_version_code )); then
+            ios_version_code=$((latest_version_code + 1))
+          fi
+          if (( ios_version_code > 2100000000 )); then
+            echo '::error::IOS_VERSION_CODE ultrapassou o limite aceito pela distribuição.'
+            exit 1
+          fi
+          ios_version_name="1.0.$((ios_version_code - 1000))"
+          python3 mobile/publish_package.py --repository distribution --artifact AutoCareManager-iOS.zip --platform ios --version-code "$ios_version_code" --version-name "$ios_version_name" --commit "$GITHUB_SHA"
           git -C distribution config user.name 'github-actions[bot]'
           git -C distribution config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git -C distribution add -- AutoCareManager
           if ! git -C distribution diff --cached --quiet; then
-            git -C distribution commit -m "AutoCareManager iOS PWA 1.0.${GITHUB_RUN_NUMBER}"
+            git -C distribution commit -m "AutoCareManager iOS PWA ${ios_version_name}"
             git -C distribution push origin HEAD:main
           fi
 
