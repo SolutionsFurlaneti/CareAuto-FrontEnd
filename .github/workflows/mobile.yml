@@ -1,0 +1,201 @@
+name: Mobile packages
+
+on:
+  workflow_call:
+    secrets:
+      ANDROID_KEYSTORE_BASE64:
+        required: false
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      ANDROID_KEY_ALIAS:
+        required: false
+      ANDROID_KEY_PASSWORD:
+        required: false
+      MOBILE_DISTRIBUTION_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autocaremanager-mobile-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-36 build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Testar preparação da publicação
+        run: python3 -m unittest discover -s mobile -p 'test*.py' -v
+
+      - name: Instalar dependências e sincronizar Capacitor
+        run: |
+          npm ci --no-audit --no-fund
+          npm run android:sync
+
+      - name: Validar build Android em pull request
+        if: github.event_name == 'pull_request'
+        run: node scripts/build-apk.mjs
+
+      - name: Preparar assinatura e versão Android
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::Configure o secret $name em Actions para publicar o APK Android assinado. Consulte mobile/README.md."
+              missing=1
+            fi
+          done
+          if (( missing != 0 )); then
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/autocaremanager-release.jks"
+          echo "ANDROID_VERSION_CODE=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          echo "ANDROID_VERSION_NAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+
+      - name: Compilar e verificar APK assinado
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/autocaremanager-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_PASSWORD" && test -n "$ANDROID_KEY_ALIAS" && test -n "$ANDROID_KEY_PASSWORD"
+          node scripts/build-apk.mjs --release
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose android/app/build/outputs/apk/release/app-release.apk
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        with:
+          name: autocaremanager-android
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      - name: Validar token de distribuição Android
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          MOBILE_DISTRIBUTION_TOKEN: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MOBILE_DISTRIBUTION_TOKEN" ]]; then
+            echo '::error::Configure o secret MOBILE_DISTRIBUTION_TOKEN com permissão de escrita nos repositórios AndroidPackageKit e iPhoneOperatingSystem. Consulte mobile/README.md.'
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        with:
+          repository: SolutionsFurlaneti/AndroidPackageKit
+          ref: main
+          token: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
+          path: distribution
+
+      - name: Publicar APK em AndroidPackageKit/AutoCareManager
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          python3 mobile/publish_package.py --repository distribution --artifact android/app/build/outputs/apk/release/app-release.apk --platform android --version-code "$ANDROID_VERSION_CODE" --version-name "$ANDROID_VERSION_NAME" --commit "$GITHUB_SHA"
+          git -C distribution config user.name 'github-actions[bot]'
+          git -C distribution config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C distribution add -- AutoCareManager
+          if ! git -C distribution diff --cached --quiet; then
+            git -C distribution commit -m "AutoCareManager Android ${ANDROID_VERSION_NAME}"
+            git -C distribution push origin HEAD:main
+          fi
+
+      - name: Remover chave temporária
+        if: always()
+        run: rm -f -- "$RUNNER_TEMP/autocaremanager-release.jks"
+
+  ios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Compilar PWA para instalação pelo Safari
+        env:
+          VITE_BASE_PATH: /autocare/
+          VITE_API_BASE_URL: /autocare-api
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm run build
+          test -s dist/manifest.webmanifest
+          test -s dist/sw.js
+          test -s dist/icons/apple-touch-icon.png
+          cd dist && zip -qr ../AutoCareManager-iOS.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: autocaremanager-ios-pwa
+          path: AutoCareManager-iOS.zip
+          if-no-files-found: error
+
+      - name: Validar token de distribuição iOS
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          MOBILE_DISTRIBUTION_TOKEN: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MOBILE_DISTRIBUTION_TOKEN" ]]; then
+            echo '::error::Configure o secret MOBILE_DISTRIBUTION_TOKEN com permissão de escrita nos repositórios AndroidPackageKit e iPhoneOperatingSystem. Consulte mobile/README.md.'
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        with:
+          repository: SolutionsFurlaneti/iPhoneOperatingSystem
+          ref: main
+          token: ${{ secrets.MOBILE_DISTRIBUTION_TOKEN }}
+          path: distribution
+
+      - name: Publicar PWA em iPhoneOperatingSystem/AutoCareManager
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          python3 mobile/publish_package.py --repository distribution --artifact AutoCareManager-iOS.zip --platform ios --version-code "$((1000 + GITHUB_RUN_NUMBER))" --version-name "1.0.${GITHUB_RUN_NUMBER}" --commit "$GITHUB_SHA"
+          git -C distribution config user.name 'github-actions[bot]'
+          git -C distribution config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C distribution add -- AutoCareManager
+          if ! git -C distribution diff --cached --quiet; then
+            git -C distribution commit -m "AutoCareManager iOS PWA 1.0.${GITHUB_RUN_NUMBER}"
+            git -C distribution push origin HEAD:main
+          fi
+
+
