@@ -20,6 +20,7 @@ import { Skeleton, Button, EmptyState, StatusBadge } from '../../ui';
 import { money, dateTime, todayIso, integer } from '../../lib/format';
 import { label } from '../../lib/labels';
 import { StayDetails } from '../stays/StayDetails';
+import { Modal } from '../../ui/Modal';
 
 const localDay = (value: string) =>
   new Intl.DateTimeFormat('en-CA', {
@@ -76,6 +77,38 @@ export function OverviewPage() {
           .reduce((n, x) => n + x.valorCentavos, 0) || 0) / 100,
   }));
   const hasChartData = series.some((x) => x.value > 0);
+  const movementRows = days.map((day) => {
+    const date = new Date(day + 'T12:00:00Z');
+    const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' }).format(
+      date,
+    );
+    return {
+      day,
+      label: day.slice(8) + '/' + day.slice(5, 7),
+      weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1),
+      entries: data?.stays.filter((stay) => localDay(stay.dataEntrada) === day).length || 0,
+      exits:
+        data?.stays.filter(
+          (stay) =>
+            stay.status === 'CONCLUIDO' && stay.dataSaida && localDay(stay.dataSaida) === day,
+        ).length || 0,
+      revenue:
+        data?.payments
+          .filter(
+            (payment) =>
+              payment.status === 'PAGO' && payment.pagoEm && localDay(payment.pagoEm) === day,
+          )
+          .reduce((sum, payment) => sum + payment.valorCentavos, 0) || 0,
+    };
+  });
+  const movementTotals = movementRows.reduce(
+    (totals, row) => ({
+      entries: totals.entries + row.entries,
+      exits: totals.exits + row.exits,
+      revenue: totals.revenue + row.revenue,
+    }),
+    { entries: 0, exits: 0, revenue: 0 },
+  );
 
   return (
     <>
@@ -106,68 +139,38 @@ export function OverviewPage() {
           <>
             {/* Occupancy Indicator Banner */}
             {data.operation && (
-              <div
-                style={{
-                  background: 'var(--bg-raise)',
-                  border: '1px solid var(--line-soft)',
-                  borderRadius: 'var(--radius)',
-                  padding: '16px 20px',
-                  marginBottom: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '16px',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '10px',
-                      background: 'var(--bg-press)',
-                      color: 'var(--ok)',
-                      display: 'grid',
-                      placeItems: 'center',
-                    }}
-                  >
+              <section className="occupancy-card" aria-labelledby="occupancy-title">
+                <div className="occupancy-overview">
+                  <span className="occupancy-icon" aria-hidden="true">
                     <CarFront size={22} />
-                  </div>
-                  <div>
-                    <strong style={{ fontSize: '14px', display: 'block', color: 'var(--ink)' }}>
-                      Capacidade do Pátio: {open} de {totalSpots} vagas ocupadas ({occupancyPercent}%)
+                  </span>
+                  <div className="occupancy-copy">
+                    <strong id="occupancy-title">
+                      Capacidade do Pátio: {open} de {totalSpots} vagas ocupadas ({occupancyPercent}
+                      %)
                     </strong>
-                    <span style={{ fontSize: '11px', color: 'var(--ink-faint)' }}>
+                    <span>
                       {totalSpots - open} vagas livres para novos clientes rotativos e mensalistas.
                     </span>
                   </div>
                 </div>
-                <div style={{ flex: '1 1 240px', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div
+                  className="occupancy-progress-track"
+                  role="progressbar"
+                  aria-label="Ocupação do pátio"
+                  aria-valuemin={0}
+                  aria-valuemax={totalSpots}
+                  aria-valuenow={open}
+                  aria-valuetext={`${open} de ${totalSpots} vagas ocupadas (${occupancyPercent}%)`}
+                  data-warning={occupancyPercent > 85 ? 'true' : undefined}
+                >
                   <div
-                    style={{
-                      height: '8px',
-                      width: '100%',
-                      background: 'var(--bg-press)',
-                      borderRadius: '999px',
-                      overflow: 'hidden',
-                      border: '1px solid var(--line-soft)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${occupancyPercent}%`,
-                        background: occupancyPercent > 85 ? 'var(--danger)' : 'var(--ok)',
-                        borderRadius: '999px',
-                        transition: 'width 0.4s ease',
-                      }}
-                    />
-                  </div>
+                    className="occupancy-progress-value"
+                    style={{ width: `${occupancyPercent}%` }}
+                  />
                 </div>
-              </div>
+              </section>
             )}
-
             <div className="metrics">
               {data.operation ? (
                 <>
@@ -254,26 +257,12 @@ export function OverviewPage() {
                   <Button
                     variant="ghost"
                     data-testid="chart-table-toggle"
-                    onClick={() => setTable(!table)}
+                    onClick={() => setTable(true)}
                   >
-                    {table ? 'Ver gráfico' : 'Ver tabela'}
+                    Ver tabela
                   </Button>
                 </div>
-                {table ? (
-                  <DataTable
-                    rows={series}
-                    columns={[
-                      { label: 'Dia', render: (r) => r.label },
-                      {
-                        label: data.operation ? 'Entradas' : 'Recebido',
-                        render: (r) => (data.operation ? r.value : money(r.value)),
-                      },
-                    ]}
-                    rowKey={(r) => r.day}
-                    caption="Movimento dos últimos sete dias"
-                    testId="chart-table"
-                  />
-                ) : hasChartData ? (
+                {hasChartData ? (
                   <div
                     className="chart-area"
                     role="img"
@@ -399,7 +388,9 @@ export function OverviewPage() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                               <span className="plate">{v?.placa || '#' + r.veiculoId}</span>
                               <small style={{ color: 'var(--ink-dim)', fontSize: '11px' }}>
-                                {v ? `${v.marca || ''} ${v.modelo || ''}`.trim() : `Estadia #${r.estadiaId}`}
+                                {v
+                                  ? `${v.marca || ''} ${v.modelo || ''}`.trim()
+                                  : `Estadia #${r.estadiaId}`}
                               </small>
                             </div>
                           );
@@ -409,8 +400,19 @@ export function OverviewPage() {
                         label: 'Permanência',
                         render: (r) => (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <Timer size={14} style={{ color: r.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink-faint)' }} />
-                            <span style={{ fontWeight: 650, color: r.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink-dim)' }}>
+                            <Timer
+                              size={14}
+                              style={{
+                                color:
+                                  r.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink-faint)',
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontWeight: 650,
+                                color: r.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink-dim)',
+                              }}
+                            >
                               {calcDuration(r.dataEntrada, r.dataSaida)}
                             </span>
                           </div>
@@ -470,6 +472,60 @@ export function OverviewPage() {
         )
       )}
 
+      {data && (
+        <Modal
+          open={table}
+          onClose={() => setTable(false)}
+          title="Movimento do Estacionamento"
+          size="md"
+          actions={
+            <Button variant="secondary" onClick={() => setTable(false)}>
+              Fechar
+            </Button>
+          }
+        >
+          <p className="movement-modal-description">Histórico detalhado dos últimos 7 dias.</p>
+          <DataTable
+            rows={movementRows}
+            columns={[
+              {
+                label: 'Data',
+                render: (row) => (
+                  <>
+                    <strong>{row.label}</strong> <small>({row.weekday})</small>
+                  </>
+                ),
+              },
+              ...(data.operation
+                ? [
+                    {
+                      label: 'Entradas',
+                      render: (row: (typeof movementRows)[number]) => row.entries,
+                    },
+                    { label: 'Saídas', render: (row: (typeof movementRows)[number]) => row.exits },
+                  ]
+                : []),
+              ...(data.financial
+                ? [
+                    {
+                      label: 'Faturamento',
+                      render: (row: (typeof movementRows)[number]) => money(row.revenue / 100),
+                    },
+                  ]
+                : []),
+            ]}
+            rowKey={(row) => row.day}
+            caption="Movimento do estacionamento nos últimos sete dias"
+            testId="movement-table"
+          />
+          <div className="movement-total-row">
+            <strong>Total no período</strong>
+            {data.operation && <span>{movementTotals.entries} entradas</span>}
+            {data.operation && <span>{movementTotals.exits} saídas</span>}
+            {data.financial && <strong>{money(movementTotals.revenue / 100)}</strong>}
+          </div>
+        </Modal>
+      )}
       {selectedStay !== null && (
         <StayDetails id={selectedStay} onClose={() => setSelectedStay(null)} />
       )}

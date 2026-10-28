@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Plus, CarFront, Clock3, ArrowUpRight, Search, Timer, LayoutGrid, List } from 'lucide-react';
+import {
+  Plus,
+  CarFront,
+  Clock3,
+  ArrowUpRight,
+  Search,
+  Timer,
+  LayoutGrid,
+  List,
+  MapPinned,
+} from 'lucide-react';
 import { Button, Field, Skeleton, EmptyState, StatusBadge } from '../../ui';
 import { PageHeader } from '../../components/PageHeader';
 import { MetricCard } from '../../components/MetricCard';
@@ -12,6 +22,7 @@ import { dateTime, money } from '../../lib/format';
 import { label } from '../../lib/labels';
 import { EntryModal } from './EntryModal';
 import { StayDetails } from './StayDetails';
+import { ParkingMapDialog } from './ParkingMapDialog';
 
 const calcDuration = (entrada: string, saida?: string | null) => {
   const start = new Date(entrada).getTime();
@@ -23,7 +34,10 @@ const calcDuration = (entrada: string, saida?: string | null) => {
   return `${mins} min`;
 };
 
-const getDurationTier = (entrada: string, saida?: string | null): 'tolerancia' | 'regular' | 'alerta' => {
+const getDurationTier = (
+  entrada: string,
+  saida?: string | null,
+): 'tolerancia' | 'regular' | 'alerta' => {
   if (saida) return 'regular';
   const diffMinutes = Math.max(0, Math.floor((Date.now() - new Date(entrada).getTime()) / 60000));
   if (diffMinutes <= 15) return 'tolerancia';
@@ -38,6 +52,7 @@ export function StaysPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [entry, setEntry] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
@@ -49,7 +64,9 @@ export function StaysPage() {
       }
       if (e.key === 'F3') {
         e.preventDefault();
-        const searchInput = document.querySelector<HTMLInputElement>('[data-testid="stay-search"] input');
+        const searchInput = document.querySelector<HTMLInputElement>(
+          '[data-testid="stay-search"] input',
+        );
         searchInput?.focus();
       }
     };
@@ -79,14 +96,25 @@ export function StaysPage() {
         title="Estacionamento"
         description="Controle de pátio ao vivo: entradas, serviços em execução e checkout ágil."
         action={
-          <Button
-            data-testid="stay-new"
-            onClick={() => setEntry(true)}
-            style={{ fontWeight: 650, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-          >
-            <Plus size={18} />
-            Registrar entrada
-          </Button>
+          <div className="parking-page-actions">
+            <Button
+              variant="secondary"
+              data-testid="parking-map-open"
+              disabled={query.isPending || !query.data}
+              onClick={() => setMapOpen(true)}
+            >
+              <MapPinned size={17} />
+              Mapa do pátio
+            </Button>
+            <Button
+              data-testid="stay-new"
+              onClick={() => setEntry(true)}
+              style={{ fontWeight: 650, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+            >
+              <Plus size={18} />
+              Registrar entrada
+            </Button>
+          </div>
         }
       />
       <div className="metrics metrics-three">
@@ -198,7 +226,9 @@ export function StaysPage() {
                     </div>
                     <div className="patio-card-body">
                       <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--ink)' }}>
-                        {v ? `${v.marca || ''} ${v.modelo || ''}`.trim() : `Estadia #${r.estadiaId}`}
+                        {v
+                          ? `${v.marca || ''} ${v.modelo || ''}`.trim()
+                          : `Estadia #${r.estadiaId}`}
                       </div>
                       <small style={{ color: 'var(--ink-dim)', fontSize: '12px' }}>
                         {v?.cor ? `Cor: ${v.cor} · ` : ''}Entrada: {dateTime(r.dataEntrada)}
@@ -209,8 +239,14 @@ export function StaysPage() {
                     </div>
                     <div className="patio-card-footer">
                       <div>
-                        <span style={{ fontSize: '11px', color: 'var(--ink-faint)', display: 'block' }}>Total</span>
-                        <strong style={{ fontSize: '16px', color: 'var(--ink)' }}>{money(r.valorTotal)}</strong>
+                        <span
+                          style={{ fontSize: '11px', color: 'var(--ink-faint)', display: 'block' }}
+                        >
+                          Total
+                        </span>
+                        <strong style={{ fontSize: '16px', color: 'var(--ink)' }}>
+                          {money(r.valorTotal)}
+                        </strong>
                       </div>
                       <Button
                         variant="ghost"
@@ -240,7 +276,9 @@ export function StaysPage() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <span className="plate">{v?.placa || '#' + r.veiculoId}</span>
                         <small style={{ color: 'var(--ink-dim)', fontSize: '11px' }}>
-                          {v ? `${v.marca || ''} ${v.modelo || ''} · ${v.cor || ''}`.trim() : `Estadia #${r.estadiaId}`}
+                          {v
+                            ? `${v.marca || ''} ${v.modelo || ''} · ${v.cor || ''}`.trim()
+                            : `Estadia #${r.estadiaId}`}
                         </small>
                       </div>
                     );
@@ -250,8 +288,18 @@ export function StaysPage() {
                   label: 'Tempo de Pátio',
                   render: (r) => (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Timer size={14} style={{ color: r.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink-faint)' }} />
-                      <span style={{ fontWeight: 650, color: r.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink-dim)' }}>
+                      <Timer
+                        size={14}
+                        style={{
+                          color: r.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink-faint)',
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontWeight: 650,
+                          color: r.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink-dim)',
+                        }}
+                      >
                         {calcDuration(r.dataEntrada, r.dataSaida)}
                       </span>
                     </div>
@@ -281,7 +329,9 @@ export function StaysPage() {
           )
         ) : (
           <EmptyState
-            title={search ? 'Nenhum veículo encontrado com essa placa' : 'O pátio está livre no momento'}
+            title={
+              search ? 'Nenhum veículo encontrado com essa placa' : 'O pátio está livre no momento'
+            }
             description={
               search
                 ? 'Confira os caracteres digitados ou o filtro selecionado acima.'
@@ -292,6 +342,17 @@ export function StaysPage() {
         <Pagination page={page} size={20} total={rows.length} onChange={setPage} />
       </section>
 
+      <ParkingMapDialog
+        open={mapOpen}
+        stays={all}
+        vehicles={vehicles.data || []}
+        onClose={() => setMapOpen(false)}
+        onRegisterEntry={() => {
+          setMapOpen(false);
+          setEntry(true);
+        }}
+        onSelectStay={setSelected}
+      />
       {entry && <EntryModal onClose={() => setEntry(false)} />}
       {selected !== null && <StayDetails id={selected} onClose={() => setSelected(null)} />}
     </>

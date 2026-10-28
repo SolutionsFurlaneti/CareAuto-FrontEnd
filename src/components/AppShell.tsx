@@ -1,24 +1,7 @@
-import { useState, useEffect, Suspense } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState, Suspense } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Drawer, useMediaQuery } from '@mui/material';
-import {
-  LayoutDashboard,
-  CarFront,
-  Users,
-  Layers,
-  Wrench,
-  CircleDollarSign,
-  CalendarDays,
-  ReceiptText,
-  ScanLine,
-  Menu,
-  LogOut,
-  ChevronRight,
-  Sparkles,
-  Plug,
-  Printer,
-  Plus,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, LayoutGrid, Menu, PanelLeft, Plus } from 'lucide-react';
 import { m, useReducedMotion } from 'motion/react';
 import { useAuthStore, hasRole, type Role } from '../stores/authStore';
 import { ThemeToggle } from './ThemeToggle';
@@ -26,91 +9,21 @@ import { Button, Skeleton } from '../ui';
 import { signOut } from '../features/auth/api';
 import { toast } from 'sonner';
 import { EntryModal } from '../features/stays/EntryModal';
-const sections = [
-  {
-    title: 'ACESSO',
-    items: [{ to: '/usuarios', text: 'Equipe e acesso', icon: Users, roles: ['Admin'] }],
-  },
-  {
-    title: 'PRINCIPAL',
-    items: [
-      {
-        to: '/',
-        text: 'Visão geral',
-        icon: LayoutDashboard,
-        roles: ['Admin', 'Operador', 'Financeiro', 'Cliente'],
-      },
-      {
-        to: '/estacionamento',
-        text: 'Estacionamento',
-        icon: CarFront,
-        roles: ['Admin', 'Operador'],
-      },
-      { to: '/clientes', text: 'Clientes', icon: Users, roles: ['Admin', 'Operador'] },
-      { to: '/veiculos', text: 'Veículos', icon: CarFront, roles: ['Admin', 'Operador'] },
-    ],
-  },
-  {
-    title: 'FINANCEIRO',
-    items: [
-      {
-        to: '/pagamentos',
-        text: 'Pagamentos',
-        icon: CircleDollarSign,
-        roles: ['Admin', 'Financeiro', 'Cliente'],
-      },
-      {
-        to: '/assinaturas',
-        text: 'Assinaturas',
-        icon: CalendarDays,
-        roles: ['Admin', 'Financeiro', 'Cliente'],
-      },
-    ],
-  },
-  {
-    title: 'CONFIGURAÇÕES',
-    items: [
-      { to: '/integracoes', text: 'Integrações', icon: Plug, roles: ['Admin'] },
-      { to: '/impressao', text: 'Impressão', icon: Printer, roles: ['Admin'] },
-      {
-        to: '/servicos',
-        text: 'Serviços',
-        icon: Wrench,
-        roles: ['Admin', 'Operador', 'Financeiro'],
-      },
-      {
-        to: '/precos-servicos',
-        text: 'Preços dos serviços',
-        icon: ReceiptText,
-        roles: ['Admin', 'Operador', 'Financeiro'],
-      },
-      {
-        to: '/tabelas-preco',
-        text: 'Tabelas de preços',
-        icon: ReceiptText,
-        roles: ['Admin', 'Operador', 'Financeiro'],
-      },
-      {
-        to: '/taxas-dinamicas',
-        text: 'Taxas dinâmicas',
-        icon: Sparkles,
-        roles: ['Admin', 'Operador', 'Financeiro'],
-      },
-      {
-        to: '/categorias',
-        text: 'Categorias',
-        icon: Layers,
-        roles: ['Admin', 'Operador', 'Financeiro'],
-      },
-      {
-        to: '/consultas-placa',
-        text: 'Consultas de placa',
-        icon: ScanLine,
-        roles: ['Admin', 'Operador'],
-      },
-    ],
-  },
-];
+import {
+  GridModuleMenu,
+  SidebarNavigation,
+  navigationSections,
+  type MenuMode,
+} from './ModuleNavigation';
+
+const roleVisibleSections = (roles: Role[], authMode?: string) =>
+  navigationSections.map((section) => ({
+    ...section,
+    items: section.items.filter(
+      (item) => hasRole(roles, item.roles) && (item.to !== '/usuarios' || authMode === 'password'),
+    ),
+  }));
+
 export function AppShell() {
   const [open, setOpen] = useState(false);
   const [globalEntry, setGlobalEntry] = useState(false);
@@ -119,125 +32,128 @@ export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const reduced = useReducedMotion();
+  const [menuMode, setMenuMode] = useState<MenuMode>(() => {
+    const saved = window.localStorage.getItem('AutoCareManager-menu-mode');
+    if (saved === 'grid' || saved === 'sidebar') return saved;
+    return window.matchMedia('(min-width:900px)').matches ? 'sidebar' : 'grid';
+  });
+  const isPermanent = desktop && menuMode === 'sidebar';
+  const sections = roleVisibleSections(session?.roles || [], session?.authMode);
+
+  useEffect(() => {
+    window.localStorage.setItem('AutoCareManager-menu-mode', menuMode);
+  }, [menuMode]);
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
+
   const title =
-    sections
-      .flatMap((s) => s.items)
+    navigationSections
+      .flatMap((section) => section.items)
       .find(
-        (i) =>
-          i.to === location.pathname || (i.to !== '/' && location.pathname.startsWith(i.to + '/')),
+        (item) =>
+          item.to === location.pathname ||
+          (item.to !== '/' && location.pathname.startsWith(item.to + '/')),
       )?.text || 'CareAuto';
-  const navigation = (
-    <div className="sidebar-inner">
-      <NavLink to="/" onClick={() => setOpen(false)} className="brand" data-testid="brand">
-        <span className="brand-symbol">
-          <CarFront size={24} />
-        </span>
-        <span>
-          CareAuto
-          <small>GESTÃO AUTOMOTIVA</small>
-        </span>
-      </NavLink>
-      <p className="tenant-name" data-testid="estabelecimento-atual">
-        {session?.estabelecimentoNome}
-      </p>
-      <nav aria-label="Navegação principal">
-        {sections.map((section) => {
-          const items = section.items.filter(
-            (i) =>
-              hasRole(session?.roles || [], i.roles as Role[]) &&
-              (i.to !== '/usuarios' || session?.authMode === 'password'),
-          );
-          return items.length ? (
-            <div className="nav-section" key={section.title}>
-              <p>{section.title}</p>
-              {items.map((item) => (
-                <NavLink
-                  end={item.to === '/'}
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setOpen(false)}
-                  data-testid={'nav-' + (item.to.slice(1) || 'overview')}
-                  className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
-                >
-                  <item.icon size={18} />
-                  <span>{item.text}</span>
-                </NavLink>
-              ))}
-            </div>
-          ) : null;
-        })}
-      </nav>
-      {session?.authMode === 'password' && (
-        <NavLink className="nav-item" data-testid="change-password" to="/trocar-senha">
-          Alterar minha senha
-        </NavLink>
-      )}
-      <div className="sidebar-bottom">
-        <span className="avatar">{session?.userName.slice(0, 2).toUpperCase()}</span>
-        <div>
-          <strong>{session?.userName}</strong>
-          <small>
-            {session?.roles
-              .map((r) => (r === 'Admin' ? 'Administrador' : r === 'Operador' ? 'Funcionário' : r))
-              .join(' · ')}
-          </small>
-        </div>
-        <Button
-          variant="ghost"
-          aria-label="Sair da conta"
-          data-testid="logout"
-          onClick={async () => {
-            try {
-              await signOut();
-            } catch {
-              toast.error(
-                'A sessão local foi encerrada, mas não foi possível encerrar as sessões no servidor.',
-              );
-            }
-            navigate('/login', { replace: true });
-          }}
-        >
-          <LogOut size={18} />
-        </Button>
-      </div>
-    </div>
-  );
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch {
+      toast.error(
+        'A sessão local foi encerrada, mas não foi possível encerrar as sessões no servidor.',
+      );
+    }
+    navigate('/login', { replace: true });
+  };
+
+  const switchMenuMode = () => {
+    setMenuMode((current) => (current === 'grid' ? 'sidebar' : 'grid'));
+    setOpen(true);
+  };
+
+  const openNavigation = () => {
+    if (isPermanent) setMenuMode('grid');
+    setOpen(true);
+  };
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">
         Pular para o conteúdo
       </a>
       <Drawer
-        variant={desktop ? 'permanent' : 'temporary'}
-        open={desktop || open}
+        variant={isPermanent ? 'permanent' : 'temporary'}
+        open={isPermanent || open}
         onClose={() => setOpen(false)}
         className="sidebar"
-        PaperProps={{ className: 'sidebar-paper' }}
+        PaperProps={{
+          className: menuMode === 'grid' ? 'sidebar-paper menu-grid-paper' : 'sidebar-paper',
+          'aria-label': menuMode === 'grid' ? 'Menu de módulos do CareAuto' : 'Navegação CareAuto',
+        }}
       >
-        {navigation}
+        {menuMode === 'grid' ? (
+          <GridModuleMenu
+            sections={sections}
+            session={session}
+            onClose={() => setOpen(false)}
+            onSwitchMode={switchMenuMode}
+            onLogout={handleLogout}
+          />
+        ) : (
+          <SidebarNavigation
+            sections={sections}
+            session={session}
+            onClose={() => setOpen(false)}
+            onSwitchMode={switchMenuMode}
+            onLogout={handleLogout}
+          />
+        )}
       </Drawer>
       <div className="workspace">
         <header className="topbar">
-          <div>
-            <Button
-              variant="ghost"
-              aria-label="Abrir menu"
-              data-testid="nav-open"
-              className="mobile-menu"
-              onClick={() => setOpen(true)}
-            >
-              <Menu size={22} />
-            </Button>
+          <div className="topbar-leading">
+            {!isPermanent && (
+              <Button
+                variant="ghost"
+                aria-label="Abrir menu"
+                aria-expanded={open}
+                data-testid="nav-open"
+                className="mobile-menu"
+                onClick={openNavigation}
+              >
+                <Menu size={22} />
+              </Button>
+            )}
             <span className="breadcrumb-brand" title={session?.estabelecimentoNome}>
               {session?.estabelecimentoNome}
             </span>
-            <ChevronRight size={14} />
-            <span>{title}</span>
+            <ChevronRight aria-hidden="true" size={14} />
+            <button
+              type="button"
+              className="topbar-title"
+              onClick={openNavigation}
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              aria-label={`Abrir menu: ${title}`}
+            >
+              <span>{title}</span>
+              <ChevronDown size={13} aria-hidden="true" />
+            </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="topbar-actions">
+            <Button
+              variant="ghost"
+              className="menu-mode-toggle"
+              aria-label={
+                menuMode === 'grid' ? 'Alternar para menu lateral' : 'Alternar para grade PDV'
+              }
+              title={menuMode === 'grid' ? 'Menu lateral' : 'Grade PDV'}
+              onClick={switchMenuMode}
+            >
+              {menuMode === 'grid' ? <PanelLeft size={17} /> : <LayoutGrid size={17} />}
+              <span>{menuMode === 'grid' ? 'Menu lateral' : 'Grade PDV'}</span>
+            </Button>
             {hasRole(session?.roles || [], ['Admin', 'Operador']) && (
               <Button
                 variant="primary"
@@ -282,6 +198,3 @@ export function AppShell() {
     </div>
   );
 }
-
-
-

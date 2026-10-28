@@ -15,6 +15,7 @@ import {
   registerPwaServiceWorker,
 } from './lib/device';
 import './styles/global.css';
+import './styles/tailwind.css';
 applyTheme();
 keepFocusedFieldVisible();
 void bindNativeBackButton();

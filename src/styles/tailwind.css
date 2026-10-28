@@ -1,0 +1,17 @@
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' important;
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --color-app-bg: var(--bg);
+  --color-app-surface: var(--bg-raise);
+  --color-app-muted: var(--bg-press);
+  --color-app-line: var(--line-soft);
+  --color-app-ink: var(--ink);
+  --color-app-dim: var(--ink-dim);
+  --color-app-faint: var(--ink-faint);
+  --color-care-mint: var(--mint);
+  --color-care-mint-deep: var(--mint-deep);
+  --color-care-mint-ink: var(--mint-ink);
+}
