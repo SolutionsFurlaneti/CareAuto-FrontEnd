@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
 import { Copy, Plus, RefreshCw } from 'lucide-react';
 import { PageHeader } from '../../components/PageHeader';
 import { QueryError } from '../../components/QueryError';
 import { DataTable } from '../../components/DataTable';
 import { describeError } from '../../lib/describeError';
+import { API_BASE_URL } from '../../lib/apiClient';
 import { dateTime } from '../../lib/format';
-import { confirmAction } from '../../lib/swal';
+import { alertAction, confirmAction } from '../../lib/swal';
 import { Button, EmptyState, Modal, Skeleton, StatusBadge, Switch } from '../../ui';
 import {
   deactivatePrinter,
@@ -22,6 +24,7 @@ import {
 } from './api';
 import { printKeys, usePrintConfig, usePrintJobs, usePrinters, usePrintScope } from './hooks';
 import { PrinterForm } from './PrinterForm';
+import { nativePrintAgent, type NativeAgentStatus } from './nativePrintAgent';
 
 const jobStatus: Record<TrabalhoImpressao['status'], { badge: string; label: string }> = {
   PENDENTE: { badge: 'PENDENTE', label: 'Na fila' },
@@ -32,17 +35,21 @@ const jobStatus: Record<TrabalhoImpressao['status'], { badge: string; label: str
 function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
   const cache = useQueryClient();
   const scope = usePrintScope();
+  const hasEntryPrinter =
+    config.possuiImpressoraEntrada ?? config.impressaoEntradaDisponivel;
   const [ask, setAsk] = useState(config.perguntarAoSalvarEntrada);
   const [automatic, setAutomatic] = useState(config.imprimirCupomEntradaAutomatico);
   useEffect(() => {
     setAsk(config.perguntarAoSalvarEntrada);
     setAutomatic(config.imprimirCupomEntradaAutomatico);
   }, [config.versao, config.perguntarAoSalvarEntrada, config.imprimirCupomEntradaAutomatico]);
+  const effectiveAsk = hasEntryPrinter && ask;
+  const effectiveAutomatic = hasEntryPrinter && !effectiveAsk && automatic;
   const save = useMutation({
     mutationFn: () =>
       savePrintConfig({
-        perguntarAoSalvarEntrada: ask,
-        imprimirCupomEntradaAutomatico: automatic,
+        perguntarAoSalvarEntrada: effectiveAsk,
+        imprimirCupomEntradaAutomatico: effectiveAutomatic,
         versao: config.versao,
       }),
     onSuccess: (data) => {
@@ -51,12 +58,14 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
     },
   });
   const dirty =
-    ask !== config.perguntarAoSalvarEntrada || automatic !== config.imprimirCupomEntradaAutomatico;
-  const summary = ask
+    effectiveAsk !== config.perguntarAoSalvarEntrada ||
+    effectiveAutomatic !== config.imprimirCupomEntradaAutomatico;
+  const summary = effectiveAsk
     ? 'Ao registrar uma entrada, o operador escolhe se imprime o ticket.'
-    : automatic
+    : effectiveAutomatic
       ? 'O ticket é impresso automaticamente em toda entrada.'
       : 'Nenhum ticket é impresso na entrada. O operador ainda pode imprimir pela estadia.';
+  const blockedMessage = 'A opção só pode ser ativada após cadastrar e instalar uma impressora.';
   return (
     <section className="panel" aria-labelledby="print-preferences" data-testid="print-preferences">
       <div className="panel-toolbar">
@@ -66,22 +75,42 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
         <div className="switch-group">
           <Switch
             label="Perguntar se deseja imprimir na entrada"
-            description="Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar."
+            description={
+              hasEntryPrinter
+                ? 'Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.'
+                : 'Cadastre e instale uma impressora térmica para ativar esta opção.'
+            }
             data-testid="field-perguntarAoSalvarEntrada"
-            checked={ask}
-            onChange={setAsk}
+            checked={effectiveAsk}
+            onChange={(enabled) => {
+              if (enabled && !hasEntryPrinter) {
+                void alertAction('Impressora necessária', blockedMessage);
+                return;
+              }
+              setAsk(enabled);
+              if (enabled) setAutomatic(false);
+            }}
           />
           <Switch
             label="Imprimir automaticamente"
             description={
-              ask
-                ? 'Desative a pergunta para imprimir sem confirmação.'
-                : 'Imprime o ticket sem perguntar.'
+              !hasEntryPrinter
+                ? 'Cadastre e instale uma impressora térmica para ativar esta opção.'
+                : effectiveAsk
+                  ? 'Desative a pergunta para imprimir sem confirmação.'
+                  : 'Imprime o ticket sem perguntar.'
             }
             data-testid="field-imprimirCupomEntradaAutomatico"
-            checked={!ask && automatic}
-            disabled={ask}
-            onChange={setAutomatic}
+            checked={effectiveAutomatic}
+            disabled={effectiveAsk}
+            onChange={(enabled) => {
+              if (enabled && !hasEntryPrinter) {
+                void alertAction('Impressora necessária', blockedMessage);
+                return;
+              }
+              setAutomatic(enabled);
+              if (enabled) setAsk(false);
+            }}
           />
         </div>
         <p className="muted" role="status">
@@ -111,29 +140,54 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
 function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
   const cache = useQueryClient();
   const scope = usePrintScope();
+  const nativePlatform = Capacitor.isNativePlatform();
   const [token, setToken] = useState<string>();
+  const [nativeStatus, setNativeStatus] = useState<NativeAgentStatus>();
+  useEffect(() => {
+    if (!nativePlatform) return;
+    void nativePrintAgent
+      .getStatus()
+      .then(setNativeStatus)
+      .catch(() => setNativeStatus(undefined));
+  }, [nativePlatform]);
   const generate = useMutation({
     mutationFn: generateAgentToken,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setToken(data.token);
+      if (nativePlatform) {
+        try {
+          const status = await nativePrintAgent.start({
+            apiUrl: API_BASE_URL || 'https://www.furlaneti.com.br/autocare-api',
+            token: data.token,
+          });
+          setNativeStatus(status);
+          toast.success('Agente de impressão SUNMI iniciado neste terminal.');
+        } catch (e) {
+          toast.error(describeError(e));
+        }
+      }
       void cache.invalidateQueries({ queryKey: printKeys.config(scope) });
     },
     onError: (e) => toast.error(describeError(e)),
   });
   const online = config.agenteConectado;
   async function start() {
+    if (nativePlatform && !nativeStatus?.supported) {
+      toast.error('Este terminal não foi identificado como compatível com a impressora SUNMI.');
+      return;
+    }
     if (
       config.possuiTokenAgente &&
       !(await confirmAction(
         'Gerar novo token?',
-        'O agente instalado na guarita deixará de imprimir até receber o novo token.',
+        'Todos os agentes deste estabelecimento deixarão de imprimir até receberem o novo token.',
         'Gerar novo token',
       ))
     )
       return;
     generate.mutate();
   }
-  async function copy() {
+  async function copyToken() {
     if (!token) return;
     try {
       await navigator.clipboard.writeText(token);
@@ -142,39 +196,97 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
       toast.error('Não foi possível copiar. Selecione o texto e copie manualmente.');
     }
   }
+  async function copyDeviceId() {
+    if (!nativeStatus?.deviceId) return;
+    try {
+      await navigator.clipboard.writeText(nativeStatus.deviceId);
+      toast.success('ID do POS copiado.');
+    } catch {
+      toast.error('Não foi possível copiar o ID. Selecione o texto e copie manualmente.');
+    }
+  }
+  async function stop() {
+    try {
+      await nativePrintAgent.stop();
+      setNativeStatus((current) => current ? { ...current, running: false } : current);
+      toast.success('Agente de impressão pausado neste terminal.');
+    } catch (e) {
+      toast.error(describeError(e));
+    }
+  }
   return (
     <section className="panel" aria-labelledby="print-agent" data-testid="print-agent">
       <div className="panel-toolbar">
-        <h2 id="print-agent">Agente de impressão</h2>
+        <h2 id="print-agent">{nativePlatform ? 'Agente Android' : 'Agente de impressão'}</h2>
         {!config.possuiTokenAgente ? (
           <StatusBadge status="ENCERRADA" label="Não configurado" />
         ) : online ? (
           <StatusBadge status="ATIVA" label="Conectado" />
+        ) : nativePlatform && nativeStatus?.running ? (
+          <StatusBadge status="PENDENTE" label="Ativo no terminal" />
         ) : (
           <StatusBadge status="PENDENTE" label="Sem contato" />
         )}
       </div>
       <div className="integration-body">
-        <p>
-          O navegador não acessa impressoras USB nem a porta 9100. Um pequeno serviço instalado no
-          computador da guarita busca os tickets na fila e imprime.
-        </p>
-        <p className="muted">
-          {config.possuiTokenAgente
-            ? config.ultimoContatoAgenteEm
-              ? `Último contato: ${dateTime(config.ultimoContatoAgenteEm)}.`
-              : 'O agente ainda não se conectou com o token atual.'
-            : 'Gere um token e configure-o no agente local de impressão. Consulte o guia de instalação do agente.'}
-        </p>
+        {nativePlatform ? (
+          <>
+            <p>
+              O agente SUNMI consulta a fila em segundo plano e envia tickets com QR Code à impressora
+              térmica integrada. Compatibilidade automática é habilitada para terminais SUNMI.
+            </p>
+            <p className="muted">
+              Modelo detectado: {nativeStatus?.model || 'consultando terminal'}
+              {nativeStatus && !nativeStatus.supported
+                ? ' · Este fabricante ainda não possui adaptador nativo de impressão nesta versão.'
+                : ''}
+            </p>
+            <div className="integration-actions">
+              <code className="agent-token">{nativeStatus?.deviceId || 'ID do POS indisponível'}</code>
+              <Button variant="secondary" disabled={!nativeStatus?.deviceId} onClick={() => void copyDeviceId()}>
+                <Copy size={16} aria-hidden="true" /> Copiar ID do POS
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p>
+              O navegador não acessa impressoras USB nem a porta 9100. Um pequeno serviço instalado no
+              computador da guarita busca os tickets na fila e imprime.
+            </p>
+            <p className="muted">
+              {config.possuiTokenAgente
+                ? config.ultimoContatoAgenteEm
+                  ? 'Último contato: ' + dateTime(config.ultimoContatoAgenteEm) + '.'
+                  : 'O agente ainda não se conectou com o token atual.'
+                : 'Gere um token e configure-o no agente local de impressão. Consulte o guia de instalação do agente.'}
+            </p>
+          </>
+        )}
         <div className="integration-actions">
           <Button
             variant={config.possuiTokenAgente ? 'secondary' : 'primary'}
             busy={generate.isPending}
+            disabled={nativePlatform && !nativeStatus?.supported}
             data-testid="agent-token"
             onClick={() => void start()}
           >
-            {config.possuiTokenAgente ? 'Gerar novo token' : 'Gerar token do agente'}
+            {nativePlatform
+              ? nativeStatus?.running
+                ? 'Reiniciar agente e token'
+                : 'Ativar agente neste POS'
+              : config.possuiTokenAgente
+                ? 'Gerar novo token'
+                : 'Gerar token do agente'}
           </Button>
+          {nativePlatform && nativeStatus?.running && (
+            <Button variant="ghost" disabled={generate.isPending} onClick={() => void stop()}>
+              Pausar agente neste POS
+            </Button>
+          )}
+          {!nativePlatform && config.ultimoContatoAgenteEm && (
+            <small>Último contato: {dateTime(config.ultimoContatoAgenteEm)}</small>
+          )}
         </div>
       </div>
       <Modal
@@ -183,7 +295,7 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
         title="Token do agente"
         actions={
           <>
-            <Button variant="secondary" onClick={() => void copy()}>
+            <Button variant="secondary" onClick={() => void copyToken()}>
               <Copy size={16} aria-hidden="true" /> Copiar
             </Button>
             <Button data-testid="agent-token-done" onClick={() => setToken(undefined)}>
@@ -193,22 +305,33 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
         }
       >
         <p role="alert" className="notice">
-          Este token aparece uma única vez. Guarde-o agora: depois de fechar, só é possível gerar
-          outro.
+          Este token aparece uma única vez. Guarde-o agora: depois de fechar, só é possível gerar outro.
         </p>
         <code className="agent-token" data-testid="agent-token-value">
           {token}
         </code>
-        <p className="muted">No computador da guarita, em um PowerShell como administrador:</p>
-        <code className="agent-token">
-          [Environment]::SetEnvironmentVariable("Agente__Token", "{token}", "Machine")
-        </code>
-        <p className="muted">Depois reinicie o serviço local de impressão no Windows.</p>
+        {nativePlatform ? (
+          <>
+            <p className="muted">
+              {nativeStatus?.running
+                ? 'O serviço nativo está ativo. O token fica protegido pelo Android Keystore neste terminal.'
+                : 'O token foi gerado, mas o agente não iniciou. Você pode copiá-lo e tentar novamente após verificar a compatibilidade do terminal.'}
+            </p>
+            <p className="muted">ID deste POS: {nativeStatus?.deviceId || 'indisponível'}</p>
+          </>
+        ) : (
+          <>
+            <p className="muted">No computador da guarita, em um PowerShell como administrador:</p>
+            <code className="agent-token">
+              [Environment]::SetEnvironmentVariable("Agente__Token", "{token}", "Machine")
+            </code>
+            <p className="muted">Depois reinicie o serviço local de impressão no Windows.</p>
+          </>
+        )}
       </Modal>
     </section>
   );
 }
-
 function PrintersPanel({ agentReady }: { agentReady: boolean }) {
   const cache = useQueryClient();
   const scope = usePrintScope();
@@ -279,8 +402,10 @@ function PrintersPanel({ agentReady }: { agentReady: boolean }) {
               label: 'Conexão',
               render: (p) =>
                 p.tipoConexao === 'REDE_TCP'
-                  ? `Rede · ${p.enderecoDriverOuIp}:${p.portaTcp}`
-                  : `USB · ${p.enderecoDriverOuIp}`,
+                ? "Rede · " + p.enderecoDriverOuIp + ":" + p.portaTcp
+                : p.tipoConexao === 'ANDROID_POS'
+                  ? "POS Android · " + p.enderecoDriverOuIp
+                  : "USB · " + p.enderecoDriverOuIp,
             },
             {
               label: 'Função',
@@ -458,7 +583,7 @@ export function PrintingPage() {
       <PageHeader
         eyebrow="CONFIGURAÇÕES"
         title="Impressão"
-        description="Tickets de entrada com QR Code em impressoras térmicas USB ou de rede."
+        description="Tickets de entrada com QR Code em impressoras USB, de rede ou integradas a POS Android."
       />
       {config.isPending ? (
         <Skeleton />

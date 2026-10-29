@@ -13,3 +13,13 @@ export async function confirmAction(title: string, text: string, confirmButtonTe
   });
   return result.isConfirmed;
 }
+
+export async function alertAction(title: string, text: string) {
+  await Swal.fire({
+    title,
+    text,
+    icon: 'warning',
+    confirmButtonText: 'Entendi',
+    customClass: { popup: 'confirm-popup' },
+  });
+}

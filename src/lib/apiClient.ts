@@ -18,7 +18,8 @@ export const toQuery = (values: Record<string, string | number | boolean | null 
     if (v !== null && v !== undefined && v !== '') params.set(k, String(v));
   return params.size ? '?' + params.toString() : '';
 };
-const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const base = API_BASE_URL;
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 /** auth 'backoffice' usa a sessão do backoffice da plataforma; 'none' não envia token; o padrão é a sessão do estacionamento. */
 export type ApiOptions = RequestInit & { auth?: 'tenant' | 'backoffice' | 'none' };

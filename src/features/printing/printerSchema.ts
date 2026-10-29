@@ -11,7 +11,7 @@ export const printerSchema = z
       .trim()
       .min(1, 'Informe um nome, como Guarita 1.')
       .max(100, 'Nome muito longo.'),
-    tipoConexao: z.enum(['USB_WINDOWS', 'REDE_TCP']),
+    tipoConexao: z.enum(['USB_WINDOWS', 'REDE_TCP', 'ANDROID_POS']),
     enderecoDriverOuIp: z
       .string()
       .trim()
@@ -28,6 +28,14 @@ export const printerSchema = z
     ativo: z.boolean(),
   })
   .superRefine((v, ctx) => {
+    if (v.tipoConexao === 'ANDROID_POS') {
+      if (!z.string().uuid().safeParse(v.enderecoDriverOuIp).success)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['enderecoDriverOuIp'],
+          message: 'Informe o ID do agente Android exibido no terminal POS.',
+        });
+    }
     if (v.tipoConexao === 'REDE_TCP') {
       if (v.portaTcp === null)
         ctx.addIssue({

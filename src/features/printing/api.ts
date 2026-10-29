@@ -6,6 +6,8 @@ export interface ConfiguracaoImpressao {
   imprimirCupomEntradaAutomatico: boolean;
   acaoAposEntrada: AcaoAposEntrada;
   possuiTokenAgente: boolean;
+  /** Impressora ativa e configurada para tickets de entrada. */
+  possuiImpressoraEntrada: boolean;
   /** Token gerado e ao menos uma impressora de entrada ativa. */
   impressaoEntradaDisponivel: boolean;
   /** Calculado pelo servidor: contato nos últimos 2 minutos. */
@@ -15,7 +17,7 @@ export interface ConfiguracaoImpressao {
   atualizadoPor: string | null;
   versao: string | null;
 }
-export type TipoConexao = 'USB_WINDOWS' | 'REDE_TCP';
+export type TipoConexao = 'USB_WINDOWS' | 'REDE_TCP' | 'ANDROID_POS';
 export interface Impressora {
   impressoraId: number;
   nome: string;

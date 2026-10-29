@@ -42,6 +42,7 @@ export function PrinterForm({
         },
   });
   const network = watch('tipoConexao') === 'REDE_TCP';
+  const androidPos = watch('tipoConexao') === 'ANDROID_POS';
   useEffect(() => {
     if (!(error instanceof ApiError) || !error.fieldErrors) return;
     for (const [key, messages] of Object.entries(error.fieldErrors)) {
@@ -76,17 +77,20 @@ export function PrinterForm({
       >
         <option value="REDE_TCP">Rede TCP/IP (porta 9100)</option>
         <option value="USB_WINDOWS">USB (driver do Windows)</option>
+        <option value="ANDROID_POS">POS Android integrado (agente local)</option>
       </SelectField>
       <Field
-        label={network ? 'Endereço IP' : 'Nome do driver no Windows'}
-        placeholder={network ? '192.168.0.50' : 'EPSON TM-T20X Receipt'}
+        label={androidPos ? 'ID do agente Android' : network ? 'Endereço IP' : 'Nome do driver no Windows'}
+        placeholder={androidPos ? 'ID exibido no POS Android' : network ? '192.168.0.50' : 'EPSON TM-T20X Receipt'}
         required
         data-testid="field-enderecoDriverOuIp"
         {...register('enderecoDriverOuIp')}
         hint={
-          network
-            ? 'IP fixo da impressora na rede da guarita.'
-            : 'Nome exato exibido em Configurações do Windows › Impressoras e scanners.'
+          androidPos
+            ? 'Identificador mostrado em Configurações > Impressão no próprio POS.'
+            : network
+              ? 'IP fixo da impressora na rede da guarita.'
+              : 'Nome exato exibido em Configurações do Windows › Impressoras e scanners.'
         }
         error={errors.enderecoDriverOuIp?.message}
       />
