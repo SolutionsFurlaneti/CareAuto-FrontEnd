@@ -25,6 +25,9 @@ jobs:
       - name: Instalar dependências
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      - name: Testar preparação da Release de produção
+        run: python3 -m unittest discover -s .github/tests -p 'test_*.py' -v
+
       - name: Lint
         run: npm run lint
 
@@ -47,7 +50,7 @@ jobs:
           name: autocaremanager-web
           path: dist/
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
 
 
 

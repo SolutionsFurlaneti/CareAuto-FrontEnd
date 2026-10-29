@@ -75,7 +75,7 @@ npm run coverage:merge
 npm run build-storybook
 ```
 
-Veja [test/README.md](test/README.md) e [test/RESPONSIVENESS.md](test/RESPONSIVENESS.md). CI em `.github/workflows/frontend.yml` executa os gates. O relatório combinado fica em `coverage/merged/index.html`; LCOV em `coverage/merged/lcov.info`.
+Veja [test/README.md](test/README.md) e [test/RESPONSIVENESS.md](test/RESPONSIVENESS.md). O CI reutilizável em `.github/workflows/ci.yml` verifica lint, tipos, unitários com cobertura, build web, Storybook e os testes da Release. Os comandos de Playwright e cobertura combinada estão documentados em `test/README.md`. O relatório combinado fica em `coverage/merged/index.html`; LCOV em `coverage/merged/lcov.info`.
 
 Neste computador, caso o comando `npm` aponte para uma instalação antiga, use `node "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js" run <script>`.
 
@@ -86,6 +86,24 @@ Neste computador, caso o comando `npm` aponte para uma instalação antiga, use 
 Para hospedar em `/AutoCareManager/`, defina `VITE_BASE_PATH=/AutoCareManager/` **antes do build**. No modo External, registre também o callback `https://seu-dominio/AutoCareManager/auth/callback` no provedor. O caminho da API é independente do basename da SPA.
 
 Variáveis `VITE_*` são públicas e incorporadas ao bundle: nunca coloque senhas, connection strings, client secrets ou chaves Asaas nelas. Aplique HTTPS na infraestrutura de produção. O host `backend/test/AutoCareManager.BrowserHost` serve exclusivamente aos testes e não deve ser publicado.
+
+### Release automática de produção
+
+Em cada push para `main`, o CD executa CI, pacotes mobile e deploy no Azure Static Web Apps. A Release web é criada somente quando esses três jobs terminam com sucesso, na branch principal do repositório. Pull requests e jobs com falha, cancelados ou ignorados não publicam Release.
+
+O job de Release baixa o mesmo artefato `autocaremanager-web` aprovado pelo CI e utilizado no deploy, sem recompilar o frontend. A versão segue `v1.0.N`, onde `N` é a contagem de commits do SHA aprovado, incluindo commits de merge. O histórico completo e a verificação do commit das tags impedem reutilizar uma versão que pertence a outro commit.
+
+A Release contém `autocaremanager-web-v1.0.N.zip`, com os arquivos de `dist/` na raiz, e `SHA256SUMS`. Esses arquivos ficam em **Releases → Assets**. A seção **Packages** do GitHub é um registro para formatos como npm ou imagens Docker; o pacote estático de produção é distribuído pela Release.
+
+O artefato intermediário do CI é mantido por sete dias para permitir retentativas. Se o upload falhar, a Release permanece em rascunho e a reexecução pode concluí-la. Uma Release já publicada não é sobrescrita. Se faltarem anexos em uma Release publicada, a execução falha e pede revisão manual.
+
+A permissão `contents: write` fica restrita ao job de Release, usando o `GITHUB_TOKEN` do próprio workflow. Não é necessário cadastrar outro token para publicar a Release web no mesmo repositório. Os secrets já usados pelo Azure e pela distribuição mobile continuam sendo necessários para esses jobs.
+
+Os testes locais desse fluxo simulam o GitHub e não publicam arquivos reais:
+
+```sh
+python3 -m unittest discover -s .github/tests -p 'test_*.py' -v
+```
 
 ### Painel de Integrações
 

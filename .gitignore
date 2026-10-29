@@ -17,6 +17,8 @@
 **/test-results/
 **/storybook-static/
 **/*.tsbuildinfo
+**/__pycache__/
+**/*.pyc
 **/.env.local
 **/.env.*.local
 **/dist-android/
