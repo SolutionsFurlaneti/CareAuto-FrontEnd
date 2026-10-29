@@ -275,7 +275,10 @@ export function GridModuleMenu({
               <h2 className="truncate text-sm font-bold leading-tight text-app-ink">
                 Menu do CareAuto POS
               </h2>
-              <span className="hidden max-w-32 truncate rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-semibold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 min-[360px]:inline">
+              <span
+                data-testid="estabelecimento-atual"
+                className="hidden max-w-32 truncate rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-semibold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 min-[360px]:inline"
+              >
                 {session?.estabelecimentoNome || 'Estacionamento'}
               </span>
             </div>
@@ -421,7 +424,10 @@ export function SidebarNavigation({
           <LayoutGrid size={16} />
         </button>
       </div>
-      <div className="mb-3 rounded-xl border border-app-line bg-app-bg px-3 py-2 text-xs font-semibold text-app-ink">
+      <div
+        data-testid="estabelecimento-atual"
+        className="mb-3 rounded-xl border border-app-line bg-app-bg px-3 py-2 text-xs font-semibold text-app-ink"
+      >
         {session?.estabelecimentoNome || 'Estacionamento'}
       </div>
       <nav aria-label="Navegação principal" className="min-h-0 flex-1 overflow-y-auto">

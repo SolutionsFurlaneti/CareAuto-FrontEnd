@@ -10,6 +10,16 @@ import { printerSchema } from '../../src/features/printing/printerSchema';
 import type { AcaoAposEntrada } from '../../src/features/printing/api';
 
 const api = vi.hoisted(() => vi.fn());
+const entryPrinter = {
+  impressoraId: 1,
+  nome: 'Guarita',
+  tipoConexao: 'REDE_TCP',
+  enderecoDriverOuIp: '192.168.0.50',
+  portaTcp: 9100,
+  imprimeEntrada: true,
+  imprimeFechamento: true,
+  ativo: true,
+};
 vi.mock('../../src/lib/apiClient', async (actual) => ({
   ...(await actual<typeof import('../../src/lib/apiClient')>()),
   api,
@@ -78,7 +88,8 @@ beforeEach(() => {
     if (path === '/api/v1/estadias' && method === 'POST')
       return Promise.resolve({ estadiaId: 55, veiculoId: 7, tabelaId: 3, status: 'EM_ANDAMENTO' });
     if (path.endsWith('/ticket')) return Promise.resolve({ trabalhos: 1 });
-    if (path === '/api/v1/impressao/impressoras' && method === 'GET') return Promise.resolve([]);
+    if (path === '/api/v1/impressao/impressoras' && method === 'GET')
+      return Promise.resolve([entryPrinter]);
     if (path === '/api/v1/impressao/impressoras')
       return Promise.resolve({ impressoraId: 1, ...JSON.parse(String(options!.body)) });
     if (path === '/api/v1/impressao/trabalhos') return Promise.resolve([]);
@@ -149,13 +160,16 @@ describe('entry ticket', () => {
 
 describe('printing settings page', () => {
   it('only allows automatic printing when the question is off and saves both flags', async () => {
+    // The backend's availability flag also requires an agent token; a configured entry printer
+    // should still allow the preference to be saved before the agent is installed.
+    config = { ...config, impressaoEntradaDisponivel: false };
     const user = userEvent.setup();
     wrap(<PrintingPage />);
     const ask = await screen.findByRole('switch', {
       name: 'Perguntar se deseja imprimir na entrada',
     });
     const automatic = screen.getByRole('switch', { name: 'Imprimir automaticamente' });
-    expect(ask).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => expect(ask).toHaveAttribute('aria-checked', 'true'));
     expect(automatic).toBeDisabled();
     expect(screen.getByTestId('print-preferences-save')).toBeDisabled();
     await user.click(ask);

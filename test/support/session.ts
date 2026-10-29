@@ -46,6 +46,11 @@ export const test = base.extend<{ authenticated: Page; state: TestState; role: R
 });
 export { expect };
 export async function openNav(page: Page, testId: string) {
-  if ((page.viewportSize()?.width ?? 1440) < 900) await page.getByTestId('nav-open').click();
+  const temporaryMenu = page.getByTestId('nav-open');
+  if (
+    (await temporaryMenu.count()) > 0 &&
+    (await temporaryMenu.getAttribute('aria-expanded')) === 'false'
+  )
+    await page.getByRole('button', { name: /^Abrir menu:/ }).click();
   await page.getByTestId(testId).click();
 }

@@ -47,9 +47,13 @@ test('admin sets up printing and the operator prints the entry ticket through th
   await expect(page.getByTestId('printers-table')).toContainText('Guarita 1');
   await expect(page.getByTestId('printers-table')).toContainText('192.168.0.50:9100');
 
-  await expect(
-    page.getByRole('switch', { name: 'Perguntar se deseja imprimir na entrada' }),
-  ).toHaveAttribute('aria-checked', 'true');
+  const askBeforePrinting = page.getByRole('switch', {
+    name: 'Perguntar se deseja imprimir na entrada',
+  });
+  await askBeforePrinting.click();
+  await expect(askBeforePrinting).toHaveAttribute('aria-checked', 'true');
+  await page.getByTestId('print-preferences-save').click();
+  await expect(page.getByText('Preferências de impressão salvas.')).toBeVisible();
 
   await openNav(page, 'nav-estacionamento');
   await page.getByTestId('stay-new').click();
