@@ -35,8 +35,9 @@ const jobStatus: Record<TrabalhoImpressao['status'], { badge: string; label: str
 function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
   const cache = useQueryClient();
   const scope = usePrintScope();
+  const printers = usePrinters();
   const hasEntryPrinter =
-    config.possuiImpressoraEntrada ?? config.impressaoEntradaDisponivel;
+    printers.data?.some((printer) => printer.ativo && printer.imprimeEntrada) ?? false;
   const [ask, setAsk] = useState(config.perguntarAoSalvarEntrada);
   const [automatic, setAutomatic] = useState(config.imprimirCupomEntradaAutomatico);
   useEffect(() => {
@@ -65,7 +66,7 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
     : effectiveAutomatic
       ? 'O ticket é impresso automaticamente em toda entrada.'
       : 'Nenhum ticket é impresso na entrada. O operador ainda pode imprimir pela estadia.';
-  const blockedMessage = 'A opção só pode ser ativada após cadastrar e instalar uma impressora.';
+  const blockedMessage = 'Cadastre e ative uma impressora para habilitar esta opção.';
   return (
     <section className="panel" aria-labelledby="print-preferences" data-testid="print-preferences">
       <div className="panel-toolbar">
@@ -77,8 +78,10 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
             label="Perguntar se deseja imprimir na entrada"
             description={
               hasEntryPrinter
-                ? 'Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.'
-                : 'Cadastre e instale uma impressora térmica para ativar esta opção.'
+                ? config.possuiTokenAgente
+                  ? 'Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.'
+                  : 'Gere o token e instale o agente de impressão para enviar os tickets.'
+                : 'Cadastre e ative uma impressora térmica para habilitar esta opção.'
             }
             data-testid="field-perguntarAoSalvarEntrada"
             checked={effectiveAsk}
@@ -95,10 +98,12 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
             label="Imprimir automaticamente"
             description={
               !hasEntryPrinter
-                ? 'Cadastre e instale uma impressora térmica para ativar esta opção.'
+                ? 'Cadastre e ative uma impressora térmica para habilitar esta opção.'
                 : effectiveAsk
                   ? 'Desative a pergunta para imprimir sem confirmação.'
-                  : 'Imprime o ticket sem perguntar.'
+                  : config.possuiTokenAgente
+                    ? 'Imprime o ticket sem perguntar.'
+                    : 'Gere o token e instale o agente de impressão para enviar os tickets.'
             }
             data-testid="field-imprimirCupomEntradaAutomatico"
             checked={effectiveAutomatic}
@@ -116,6 +121,12 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
         <p className="muted" role="status">
           {summary}
         </p>
+        {hasEntryPrinter && !config.possuiTokenAgente && (
+          <p className="notice" role="status">
+            A impressora está cadastrada. Para os tickets chegarem até ela, gere o token do agente e
+            instale o agente no computador da guarita.
+          </p>
+        )}
         {!!save.error && (
           <p role="alert" className="form-error">
             {describeError(save.error)}

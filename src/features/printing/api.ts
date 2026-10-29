@@ -6,8 +6,6 @@ export interface ConfiguracaoImpressao {
   imprimirCupomEntradaAutomatico: boolean;
   acaoAposEntrada: AcaoAposEntrada;
   possuiTokenAgente: boolean;
-  /** Impressora ativa e configurada para tickets de entrada. */
-  possuiImpressoraEntrada: boolean;
   /** Token gerado e ao menos uma impressora de entrada ativa. */
   impressaoEntradaDisponivel: boolean;
   /** Calculado pelo servidor: contato nos últimos 2 minutos. */
