@@ -10,7 +10,8 @@ import { describeError } from '../../lib/describeError';
 import { API_BASE_URL } from '../../lib/apiClient';
 import { dateTime } from '../../lib/format';
 import { alertAction, confirmAction } from '../../lib/swal';
-import { Button, EmptyState, Modal, Skeleton, StatusBadge, Switch } from '../../ui';
+import { Button, EmptyState, Modal, SelectField, Skeleton, StatusBadge, Switch } from '../../ui';
+import { sessionScope, useAuthStore } from '../../stores/authStore';
 import {
   deactivatePrinter,
   generateAgentToken,
@@ -40,17 +41,30 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
     printers.data?.some((printer) => printer.ativo && printer.imprimeEntrada) ?? false;
   const [ask, setAsk] = useState(config.perguntarAoSalvarEntrada);
   const [automatic, setAutomatic] = useState(config.imprimirCupomEntradaAutomatico);
+  const [browser, setBrowser] = useState(config.imprimirPeloNavegador ?? false);
+  const [paperWidth, setPaperWidth] = useState<58 | 80>(config.larguraPapelNavegadorMm ?? 80);
   useEffect(() => {
     setAsk(config.perguntarAoSalvarEntrada);
     setAutomatic(config.imprimirCupomEntradaAutomatico);
-  }, [config.versao, config.perguntarAoSalvarEntrada, config.imprimirCupomEntradaAutomatico]);
-  const effectiveAsk = hasEntryPrinter && ask;
-  const effectiveAutomatic = hasEntryPrinter && !effectiveAsk && automatic;
+    setBrowser(config.imprimirPeloNavegador ?? false);
+    setPaperWidth(config.larguraPapelNavegadorMm ?? 80);
+  }, [
+    config.versao,
+    config.perguntarAoSalvarEntrada,
+    config.imprimirCupomEntradaAutomatico,
+    config.imprimirPeloNavegador,
+    config.larguraPapelNavegadorMm,
+  ]);
+  const canPrint = browser || hasEntryPrinter;
+  const effectiveAsk = canPrint && ask;
+  const effectiveAutomatic = canPrint && !effectiveAsk && automatic;
   const save = useMutation({
     mutationFn: () =>
       savePrintConfig({
         perguntarAoSalvarEntrada: effectiveAsk,
         imprimirCupomEntradaAutomatico: effectiveAutomatic,
+        imprimirPeloNavegador: browser,
+        larguraPapelNavegadorMm: paperWidth,
         versao: config.versao,
       }),
     onSuccess: (data) => {
@@ -60,11 +74,15 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
   });
   const dirty =
     effectiveAsk !== config.perguntarAoSalvarEntrada ||
-    effectiveAutomatic !== config.imprimirCupomEntradaAutomatico;
+    effectiveAutomatic !== config.imprimirCupomEntradaAutomatico ||
+    browser !== (config.imprimirPeloNavegador ?? false) ||
+    paperWidth !== (config.larguraPapelNavegadorMm ?? 80);
   const summary = effectiveAsk
     ? 'Ao registrar uma entrada, o operador escolhe se imprime o ticket.'
     : effectiveAutomatic
-      ? 'O ticket é impresso automaticamente em toda entrada.'
+      ? browser
+        ? 'O diálogo de impressão abre após cada entrada. Confirme a impressão na janela do sistema.'
+        : 'O ticket é impresso automaticamente em toda entrada.'
       : 'Nenhum ticket é impresso na entrada. O operador ainda pode imprimir pela estadia.';
   const blockedMessage = 'Cadastre e ative uma impressora para habilitar esta opção.';
   return (
@@ -75,18 +93,43 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
       <div className="integration-body">
         <div className="switch-group">
           <Switch
+            label="Imprimir utilizando o navegador"
+            description={
+              Capacitor.isNativePlatform()
+                ? 'Disponível ao abrir o CareAuto no navegador do computador.'
+                : 'Abre o diálogo do sistema para escolher sua impressora USB ou de rede. Cada impressão precisa de confirmação.'
+            }
+            data-testid="field-imprimirPeloNavegador"
+            checked={browser}
+            disabled={Capacitor.isNativePlatform() && !browser}
+            onChange={setBrowser}
+          />
+          {browser && (
+            <SelectField
+              label="Largura do papel"
+              data-testid="field-larguraPapelNavegadorMm"
+              value={paperWidth}
+              onChange={(event) => setPaperWidth(event.target.value === '58' ? 58 : 80)}
+            >
+              <option value="58">58 mm</option>
+              <option value="80">80 mm</option>
+            </SelectField>
+          )}
+          <Switch
             label="Perguntar se deseja imprimir na entrada"
             description={
-              hasEntryPrinter
-                ? config.possuiTokenAgente
-                  ? 'Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.'
-                  : 'Gere o token e instale o agente de impressão para enviar os tickets.'
-                : 'Cadastre e ative uma impressora térmica para habilitar esta opção.'
+              browser
+                ? 'Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.'
+                : hasEntryPrinter
+                  ? config.possuiTokenAgente
+                    ? 'Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.'
+                    : 'Gere o token e instale o agente de impressão para enviar os tickets.'
+                  : 'Cadastre e ative uma impressora térmica para habilitar esta opção.'
             }
             data-testid="field-perguntarAoSalvarEntrada"
             checked={effectiveAsk}
             onChange={(enabled) => {
-              if (enabled && !hasEntryPrinter) {
+              if (enabled && !canPrint) {
                 void alertAction('Impressora necessária', blockedMessage);
                 return;
               }
@@ -97,19 +140,21 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
           <Switch
             label="Imprimir automaticamente"
             description={
-              !hasEntryPrinter
-                ? 'Cadastre e ative uma impressora térmica para habilitar esta opção.'
-                : effectiveAsk
-                  ? 'Desative a pergunta para imprimir sem confirmação.'
-                  : config.possuiTokenAgente
-                    ? 'Imprime o ticket sem perguntar.'
-                    : 'Gere o token e instale o agente de impressão para enviar os tickets.'
+              browser
+                ? 'Abre o diálogo após registrar a entrada. Confirme a impressão na janela do sistema.'
+                : !hasEntryPrinter
+                  ? 'Cadastre e ative uma impressora térmica para habilitar esta opção.'
+                  : effectiveAsk
+                    ? 'Desative a pergunta para imprimir sem confirmação.'
+                    : config.possuiTokenAgente
+                      ? 'Imprime o ticket sem perguntar.'
+                      : 'Gere o token e instale o agente de impressão para enviar os tickets.'
             }
             data-testid="field-imprimirCupomEntradaAutomatico"
             checked={effectiveAutomatic}
             disabled={effectiveAsk}
             onChange={(enabled) => {
-              if (enabled && !hasEntryPrinter) {
+              if (enabled && !canPrint) {
                 void alertAction('Impressora necessária', blockedMessage);
                 return;
               }
@@ -121,10 +166,15 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
         <p className="muted" role="status">
           {summary}
         </p>
-        {hasEntryPrinter && !config.possuiTokenAgente && (
+        {!browser && hasEntryPrinter && !config.possuiTokenAgente && (
           <p className="notice" role="status">
             A impressora está cadastrada. Para os tickets chegarem até ela, gere o token do agente e
             instale o agente no computador da guarita.
+          </p>
+        )}
+        {config.imprimirPeloNavegador && !browser && (
+          <p className="notice" role="status">
+            Ao voltar ao agente, os trabalhos pendentes do histórico poderão ser impressos.
           </p>
         )}
         {!!save.error && (
@@ -143,6 +193,73 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
           </Button>
           {config.atualizadoEm && <small>Última alteração: {dateTime(config.atualizadoEm)}</small>}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function BrowserPrintPanel({ config }: { config: ConfiguracaoImpressao }) {
+  const establishment = useAuthStore((state) => state.session?.estabelecimentoNome ?? 'CareAuto');
+  const scope = usePrintScope();
+  const nativePlatform = Capacitor.isNativePlatform();
+  const test = useMutation({
+    mutationFn: async () => {
+      const accessToken = useAuthStore.getState().session?.accessToken;
+      const assertSession = () => {
+        const currentSession = useAuthStore.getState().session;
+        if (
+          !scope ||
+          !accessToken ||
+          sessionScope(currentSession) !== scope ||
+          currentSession?.accessToken !== accessToken
+        )
+          throw new Error('A sessão mudou. Abra a página novamente para imprimir.');
+      };
+      assertSession();
+      const { printBrowserTest } = await import('./browserPrinting');
+      await printBrowserTest(establishment, config.larguraPapelNavegadorMm ?? 80, assertSession);
+    },
+    onSuccess: () =>
+      toast.info('Diálogo de impressão aberto. Confirme a impressão na janela do sistema.'),
+    onError: (error) => toast.error(describeError(error)),
+  });
+  return (
+    <section
+      className="panel"
+      aria-labelledby="browser-print-title"
+      data-testid="browser-print-panel"
+    >
+      <div className="panel-toolbar">
+        <h2 id="browser-print-title">Impressão pelo navegador</h2>
+        <StatusBadge status="ATIVA" label="Ativa" />
+      </div>
+      <div className="integration-body">
+        <p>
+          Selecione sua impressora na janela do sistema e confirme a impressão. O ticket usa papel
+          de {config.larguraPapelNavegadorMm ?? 80} mm.
+        </p>
+        <p className="muted">
+          Não é necessário configurar token ou agente para este modo. No diálogo, use o tamanho
+          correto da bobina, escala de 100% e desative cabeçalhos e rodapés.
+        </p>
+        {nativePlatform && (
+          <p className="notice" role="alert">
+            Abra o CareAuto no navegador do computador para usar esta forma de impressão.
+          </p>
+        )}
+        <Button
+          data-testid="browser-print-test"
+          busy={test.isPending}
+          disabled={nativePlatform}
+          onClick={() => test.mutate()}
+        >
+          Imprimir teste
+        </Button>
+        {!!test.error && (
+          <p className="form-error" role="alert">
+            {describeError(test.error)}
+          </p>
+        )}
       </div>
     </section>
   );
@@ -219,7 +336,7 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
   async function stop() {
     try {
       await nativePrintAgent.stop();
-      setNativeStatus((current) => current ? { ...current, running: false } : current);
+      setNativeStatus((current) => (current ? { ...current, running: false } : current));
       toast.success('Agente de impressão pausado neste terminal.');
     } catch (e) {
       toast.error(describeError(e));
@@ -243,8 +360,9 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
         {nativePlatform ? (
           <>
             <p>
-              O agente SUNMI consulta a fila em segundo plano e envia tickets com QR Code à impressora
-              térmica integrada. Compatibilidade automática é habilitada para terminais SUNMI.
+              O agente SUNMI consulta a fila em segundo plano e envia tickets com QR Code à
+              impressora térmica integrada. Compatibilidade automática é habilitada para terminais
+              SUNMI.
             </p>
             <p className="muted">
               Modelo detectado: {nativeStatus?.model || 'consultando terminal'}
@@ -253,8 +371,14 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
                 : ''}
             </p>
             <div className="integration-actions">
-              <code className="agent-token">{nativeStatus?.deviceId || 'ID do POS indisponível'}</code>
-              <Button variant="secondary" disabled={!nativeStatus?.deviceId} onClick={() => void copyDeviceId()}>
+              <code className="agent-token">
+                {nativeStatus?.deviceId || 'ID do POS indisponível'}
+              </code>
+              <Button
+                variant="secondary"
+                disabled={!nativeStatus?.deviceId}
+                onClick={() => void copyDeviceId()}
+              >
                 <Copy size={16} aria-hidden="true" /> Copiar ID do POS
               </Button>
             </div>
@@ -262,8 +386,8 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
         ) : (
           <>
             <p>
-              O navegador não acessa impressoras USB nem a porta 9100. Um pequeno serviço instalado no
-              computador da guarita busca os tickets na fila e imprime.
+              Para imprimir sem abrir o diálogo do navegador, o agente instalado no computador da
+              guarita busca os tickets na fila e envia à impressora USB ou de rede.
             </p>
             <p className="muted">
               {config.possuiTokenAgente
@@ -316,7 +440,8 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
         }
       >
         <p role="alert" className="notice">
-          Este token aparece uma única vez. Guarde-o agora: depois de fechar, só é possível gerar outro.
+          Este token aparece uma única vez. Guarde-o agora: depois de fechar, só é possível gerar
+          outro.
         </p>
         <code className="agent-token" data-testid="agent-token-value">
           {token}
@@ -343,7 +468,13 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
     </section>
   );
 }
-function PrintersPanel({ agentReady }: { agentReady: boolean }) {
+function PrintersPanel({
+  agentConfigured,
+  agentConnected,
+}: {
+  agentConfigured: boolean;
+  agentConnected: boolean;
+}) {
   const cache = useQueryClient();
   const scope = usePrintScope();
   const printers = usePrinters();
@@ -413,10 +544,10 @@ function PrintersPanel({ agentReady }: { agentReady: boolean }) {
               label: 'Conexão',
               render: (p) =>
                 p.tipoConexao === 'REDE_TCP'
-                ? "Rede · " + p.enderecoDriverOuIp + ":" + p.portaTcp
-                : p.tipoConexao === 'ANDROID_POS'
-                  ? "POS Android · " + p.enderecoDriverOuIp
-                  : "USB · " + p.enderecoDriverOuIp,
+                  ? 'Rede · ' + p.enderecoDriverOuIp + ':' + p.portaTcp
+                  : p.tipoConexao === 'ANDROID_POS'
+                    ? 'POS Android · ' + p.enderecoDriverOuIp
+                    : 'USB · ' + p.enderecoDriverOuIp,
             },
             {
               label: 'Função',
@@ -453,8 +584,14 @@ function PrintersPanel({ agentReady }: { agentReady: boolean }) {
                       <Button
                         variant="ghost"
                         data-testid="printer-test"
-                        disabled={!agentReady}
-                        title={agentReady ? undefined : 'Gere o token do agente primeiro.'}
+                        disabled={!agentConfigured || !agentConnected}
+                        title={
+                          !agentConfigured
+                            ? 'Gere o token do agente primeiro.'
+                            : !agentConnected
+                              ? 'Agente sem contato. Atualize o token no serviço local e reinicie-o.'
+                              : undefined
+                        }
                         busy={test.isPending && test.variables === p.impressoraId}
                         onClick={() => test.mutate(p.impressoraId)}
                       >
@@ -532,12 +669,12 @@ function PrintersPanel({ agentReady }: { agentReady: boolean }) {
   );
 }
 
-function JobsPanel() {
-  const jobs = usePrintJobs();
+function JobsPanel({ browserMode = false }: { browserMode?: boolean }) {
+  const jobs = usePrintJobs(!browserMode);
   return (
     <section className="panel" aria-labelledby="print-jobs" data-testid="print-jobs">
       <div className="panel-toolbar">
-        <h2 id="print-jobs">Últimas impressões</h2>
+        <h2 id="print-jobs">{browserMode ? 'Histórico do agente' : 'Últimas impressões'}</h2>
         <Button
           variant="ghost"
           aria-label="Atualizar impressões"
@@ -547,6 +684,13 @@ function JobsPanel() {
           <RefreshCw size={16} aria-hidden="true" />
         </Button>
       </div>
+      {browserMode && (
+        <p className="printing-history-note muted" role="status">
+          Os pedidos pendentes do agente ficam pausados neste modo. Trabalhos já iniciados podem
+          terminar. O navegador abre o diálogo do sistema e não confirma a saída do papel neste
+          histórico.
+        </p>
+      )}
       {jobs.isPending ? (
         <Skeleton />
       ) : jobs.isError ? (
@@ -594,7 +738,7 @@ export function PrintingPage() {
       <PageHeader
         eyebrow="CONFIGURAÇÕES"
         title="Impressão"
-        description="Tickets de entrada com QR Code em impressoras USB, de rede ou integradas a POS Android."
+        description="Escolha entre o diálogo de impressão do navegador e o agente para tickets com QR Code."
       />
       {config.isPending ? (
         <Skeleton />
@@ -607,13 +751,20 @@ export function PrintingPage() {
       ) : (
         <div className="printing-grid">
           <PreferencesPanel config={config.data} />
-          <AgentPanel config={config.data} />
-          <PrintersPanel agentReady={config.data.possuiTokenAgente} />
-          <JobsPanel />
+          {config.data.imprimirPeloNavegador ? (
+            <BrowserPrintPanel config={config.data} />
+          ) : (
+            <>
+              <AgentPanel config={config.data} />
+              <PrintersPanel
+                agentConfigured={config.data.possuiTokenAgente}
+                agentConnected={config.data.agenteConectado}
+              />
+            </>
+          )}
+          <JobsPanel browserMode={config.data.imprimirPeloNavegador} />
         </div>
       )}
     </>
   );
 }
-
-

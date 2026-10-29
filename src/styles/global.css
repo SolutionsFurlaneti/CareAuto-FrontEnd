@@ -622,6 +622,9 @@ svg {
 .printing-grid .empty-state {
   margin: 24px;
 }
+.printing-history-note {
+  margin: 16px 24px;
+}
 .agent-token {
   display: block;
   margin: 12px 0;

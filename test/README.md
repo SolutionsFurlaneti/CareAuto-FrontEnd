@@ -53,6 +53,8 @@ Execute os testes unitários e E2E **na mesma revisão** antes de `npm run cover
 
 A cobertura não equivale a validação do provedor OIDC real, do SQL Server ou de todas as combinações do domínio. A integração OIDC real depende das configurações do ambiente e deve ser validada ao conectar o provedor. A suíte isolada usa os mesmos endpoints, handlers e validações da WebApi.
 
+`test/features/printing/browser-printing.spec.ts` verifica o modo navegador com a API isolada: salva a preferência sem agente ou impressora cadastrada, abre teste de 58 mm e ticket de 80 mm com QR assinado, reimprime pela estadia e não cria trabalhos na fila. Também cobre abertura automática e os temas claro/escuro nas larguras de 320, 390, 768, 1024 e 1440 px. Apenas o diálogo de impressão é simulado; os dados vêm da WebApi real com SQLite em memória. A saída física, o driver e o corte da bobina devem ser conferidos no computador conectado à impressora.
+
 CI executa build, lint, tipos, unitários, navegador e Storybook. Envio ao SonarCloud depende das credenciais/configuração do repositório; o relatório LCOV está pronto para essa integração.
 
 O cenário integrations.spec.ts salva as duas configurações pela API real isolada, verifica persistência após recarregar, preservação de chave omitida, remoção explícita e layout responsivo. permissions.spec.ts também rejeita acesso de Operador ao painel. Nenhuma consulta paga é executada.

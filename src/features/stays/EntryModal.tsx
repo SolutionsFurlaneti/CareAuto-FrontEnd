@@ -15,6 +15,7 @@ import { useAllRecords, useSaveRecord } from '../shared/hooks';
 import { vehicleFormSpec } from '../vehicles/vehicleFormSpec';
 import { staySchema, type StayFormData } from './staySchema';
 import { usePrintConfig, usePrintTicket } from '../printing/hooks';
+import type { ConfiguracaoImpressao } from '../printing/api';
 
 export function EntryModal({ onClose }: { onClose: () => void }) {
   const [adding, setAdding] = useState(false);
@@ -39,7 +40,7 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
     setValue,
     watch,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<StayFormData>({
     resolver: zodResolver(staySchema),
     mode: 'onBlur',
@@ -53,7 +54,7 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
       if (active) setValue('tabelaId', active.tabelaId, { shouldValidate: true });
     }
   }, [tables.data, selectedTabela, setValue]);
-  const busy = save.isPending || create.isPending || print.isPending;
+  const busy = save.isPending || create.isPending || print.isPending || isSubmitting;
   if (saved)
     return (
       <Modal
@@ -85,6 +86,12 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
         <p role="status" data-testid="ticket-question">
           Entrada registrada com sucesso! Deseja imprimir o ticket de estacionamento?
         </p>
+        {!!printConfig.error && (
+          <p role="alert" className="form-error">
+            {describeError(printConfig.error)} A entrada está registrada. Tente imprimir novamente
+            ou feche esta janela.
+          </p>
+        )}
         {!!print.error && (
           <p role="alert" className="form-error">
             {describeError(print.error)} A entrada continua registrada.
@@ -176,13 +183,26 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
             onSubmit={handleSubmit(async (values) => {
               try {
                 const stay = await save.mutateAsync({ data: values });
-                // Só pergunta ou imprime quando há agente e impressora de entrada; a entrada já está salva.
-                const action = printConfig.data?.impressaoEntradaDisponivel
-                  ? printConfig.data.acaoAposEntrada
+                let currentConfig: ConfiguracaoImpressao | undefined;
+                try {
+                  currentConfig = (await printConfig.refetch({ throwOnError: true })).data;
+                } catch {
+                  setSaved(stay);
+                  return;
+                }
+                // A entrada está salva; a disponibilidade considera navegador ou agente configurado.
+                const action = currentConfig?.impressaoEntradaDisponivel
+                  ? currentConfig.acaoAposEntrada
                   : 'NENHUMA';
                 if (action === 'PERGUNTAR') setSaved(stay);
                 else {
-                  if (action === 'IMPRIMIR') print.mutate(stay.estadiaId);
+                  if (action === 'IMPRIMIR' && currentConfig?.imprimirPeloNavegador) {
+                    setSaved(stay);
+                    print.mutate(stay.estadiaId, { onSuccess: onClose });
+                    return;
+                  }
+                  if (action === 'IMPRIMIR' && !currentConfig?.impressaoAutomaticaNoServidor)
+                    print.mutate(stay.estadiaId);
                   onClose();
                 }
               } catch {
@@ -191,7 +211,16 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
             })}
           >
             <div style={{ marginBottom: '4px' }}>
-              <label htmlFor="quick-plate-search" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-dim)', display: 'block', marginBottom: '4px' }}>
+              <label
+                htmlFor="quick-plate-search"
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--ink-dim)',
+                  display: 'block',
+                  marginBottom: '4px',
+                }}
+              >
                 Digitação Rápida de Placa (opcional)
               </label>
               <input

@@ -4,9 +4,12 @@ export type AcaoAposEntrada = 'PERGUNTAR' | 'IMPRIMIR' | 'NENHUMA';
 export interface ConfiguracaoImpressao {
   perguntarAoSalvarEntrada: boolean;
   imprimirCupomEntradaAutomatico: boolean;
+  imprimirPeloNavegador?: boolean;
+  larguraPapelNavegadorMm?: 58 | 80;
+  impressaoAutomaticaNoServidor?: boolean;
   acaoAposEntrada: AcaoAposEntrada;
   possuiTokenAgente: boolean;
-  /** Token gerado e ao menos uma impressora de entrada ativa. */
+  /** Navegador habilitado ou token e impressora de entrada ativos. */
   impressaoEntradaDisponivel: boolean;
   /** Calculado pelo servidor: contato nos últimos 2 minutos. */
   agenteConectado: boolean;
@@ -40,12 +43,32 @@ export interface TrabalhoImpressao {
   erro: string | null;
 }
 
+export interface TicketEntrada {
+  estabelecimento: string;
+  placa: string;
+  veiculo: string | null;
+  entrada: string;
+  codigoQr: string;
+  operadora?: string | null;
+  toleranciaMinutos?: number;
+  pontoEntrada?: string;
+  codigoTicket?: string | null;
+  sequencial?: string | null;
+  promocaoRodape?: { ativo: boolean; nomeParceiro: string | null; mensagem: string | null } | null;
+}
+export interface TicketNavegador {
+  larguraPapelMm: 58 | 80;
+  ticket: TicketEntrada;
+}
+
 const root = '/api/v1/impressao/';
 export const getPrintConfig = (signal?: AbortSignal) =>
   api<ConfiguracaoImpressao>(root + 'configuracao', { signal });
 export const savePrintConfig = (data: {
   perguntarAoSalvarEntrada: boolean;
   imprimirCupomEntradaAutomatico: boolean;
+  imprimirPeloNavegador?: boolean;
+  larguraPapelNavegadorMm?: 58 | 80;
   versao: string | null;
 }) =>
   api<ConfiguracaoImpressao>(root + 'configuracao', { method: 'PUT', body: JSON.stringify(data) });
@@ -66,3 +89,5 @@ export const listPrintJobs = (signal?: AbortSignal) =>
   api<TrabalhoImpressao[]>(root + 'trabalhos', { signal });
 export const printEntryTicket = (estadiaId: number) =>
   api<{ trabalhos: number }>('/api/v1/estadias/' + estadiaId + '/ticket', { method: 'POST' });
+export const getBrowserTicket = (estadiaId: number, signal?: AbortSignal) =>
+  api<TicketNavegador>('/api/v1/estadias/' + estadiaId + '/ticket', { signal });

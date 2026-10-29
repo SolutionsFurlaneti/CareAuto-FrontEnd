@@ -1,8 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
 import { describeError } from '../../lib/describeError';
 import { useAuthStore, sessionScope } from '../../stores/authStore';
-import { getPrintConfig, listPrintJobs, listPrinters, printEntryTicket } from './api';
+import {
+  getBrowserTicket,
+  getPrintConfig,
+  listPrintJobs,
+  listPrinters,
+  printEntryTicket,
+} from './api';
 
 export const printKeys = {
   all: (scope: string | null) => ['impressao', scope] as const,
@@ -32,7 +39,7 @@ export function usePrinters() {
     enabled: !!scope,
   });
 }
-export function usePrintJobs() {
+export function usePrintJobs(refreshPending = true) {
   const scope = usePrintScope();
   return useQuery({
     queryKey: printKeys.jobs(scope),
@@ -40,18 +47,53 @@ export function usePrintJobs() {
     enabled: !!scope,
     // Acompanha a fila enquanto o agente ainda não confirmou algum trabalho.
     refetchInterval: (query) =>
+      refreshPending &&
       query.state.data?.some((j) => j.status === 'PENDENTE' || j.status === 'IMPRIMINDO')
         ? 4000
         : false,
   });
 }
-/** Envia o ticket de entrada para a fila do agente. */
+/** Usa a preferência atual do estabelecimento para abrir o diálogo ou enfileirar. */
 export function usePrintTicket() {
   const cache = useQueryClient();
   const scope = usePrintScope();
   return useMutation({
-    mutationFn: (estadiaId: number) => printEntryTicket(estadiaId),
+    mutationFn: async (estadiaId: number) => {
+      const accessToken = useAuthStore.getState().session?.accessToken;
+      const assertSession = () => {
+        const currentSession = useAuthStore.getState().session;
+        if (
+          !scope ||
+          !accessToken ||
+          sessionScope(currentSession) !== scope ||
+          currentSession?.accessToken !== accessToken
+        )
+          throw new Error('A sessão mudou. Abra a estadia novamente para imprimir.');
+      };
+      assertSession();
+      const config = await getPrintConfig();
+      assertSession();
+      cache.setQueryData(printKeys.config(scope), config);
+      if (config.imprimirPeloNavegador) {
+        if (Capacitor.isNativePlatform())
+          throw new Error(
+            'Abra o CareAuto no navegador do computador para usar esta forma de impressão.',
+          );
+        const ticket = await getBrowserTicket(estadiaId);
+        assertSession();
+        const { printBrowserTicket } = await import('./browserPrinting');
+        assertSession();
+        await printBrowserTicket(ticket, assertSession);
+        return { mode: 'browser' } as const;
+      }
+      const result = await printEntryTicket(estadiaId);
+      return { mode: 'agent', trabalhos: result.trabalhos } as const;
+    },
     onSuccess: (result) => {
+      if (result.mode === 'browser') {
+        toast.info('Diálogo de impressão aberto. Confirme a impressão na janela do sistema.');
+        return;
+      }
       void cache.invalidateQueries({ queryKey: printKeys.jobs(scope) });
       toast.success(
         result.trabalhos > 1
