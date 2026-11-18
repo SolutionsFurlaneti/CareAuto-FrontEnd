@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Drawer, useMediaQuery } from '@mui/material';
 import {
   Building2,
+  ChartNoAxesCombined,
   ChevronRight,
   CircleDollarSign,
   LayoutDashboard,
@@ -28,6 +29,12 @@ const items = [
   { to: '/backoffice/marketing', text: 'Google Ads', icon: Megaphone, id: 'marketing', end: true },
   { to: '/backoffice/marketing/meta-ads', text: 'Meta Ads', icon: Megaphone, id: 'meta-ads' },
   { to: '/backoffice/emails', text: 'E-mails', icon: Mail, id: 'emails' },
+  {
+    to: '/backoffice/analytics/telemetry',
+    text: 'Monitoramento',
+    icon: ChartNoAxesCombined,
+    id: 'monitoring',
+  },
   { to: '/backoffice/integracoes', text: 'Integrações', icon: Plug, id: 'integracoes' },
 ];
 
@@ -152,4 +159,3 @@ export function BackofficeShell() {
     </div>
   );
 }
-

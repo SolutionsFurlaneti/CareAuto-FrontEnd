@@ -7,6 +7,7 @@ import { LoginPage } from './features/auth/LoginPage';
 import { CallbackPage } from './features/auth/CallbackPage';
 import { Skeleton } from './ui';
 import { RequireBackoffice } from './features/backoffice/RequireBackoffice';
+import { PageViewTracker } from './features/monitoring/PageViewTracker';
 const UsersPage = lazy(() =>
   import('./features/users/UsersPage').then((m) => ({ default: m.UsersPage })),
 );
@@ -85,6 +86,11 @@ const BackofficeMarketing = lazyBackoffice('BackofficeMarketingPage');
 const BackofficeMetaAds = lazyBackoffice('BackofficeMetaAdsPage');
 const BackofficeIntegrations = lazyBackoffice('BackofficeIntegrationsPage');
 const BackofficeEmails = lazyBackoffice('BackofficeEmailsPage');
+const BackofficeMonitoring = lazy(() =>
+  import('./features/backoffice/monitoring/MonitoringPage').then((m) => ({
+    default: m.BackofficeMonitoringPage,
+  })),
+);
 const Consultations = lazy(() =>
   import('./features/consultations/ConsultationsPage').then((m) => ({
     default: m.ConsultationsPage,
@@ -100,6 +106,7 @@ const financial: Role[] = ['Admin', 'Financeiro', 'Cliente'];
 export function App() {
   return (
     <Suspense fallback={<Skeleton />}>
+      <PageViewTracker />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/recuperar-senha" element={<Recovery />} />
@@ -140,6 +147,7 @@ export function App() {
           <Route path="marketing/meta-ads" element={<BackofficeMetaAds />} />
           <Route path="integracoes" element={<BackofficeIntegrations />} />
           <Route path="emails" element={<BackofficeEmails />} />
+          <Route path="analytics/telemetry" element={<BackofficeMonitoring />} />
           <Route path="*" element={<Navigate to="/backoffice" replace />} />
         </Route>
         <Route

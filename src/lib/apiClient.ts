@@ -1,5 +1,6 @@
 import { useAuthStore } from '../stores/authStore';
 import { useBackofficeStore } from '../features/backoffice/store';
+import { getMonitoringSessionId } from './monitoringSession';
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -41,6 +42,8 @@ export async function api<T>(
   const owner = sessions[auth];
   const token = owner.token();
   const headers = new Headers(options.headers);
+  const monitoringSession = getMonitoringSessionId();
+  if (monitoringSession) headers.set('X-Monitoring-Session-Id', monitoringSession);
   if (token) headers.set('Authorization', 'Bearer ' + token);
   if (options.body && !(options.body instanceof FormData))
     headers.set('Content-Type', 'application/json');

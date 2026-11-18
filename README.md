@@ -142,3 +142,17 @@ Em `/backoffice` (produção: `/autocare/backoffice`), com login inicial admin/1
 Recuperação de senha: o login Internal oferece “Esqueci minha senha” em `/recuperar-senha`. Usa o e-mail cadastrado, mostra confirmação genérica e orienta sobre os 30 minutos de validade. A API depende da ativação descrita em [EMAILS.md](../backend/EMAILS.md).
 
 
+
+## Monitoramento de acessos e dispositivos
+
+O painel está em `/backoffice/analytics/telemetry`, no menu **Monitoramento**, protegido pela sessão do backoffice. Usa dados reais de `GET /api/v1/backoffice/monitoring/overview`, `/logs` e `/logs/{id}`. Configure `VITE_API_BASE_URL` para a API .NET; `server.ts` é um servidor de demonstração e não fornece dados simulados de telemetria.
+
+Os filtros incluem Hoje, Últimos 7 dias, Últimos 30 dias e Personalizado (até 366 dias), tráfego com/sem bots, hosts conhecidos ou não informados, IP e status HTTP. Os limites dos dias e a exibição de datas seguem Brasília (UTC−3); o fim do intervalo enviado à API é exclusivo. A identificação de bots é baseada no user agent e não garante classificação de todos os robôs.
+
+O painel apresenta sessões, requisições, TTFB inicial do documento (p75/p95/média e amostras), predominância mobile, mapa esquemático por coordenadas reais de IP quando disponíveis, aparelhos, sistemas, resoluções, viewport, rede, gráficos com tabelas acessíveis, campanhas, referências, agregação por localidade e histórico paginado com detalhes sanitizados. Ausência de amostras não é exibida como zero de latência.
+
+O tracker envia `POST /api/v1/monitoring/page-view` em navegações do React Router. Coleta capacidades disponíveis do navegador, remove fragmentos e parâmetros sensíveis conhecidos da URL e não envia credenciais no payload. A sessão analítica é um identificador opaco por aba em sessionStorage, com fallback em memória quando o armazenamento é bloqueado; o mesmo valor segue em `X-Monitoring-Session-Id` nas chamadas da API. TTFB usa `PerformanceNavigationTiming.responseStart - startTime` somente na primeira navegação do documento; rotas SPA posteriores não geram uma nova amostra de TTFB.
+
+Cobertura: o middleware .NET registra requisições recebidas pela API; o tracker registra páginas que executam JavaScript. Bots ou visitantes que acessam somente arquivos estáticos do servidor frontend precisam de coleta de access logs ou encaminhamento no proxy do host. O navegador não fornece localização confiável por IP, marca/modelo ou todos os recursos de hardware em todos os aparelhos. Esses valores podem permanecer não informados.
+
+Verificação específica: `npm test -- test/unit/monitoring.test.ts` e o cenário Playwright de telemetria com BrowserHost/SQLite isolados. Não aponta testes para SQL Server de produção.
