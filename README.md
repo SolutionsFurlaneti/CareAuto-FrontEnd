@@ -97,6 +97,8 @@ A Release contém `autocaremanager-web-v1.0.N.zip`, com os arquivos de `dist/` n
 
 O artefato intermediário do CI é mantido por sete dias para permitir retentativas. Se o upload falhar, a Release permanece em rascunho e a reexecução pode concluí-la. Uma Release já publicada não é sobrescrita. Se faltarem anexos em uma Release publicada, a execução falha e pede revisão manual.
 
+A criação utiliza diretamente o ID retornado pela API, sem depender de o rascunho aparecer imediatamente na listagem. Na retomada, a tag pendente é resolvida via GraphQL e o estado é consultado pelo ID da Release; isso também permite recuperar rascunhos cuja tag REST ainda seja temporária. O pacote e o checksum continuam sendo verificados antes da publicação.
+
 A permissão `contents: write` fica restrita ao job de Release, usando o `GITHUB_TOKEN` do próprio workflow. Não é necessário cadastrar outro token para publicar a Release web no mesmo repositório. Os secrets já usados pelo Azure e pela distribuição mobile continuam sendo necessários para esses jobs.
 
 Os testes locais desse fluxo simulam o GitHub e não publicam arquivos reais:

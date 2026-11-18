@@ -135,14 +135,42 @@ def verify_release_assets(release, expected: set[str]) -> None:
 
 
 def find_release(base: str, tag: str):
-    # The tag endpoint only returns published releases. Authenticated listing also
-    # includes drafts, and pagination is required when resuming an older release.
-    pages = github("api", "--paginate", "--slurp", base + "/releases?per_page=100")
-    for page in pages:
-        for release in page:
-            if release.get("tag_name") == tag:
-                return release
-    return None
+    # Resolve pending draft tags the same way as `gh release view`: GraphQL can
+    # locate them even when the REST list/tag endpoints do not expose that tag.
+    owner, name = base.removeprefix("repos/").split("/")
+    response = github(
+        "api", "graphql", "-f", "query=" + (
+            "query ReleaseByTag($owner: String!, $name: String!, $tag: String!) {"
+            " repository(owner: $owner, name: $name) {"
+            " release(tagName: $tag) { databaseId } } }"
+        ), "-f", "owner=" + owner, "-f", "name=" + name, "-f", "tag=" + tag,
+    )
+    data = response.get("data") if isinstance(response, dict) else None
+    repository = data.get("repository") if isinstance(data, dict) else None
+    if not isinstance(repository, dict) or "release" not in repository:
+        raise ReleaseError("O GitHub não retornou os dados do repositório da Release.")
+    release = repository["release"]
+    if release is None:
+        return None
+    if not isinstance(release, dict):
+        raise ReleaseError("O GitHub retornou uma referência de Release inválida.")
+    return read_release(base, release.get("databaseId"))
+
+
+def release_id(release) -> int:
+    identifier = release.get("id") if isinstance(release, dict) else None
+    if type(identifier) is not int or identifier <= 0 or type(release.get("draft")) is not bool:
+        raise ReleaseError("O GitHub retornou metadados de Release inválidos.")
+    return identifier
+
+
+def read_release(base: str, identifier: int):
+    if type(identifier) is not int or identifier <= 0:
+        raise ReleaseError("O GitHub retornou um identificador de Release inválido.")
+    release = github("api", f"{base}/releases/{identifier}")
+    if release_id(release) != identifier:
+        raise ReleaseError("O GitHub retornou uma Release diferente da solicitada.")
+    return release
 
 
 def publish_release(
@@ -175,22 +203,26 @@ def publish_release(
             raise ReleaseError(f"A tag remota {tag} não aponta para o commit aprovado.")
         release = find_release(base, tag)
         if release is None:
-            github_command(
-                "release", "create", tag, "--repo", repository, "--target", commit,
-                "--title", tag, "--generate-notes", "--draft",
+            # Use the creation response directly: a fresh draft need not yet be
+            # discoverable through a subsequent list or tag lookup.
+            release = github(
+                "api", "--method", "POST", base + "/releases",
+                "-f", "tag_name=" + tag, "-f", "target_commitish=" + commit,
+                "-f", "name=" + tag, "-F", "generate_release_notes=true", "-F", "draft=true",
             )
-            release = find_release(base, tag)
-            if release is None:
-                raise ReleaseError("O GitHub não retornou o rascunho recém-criado.")
+            release_id(release)
+            if not release["draft"]:
+                raise ReleaseError("O GitHub não criou a Release como rascunho.")
+        identifier = release_id(release)
         if release["draft"]:
             github_command("release", "upload", tag, str(archive), str(checksum), "--repo", repository, "--clobber")
-            release = find_release(base, tag)
-            if release is None or not release["draft"]:
+            release = read_release(base, identifier)
+            if not release["draft"]:
                 raise ReleaseError("O rascunho mudou antes de concluir a publicação.")
             verify_release_assets(release, expected)
             github_command("release", "edit", tag, "--repo", repository, "--draft=false", "--latest")
-            release = find_release(base, tag)
-            if release is None or release["draft"]:
+            release = read_release(base, identifier)
+            if release["draft"]:
                 raise ReleaseError("O GitHub ainda informa a Release como rascunho.")
         verify_release_assets(release, expected)
         result = ReleaseResult(tag, commit, release["html_url"], archive_name)

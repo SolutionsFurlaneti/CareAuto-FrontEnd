@@ -32,6 +32,11 @@ class FakeGithub:
         self.release_query_failure = False
         self.list_page_size = 100
         self.omit_uploaded_asset = None
+        self.omit_created_releases_from_list = False
+        self.created_tags = set()
+        self.invalid_created_id = False
+        self.wrong_read_id = False
+        self.release_read_failure = False
 
     @staticmethod
     def result(arguments, value=None, error=None, status=1):
@@ -42,7 +47,8 @@ class FakeGithub:
     def metadata(self, tag):
         release = self.releases[tag]
         return {
-            "tag_name": tag,
+            "id": list(self.releases).index(tag) + 1,
+            "tag_name": "untagged-temporary" if release["draft"] else tag,
             "draft": release["draft"],
             "html_url": release["url"],
             "assets": [{"name": name} for name in release["assets"]],
@@ -54,6 +60,23 @@ class FakeGithub:
         def option(name):
             return arguments[arguments.index(name) + 1]
 
+        def fields():
+            return dict(arguments[index + 1].split("=", 1)
+                        for index, item in enumerate(arguments) if item in ("-f", "-F"))
+
+        if arguments[:2] == ("api", "graphql"):
+            if self.release_query_failure:
+                return self.result(arguments, error="gh: upstream unavailable (HTTP 503)")
+            values = fields()
+            if values["owner"] + "/" + values["name"] != REPOSITORY:
+                raise AssertionError(arguments)
+            if "release(tagName: $tag)" not in values["query"] or "databaseId" not in values["query"]:
+                raise AssertionError(arguments)
+            tag = values["tag"]
+            release = None
+            if tag in self.releases:
+                release = {"databaseId": self.metadata(tag)["id"]}
+            return self.result(arguments, {"data": {"repository": {"release": release}}})
         if arguments[0] == "api":
             endpoint = next(item for item in arguments[1:] if item.startswith("repos/"))
             base = "repos/" + REPOSITORY + "/"
@@ -77,12 +100,44 @@ class FakeGithub:
                 if tag not in self.tags:
                     return self.result(arguments, error="tag not found")
                 return self.result(arguments, {"sha": self.tags[tag]})
+            if endpoint == base + "releases":
+                values = fields()
+                if option("--method") != "POST" or values.get("draft") != "true" or values.get("generate_release_notes") != "true":
+                    raise AssertionError(arguments)
+                tag = values["tag_name"]
+                if tag in self.releases:
+                    return self.result(arguments, error="release already exists")
+                if values["target_commitish"] != self.tags[tag] or values["name"] != tag:
+                    raise AssertionError(arguments)
+                self.releases[tag] = {
+                    "draft": True,
+                    "url": f"https://github.com/{REPOSITORY}/releases/tag/{tag}",
+                    "assets": {},
+                }
+                self.created_tags.add(tag)
+                release = self.metadata(tag)
+                if self.invalid_created_id:
+                    release["id"] = 0
+                return self.result(arguments, release)
+            if endpoint.removeprefix(base + "releases/").isdigit():
+                if self.release_read_failure:
+                    return self.result(arguments, error="gh: upstream unavailable (HTTP 503)")
+                identifier = int(endpoint.removeprefix(base + "releases/"))
+                for tag in self.releases:
+                    release = self.metadata(tag)
+                    if release["id"] == identifier:
+                        if self.wrong_read_id:
+                            release["id"] += 100
+                        return self.result(arguments, release)
+                return self.result(arguments, error="gh: Not Found (HTTP 404)")
             if endpoint == base + "releases?per_page=100":
                 if "--paginate" not in arguments or "--slurp" not in arguments:
                     raise AssertionError(arguments)
                 if self.release_query_failure:
                     return self.result(arguments, error="gh: upstream unavailable (HTTP 503)")
-                releases = [self.metadata(tag) for tag in self.releases]
+                releases = [self.metadata(tag) for tag in self.releases
+                            if not (self.omit_created_releases_from_list
+                                    and tag in self.created_tags and self.releases[tag]["draft"])]
                 pages = [releases[index:index + self.list_page_size]
                          for index in range(0, len(releases), self.list_page_size)]
                 return self.result(arguments, pages or [[]])
@@ -96,18 +151,6 @@ class FakeGithub:
                         "gh: Not Found (HTTP 404)",
                     )
                 return self.result(arguments, self.metadata(tag))
-        elif arguments[:2] == ("release", "create"):
-            tag = arguments[2]
-            if tag in self.releases:
-                return self.result(arguments, error="release already exists")
-            if option("--target") != self.tags[tag] or "--draft" not in arguments:
-                raise AssertionError(arguments)
-            self.releases[tag] = {
-                "draft": True,
-                "url": f"https://github.com/{REPOSITORY}/releases/tag/{tag}",
-                "assets": {},
-            }
-            return self.result(arguments, self.releases[tag]["url"])
         elif arguments[:2] == ("release", "upload"):
             tag = arguments[2]
             release = self.releases[tag]
@@ -143,6 +186,10 @@ class FakeGithub:
         raise AssertionError("Unexpected GitHub invocation: " + repr(arguments))
 
     def operations(self, name):
+        if name == "create":
+            return [call for call in self.calls if call[:4] == (
+                "api", "--method", "POST", "repos/" + REPOSITORY + "/releases",
+            )]
         return [call for call in self.calls if call[:2] == ("release", name)]
 
 
@@ -245,7 +292,7 @@ class WebReleaseTests(unittest.TestCase):
         self.assertIn(result.url, self.summary.read_text(encoding="utf-8"))
         self.assertIn(self.approved_sha, self.summary.read_text(encoding="utf-8"))
         self.assertEqual(1, len(self.github.operations("create")))
-        self.assertIn("--generate-notes", self.github.operations("create")[0])
+        self.assertIn("generate_release_notes=true", self.github.operations("create")[0])
         self.assertEqual(1, len(self.github.operations("upload")))
         self.assertEqual(1, len(self.github.operations("edit")))
 
@@ -354,18 +401,54 @@ class WebReleaseTests(unittest.TestCase):
         for operation in ("create", "upload", "edit", "delete"):
             self.assertEqual([], self.github.operations(operation))
 
-    def test_existing_draft_on_a_later_page_is_resumed_without_duplicate_creation(self):
+    def test_existing_draft_with_pending_tag_is_resumed_without_duplicate_creation(self):
         self.github.releases["v1.0.1"] = {
             "draft": False, "url": "https://example.invalid/older-release", "assets": {},
         }
         self.seed_release(draft=True, assets={})
-        self.github.list_page_size = 1
+        self.assertNotEqual(self.tag, self.github.metadata(self.tag)["tag_name"])
         self.publish()
         self.assertFalse(self.github.releases[self.tag]["draft"])
         self.assertEqual([], self.github.operations("create"))
         self.assertEqual(1, len(self.github.operations("upload")))
         self.assertFalse(any("/releases/tags/" in argument
                              for call in self.github.calls for argument in call))
+
+    def test_new_draft_does_not_depend_on_immediate_tag_or_list_visibility(self):
+        self.github.omit_created_releases_from_list = True
+        self.publish()
+        self.assertFalse(self.github.releases[self.tag]["draft"])
+        self.assertEqual(1, len(self.github.operations("create")))
+        self.assertEqual(1, len([call for call in self.github.calls if call[:2] == ("api", "graphql")]))
+        self.assertFalse(any("/releases?" in argument
+                             for call in self.github.calls for argument in call))
+
+    def test_invalid_creation_metadata_cannot_upload_or_publish(self):
+        self.github.invalid_created_id = True
+        with self.assertRaisesRegex(web_release.ReleaseError, "metadados"):
+            self.publish()
+        self.assertTrue(self.github.releases[self.tag]["draft"])
+        self.assertEqual([], self.github.operations("upload"))
+        self.assertEqual([], self.github.operations("edit"))
+
+    def test_wrong_release_id_cannot_mutate_an_existing_draft(self):
+        self.seed_release(draft=True, assets={})
+        self.github.wrong_read_id = True
+        with self.assertRaisesRegex(web_release.ReleaseError, "diferente"):
+            self.publish()
+        for operation in ("create", "upload", "edit"):
+            self.assertEqual([], self.github.operations(operation))
+
+    def test_failed_id_read_after_upload_preserves_draft_for_retry(self):
+        self.github.release_read_failure = True
+        with self.assertRaisesRegex(web_release.ReleaseError, "503"):
+            self.publish()
+        self.assertTrue(self.github.releases[self.tag]["draft"])
+        self.assertEqual([], self.github.operations("edit"))
+        self.github.release_read_failure = False
+        self.publish()
+        self.assertFalse(self.github.releases[self.tag]["draft"])
+        self.assertEqual(1, len(self.github.operations("create")))
 
     def test_incomplete_successful_upload_keeps_the_release_as_a_draft(self):
         self.github.omit_uploaded_asset = "SHA256SUMS"
