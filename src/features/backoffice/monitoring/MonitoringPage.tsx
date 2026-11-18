@@ -414,15 +414,18 @@ const detailFields: { key: keyof MonitoringLogDetail; label: string }[] = [
   { key: 'statusCode', label: 'Status HTTP' },
   { key: 'responseTimeMs', label: 'Tempo registrado (ms)' },
   { key: 'protocol', label: 'Protocolo' },
-  { key: 'country', label: 'País' },
-  { key: 'region', label: 'Estado / região' },
-  { key: 'city', label: 'Cidade' },
-  { key: 'postalCode', label: 'CEP' },
-  { key: 'latitude', label: 'Latitude' },
-  { key: 'longitude', label: 'Longitude' },
-  { key: 'timeZone', label: 'Fuso horário' },
-  { key: 'isp', label: 'Provedor' },
-  { key: 'address', label: 'Endereço aproximado' },
+  { key: 'country', label: 'País da localização do acesso' },
+  { key: 'region', label: 'Estado / região da localização do acesso' },
+  { key: 'city', label: 'Cidade da localização do acesso' },
+  { key: 'postalCode', label: 'CEP da localização do acesso' },
+  { key: 'latitude', label: 'Latitude da localização do acesso' },
+  { key: 'longitude', label: 'Longitude da localização do acesso' },
+  { key: 'timeZone', label: 'Fuso horário da localização do acesso' },
+  { key: 'address', label: 'Endereço aproximado da localização do acesso' },
+  { key: 'ipAddressCountry', label: 'País do IP' },
+  { key: 'ipAddressRegion', label: 'Região do IP' },
+  { key: 'ipAddressCity', label: 'Cidade do IP' },
+  { key: 'isp', label: 'Provedor da conexão (IP)' },
   { key: 'deviceType', label: 'Tipo de aparelho' },
   { key: 'deviceBrand', label: 'Marca' },
   { key: 'deviceModel', label: 'Modelo' },
@@ -443,9 +446,6 @@ const detailFields: { key: keyof MonitoringLogDetail; label: string }[] = [
   { key: 'isTouchScreen', label: 'Tela sensível ao toque' },
   { key: 'userId', label: 'Usuário' },
   { key: 'sessionId', label: 'Sessão analítica' },
-  { key: 'ipAddressCountry', label: 'País do IP' },
-  { key: 'ipAddressRegion', label: 'Região do IP' },
-  { key: 'ipAddressCity', label: 'Cidade do IP' },
 ];
 function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) {
   const query = useMonitoringDetail(id);
@@ -494,6 +494,23 @@ function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
                 );
               })}
             </dl>
+            <p className="telemetry-note">
+              Em novos registros, a localização do acesso é informada pelo navegador com autorização
+              do visitante; o endereço é consultado a partir das coordenadas. Registros legados
+              podem ter outra origem. A região do IP e o provedor da conexão são identificados
+              separadamente.
+            </p>
+            <p className="telemetry-note">
+              Geocodificação, quando disponível:{' '}
+              <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">
+                Geoapify
+              </a>
+              {' · © '}
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+                OpenStreetMap
+              </a>
+              .
+            </p>
             <p className="telemetry-note">
               Dados técnicos informados pelo navegador e pela conexão. Informações sensíveis são
               ocultadas na captura.

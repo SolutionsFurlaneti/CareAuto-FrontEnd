@@ -210,7 +210,7 @@ export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
         >
           <title id={titleId}>
             Mapa esquemático de {region === 'world' ? 'origens no mundo' : 'origens no Brasil'}.{' '}
-            {dots.length} localidades com coordenadas aproximadas por IP.
+            {dots.length} localidades com coordenadas disponíveis nos registros.
           </title>
           <g className="telemetry-map-grid">
             {[-60, -30, 0, 30, 60].map((latitude) => (
@@ -256,8 +256,19 @@ export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
         )}
       </div>
       <p className="telemetry-note">
-        Localização aproximada por IP · mapa esquemático. Redes privadas e VPNs podem não ter
-        localização.
+        Localização disponível nos registros · mapa esquemático. Registros legados podem ter origem
+        diferente da localização autorizada pelo visitante.
+      </p>
+      <p className="telemetry-note">
+        Geocodificação, quando disponível:{' '}
+        <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">
+          Geoapify
+        </a>
+        {' · © '}
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+          OpenStreetMap
+        </a>
+        .
       </p>
       <details className="telemetry-table-toggle">
         <summary>Ver tabela de localidades</summary>

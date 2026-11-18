@@ -4,7 +4,7 @@ import base from './playwright.config';
 // The frontend and backend are sibling repositories in this workspace.
 export default defineConfig({
   ...base,
-  testMatch: '**/telemetry.spec.ts',
+  testMatch: ['**/telemetry.spec.ts', '**/geolocation.spec.ts'],
   timeout: 90000,
   use: { ...base.use, baseURL: 'http://127.0.0.1:5175' },
   webServer: [
