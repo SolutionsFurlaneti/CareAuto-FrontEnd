@@ -38,6 +38,7 @@ export interface MonitoringLocalityDevice {
   averageResponseTimeMs: number | null;
 }
 export interface MonitoringOverview {
+  pageViewTiming?: MonitoringOverview['initialPageTtfb'];
   totalRequests: number;
   httpRequests: number;
   uniqueIps: number;

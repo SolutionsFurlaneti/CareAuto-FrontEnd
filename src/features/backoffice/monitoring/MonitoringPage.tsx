@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Activity, Clock3, Globe2, MonitorSmartphone, RefreshCw, Users } from 'lucide-react';
+import { Chip, Tooltip as MuiTooltip } from '@mui/material';
 import {
   Area,
   AreaChart,
@@ -114,8 +115,8 @@ function Bars({
   );
 }
 function Metrics({ data }: { data: MonitoringOverview }) {
-  const ttfb = data.initialPageTtfb;
-  const mobile = ttfb.mobileSampleCount > 0;
+  const timing = data.pageViewTiming ?? data.initialPageTtfb;
+  const mobile = timing.mobileSampleCount > 0;
   return (
     <div className="telemetry-metrics" data-testid="monitoring-metrics">
       <article className="telemetry-metric">
@@ -145,25 +146,25 @@ function Metrics({ data }: { data: MonitoringOverview }) {
         <span className="telemetry-metric-icon">
           <Clock3 size={18} />
         </span>
-        <h2>TTFB da página inicial</h2>
+        <h2>Tempo de navegação</h2>
         <small>{mobile ? 'p75 mobile' : 'p75 de todas as amostras'}</small>
-        <strong data-testid="monitoring-ttfb" className={!ttfb.sampleCount ? 'is-empty' : ''}>
-          {duration(mobile ? ttfb.mobileP75Ms : ttfb.p75Ms)}
+        <strong data-testid="monitoring-ttfb" className={!timing.sampleCount ? 'is-empty' : ''}>
+          {duration(mobile ? timing.mobileP75Ms : timing.p75Ms)}
         </strong>
         <p>
           {mobile
-            ? number(ttfb.mobileSampleCount) + ' amostras mobile'
-            : number(ttfb.sampleCount) + ' amostras válidas'}
+            ? number(timing.mobileSampleCount) + ' amostras mobile'
+            : number(timing.sampleCount) + ' amostras válidas'}
         </p>
         <dl className="telemetry-mini-stats">
           <dt>Todos os dispositivos</dt>
-          <dd>{number(ttfb.sampleCount)} amostras</dd>
+          <dd>{number(timing.sampleCount)} amostras</dd>
           <dt>p75</dt>
-          <dd>{duration(ttfb.p75Ms)}</dd>
+          <dd>{duration(timing.p75Ms)}</dd>
           <dt>p95</dt>
-          <dd>{duration(ttfb.p95Ms)}</dd>
+          <dd>{duration(timing.p95Ms)}</dd>
           <dt>Média</dt>
-          <dd>{duration(ttfb.averageMs)}</dd>
+          <dd>{duration(timing.averageMs)}</dd>
         </dl>
       </article>
       <article className="telemetry-metric">
@@ -447,6 +448,27 @@ const detailFields: { key: keyof MonitoringLogDetail; label: string }[] = [
   { key: 'userId', label: 'Usuário' },
   { key: 'sessionId', label: 'Sessão analítica' },
 ];
+function HttpStatus({ code }: { code: number | null }) {
+  return code === null ? (
+    'Não informado'
+  ) : (
+    <Chip
+      size="small"
+      variant="outlined"
+      label={code}
+      aria-label={'Status HTTP ' + code}
+      color={
+        code >= 500
+          ? 'error'
+          : code >= 400
+            ? 'warning'
+            : code >= 200 && code < 300
+              ? 'success'
+              : 'default'
+      }
+    />
+  );
+}
 function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) {
   const query = useMonitoringDetail(id);
   const data = query.data;
@@ -480,25 +502,30 @@ function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
                   <div key={key}>
                     <dt>{label}</dt>
                     <dd>
-                      {value === null || value === undefined || value === ''
-                        ? 'Não informado'
-                        : key === 'createdAt'
-                          ? dateTime(String(value))
-                          : typeof value === 'boolean'
-                            ? value
-                              ? 'Sim'
-                              : 'Não'
-                            : String(value)}
+                      {value === null || value === undefined || value === '' ? (
+                        'Não informado'
+                      ) : key === 'createdAt' ? (
+                        dateTime(String(value))
+                      ) : key === 'statusCode' ? (
+                        <HttpStatus code={data.statusCode} />
+                      ) : typeof value === 'boolean' ? (
+                        value ? (
+                          'Sim'
+                        ) : (
+                          'Não'
+                        )
+                      ) : (
+                        String(value)
+                      )}
                     </dd>
                   </div>
                 );
               })}
             </dl>
             <p className="telemetry-note">
-              Em novos registros, a localização do acesso é informada pelo navegador com autorização
-              do visitante; o endereço é consultado a partir das coordenadas. Registros legados
-              podem ter outra origem. A região do IP e o provedor da conexão são identificados
-              separadamente.
+              A localização usa coordenadas autorizadas quando disponíveis, com consulta do endereço
+              aproximado. Na ausência, usa a região do IP; campos sem dados recebem valores de
+              fallback. A região do IP e o provedor da conexão também aparecem separadamente.
             </p>
             <p className="telemetry-note">
               Geocodificação, quando disponível:{' '}
@@ -518,7 +545,16 @@ function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
             {(['headers', 'requestBody'] as const).map((key) => (
               <details className="telemetry-table-toggle" key={key}>
                 <summary>
-                  {key === 'headers' ? 'Cabeçalhos sanitizados' : 'Corpo da requisição sanitizado'}
+                  {key === 'headers' ? (
+                    'Cabeçalhos sanitizados'
+                  ) : (
+                    <MuiTooltip
+                      title={<pre className="telemetry-code">{data.requestBody || '{}'}</pre>}
+                      describeChild
+                    >
+                      <span tabIndex={0}>Corpo da requisição sanitizado</span>
+                    </MuiTooltip>
+                  )}
                 </summary>
                 <pre className="telemetry-code">{data[key] || 'Não capturado'}</pre>
               </details>
@@ -883,6 +919,7 @@ export function BackofficeMonitoringPage() {
                   <p className="telemetry-empty">Nenhum registro encontrado.</p>
                 ) : (
                   <DataTable
+                    material
                     testId="monitoring-logs"
                     caption="Histórico de acessos"
                     rows={logs.data.items}
@@ -917,7 +954,10 @@ export function BackofficeMonitoringPage() {
                           [row.deviceType, row.browser].filter(Boolean).join(' / ') ||
                           'Não informado',
                       },
-                      { label: 'Status HTTP', render: (row) => row.statusCode ?? '—' },
+                      {
+                        label: 'Status HTTP',
+                        render: (row) => <HttpStatus code={row.statusCode} />,
+                      },
                       { label: 'Tempo registrado', render: (row) => duration(row.responseTimeMs) },
                       {
                         label: 'Detalhes',
@@ -949,8 +989,8 @@ export function BackofficeMonitoringPage() {
       <p className="telemetry-note telemetry-coverage">
         Cobertura: requisições recebidas pela API e navegações que executam JavaScript. Bots que
         acessam somente arquivos estáticos precisam ser coletados pelo servidor ou proxy do
-        frontend. TTFB mede apenas a primeira navegação do documento; o tempo HTTP mede o
-        processamento no servidor.
+        frontend. O tempo de navegação mede o carregamento do documento ou a transição da rota; o
+        tempo HTTP mede o processamento no servidor. Registros antigos podem conter TTFB.
       </p>
       <LogDetail id={detail} onClose={() => setDetail(null)} />
     </div>

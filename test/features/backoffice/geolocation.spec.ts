@@ -59,10 +59,11 @@ test('consented coordinates enrich the same visit while IP geography remains ind
   await expect.poll(async () => (await visits())[0]?.ipAddressCity).toBe('Mountain View');
   const initial = (await visits())[0];
   expect(initial).toMatchObject({
-    country: null,
-    region: null,
-    city: null,
-    address: null,
+    country: 'Estados Unidos',
+    region: 'California',
+    city: 'Mountain View',
+    postalCode: '00000-000',
+    address: 'Mountain View - California, Estados Unidos',
     latitude: null,
     longitude: null,
     ipAddressCountry: 'Estados Unidos',
@@ -116,7 +117,12 @@ test('consented coordinates enrich the same visit while IP geography remains ind
   await page.getByTestId('first-access').click();
   await expect(page).toHaveURL(/\/primeiro-acesso$/);
   await expect.poll(async () => (await visits()).length).toBe(3);
-  expect((await visits())[2]).toMatchObject({ latitude: null, longitude: null, address: null });
+  expect((await visits())[2]).toMatchObject({
+    latitude: null,
+    longitude: null,
+    country: 'Estados Unidos',
+    address: 'Mountain View - California, Estados Unidos',
+  });
   expect(lookups).toHaveLength(1);
 });
 
@@ -168,6 +174,11 @@ test('declining or denying location keeps navigation available without coordinat
     headers: { 'X-AutoCare-Test-Session': state.key },
   });
   for (const row of (await response.json()) as Visit[])
-    expect(row).toMatchObject({ latitude: null, longitude: null, country: null, address: null });
+    expect(row).toMatchObject({
+      latitude: null,
+      longitude: null,
+      country: 'Estados Unidos',
+      address: 'Mountain View - California, Estados Unidos',
+    });
   expect(lookups).toHaveLength(0);
 });

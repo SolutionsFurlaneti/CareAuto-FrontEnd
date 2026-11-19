@@ -124,6 +124,13 @@ describe('consentimento de localização do visitante', () => {
     expect(getCurrentPosition).not.toHaveBeenCalled();
     expect(calls(LOOKUP)).toHaveLength(0);
     expect(body(PAGE)).not.toHaveProperty('location');
+    expect(body(PAGE)).toMatchObject({ statusCode: 200, deviceBrand: 'Generic' });
+    expect(body(PAGE).responseTimeMs).toEqual(expect.any(Number));
+    expect(Number(body(PAGE).responseTimeMs)).toBeGreaterThan(0);
+    expect(JSON.parse(body(PAGE).requestBody as string)).toEqual({
+      event: 'pageview',
+      route: '/pagina',
+    });
 
     fireEvent.click(screen.getByTestId('location-consent-allow'));
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);

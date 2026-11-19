@@ -4,9 +4,14 @@ import { api } from '../../lib/apiClient';
 import { getMonitoringSessionId } from '../../lib/monitoringSession';
 import { LocationConsentPrompt } from './LocationConsentPrompt';
 import { useLocationConsent, type BrowserLocation, type ClientLocation } from './locationConsent';
+import {
+  collectDeviceMetadata,
+  pageViewResponseTime,
+  type DeviceMetadata,
+} from './browserTelemetry';
 
 const sensitiveKey =
-  /token|password|senha|secret|authorization|credential|api.?key|^code$|^state$|email|cpf|cnpj|telefone/i;
+  /token|password|senha|secret|authorization|credential|api.?key|^code$|^state$|email|cpf|cnpj|telefone|cart[aã]o/i;
 let navigationTimingReported = false;
 
 type PageViewAcknowledgment = { trackingToken?: string };
@@ -87,12 +92,16 @@ export function PageViewTracker() {
   const currentPage = useRef<TrackedPage>();
   const resolvedLocation = useRef<{ coordinates: BrowserLocation; value: ClientLocation }>();
   const lookupVersion = useRef(0);
+  const routeTiming = useRef({ key: location.key, startedAt: performance.now() });
+  if (routeTiming.current.key !== location.key)
+    routeTiming.current = { key: location.key, startedAt: performance.now() };
   useEffect(() => {
     if (callback) return;
     const url = sanitizeMonitoringUrl(window.location.href);
     if (!url || previous.current === url) return;
     const referrer = sanitizeMonitoringUrl(previous.current || document.referrer);
     previous.current = url;
+    const initialDocument = !navigationTimingReported;
     let initialPageTtfbMs: number | undefined;
     if (!navigationTimingReported) {
       navigationTimingReported = true;
@@ -108,22 +117,39 @@ export function PageViewTracker() {
         ? resolvedLocation.current.value
         : coordinates;
     const sessionId = getMonitoringSessionId();
-    const acknowledgment = api<PageViewAcknowledgment | undefined>('/api/v1/monitoring/page-view', {
-      auth: 'none',
-      method: 'POST',
-      keepalive: true,
-      body: JSON.stringify({
-        url,
-        referrer,
-        sessionId,
-        initialPageTtfbMs,
-        location: clientLocation,
-        ...collectBrowserMetrics(),
-      }),
-    }).catch(() => undefined);
+    const responseTimeMs = pageViewResponseTime(initialDocument, routeTiming.current.startedAt);
+    const metrics = collectBrowserMetrics();
+    const send = (device: DeviceMetadata) =>
+      api<PageViewAcknowledgment | undefined>('/api/v1/monitoring/page-view', {
+        auth: 'none',
+        method: 'POST',
+        keepalive: true,
+        body: JSON.stringify({
+          url,
+          referrer,
+          sessionId,
+          initialPageTtfbMs,
+          statusCode: 200,
+          responseTimeMs,
+          requestBody: JSON.stringify({ event: 'pageview', route: new URL(url).pathname }),
+          // Recheck consent if asynchronous Client Hints resolve after the user stops sharing.
+          location: coordinates && getCoordinates() === coordinates ? clientLocation : undefined,
+          ...device,
+          ...metrics,
+        }),
+      }).catch(() => undefined);
+    const device = collectDeviceMetadata();
+    const acknowledgment = device instanceof Promise ? device.then(send) : send(device);
     currentPage.current = { url, sessionId, sentLocation: clientLocation, acknowledgment };
     if (!coordinates) refresh();
-  }, [callback, getNavigationCoordinates, refresh, location.pathname, location.search]);
+  }, [
+    callback,
+    getCoordinates,
+    getNavigationCoordinates,
+    refresh,
+    location.pathname,
+    location.search,
+  ]);
 
   useEffect(() => {
     if (!coordinates || callback || getCoordinates() !== coordinates) {

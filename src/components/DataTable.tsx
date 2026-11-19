@@ -1,4 +1,4 @@
-import { useMediaQuery } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, useMediaQuery } from '@mui/material';
 import type { ReactNode } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 
@@ -13,12 +13,14 @@ export function DataTable<T>({
   rowKey,
   testId,
   caption,
+  material = false,
 }: {
   rows: T[];
   columns: Column<T>[];
   rowKey: (row: T) => string | number;
   testId: string;
   caption: string;
+  material?: boolean;
 }) {
   const cards = useMediaQuery('(max-width:1199px)');
   const reduced = useReducedMotion();
@@ -74,6 +76,36 @@ export function DataTable<T>({
       </div>
     );
   }
+
+  if (material)
+    return (
+      <div className="table-wrap">
+        <Table
+          data-testid={testId}
+          sx={{ '& .MuiTableCell-root': { font: 'inherit', color: 'inherit' } }}
+        >
+          <caption className="sr-only">{caption}</caption>
+          <TableHead>
+            <TableRow>
+              {columns.map((column) => (
+                <TableCell scope="col" key={column.label}>
+                  {column.label}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={rowKey(row)} data-testid={testId + '-row'}>
+                {columns.map((column) => (
+                  <TableCell key={column.label}>{column.render(row)}</TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
 
   return (
     <div className="table-wrap">

@@ -9,6 +9,10 @@ import {
   todayInBrasilia,
 } from '../../src/features/backoffice/monitoring/dates';
 import { getMonitoringSessionId } from '../../src/lib/monitoringSession';
+import {
+  collectDeviceMetadata,
+  pageViewResponseTime,
+} from '../../src/features/monitoring/browserTelemetry';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -34,6 +38,81 @@ describe('períodos do monitoramento', () => {
   });
 });
 describe('telemetria do navegador', () => {
+  it('identifica desktops sem inventar um fabricante e mantém duração positiva', () => {
+    vi.stubGlobal('navigator', {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0',
+      maxTouchPoints: 0,
+    });
+    expect(collectDeviceMetadata()).toEqual({
+      deviceBrand: 'Generic',
+      deviceModel: 'Windows Desktop',
+    });
+    vi.spyOn(performance, 'now').mockReturnValue(90);
+    expect(pageViewResponseTime(false, 90)).toBe(1);
+    expect(pageViewResponseTime(false, 55)).toBe(35);
+  });
+  it('usa o carregamento completo do documento em vez de TTFB', () => {
+    vi.stubGlobal('performance', {
+      now: () => 900,
+      getEntriesByType: () => [{ startTime: 5, responseStart: 30, loadEventEnd: 305 }],
+    });
+    expect(pageViewResponseTime(true, 0)).toBe(300);
+  });
+  it('extrai modelos móveis do User-Agent quando Client Hints não estão disponíveis', () => {
+    vi.stubGlobal('navigator', {
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; SM-S918B Build/TP1A) Mobile',
+      maxTouchPoints: 5,
+    });
+    expect(collectDeviceMetadata()).toEqual({ deviceBrand: 'Samsung', deviceModel: 'SM-S918B' });
+    vi.stubGlobal('navigator', {
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile',
+      maxTouchPoints: 5,
+    });
+    expect(collectDeviceMetadata()).toEqual({ deviceBrand: 'Apple', deviceModel: 'iPhone' });
+  });
+  it('não interpreta o modelo reduzido K do Android como hardware real', () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Linux; Android 10; K) Mobile' });
+    expect(collectDeviceMetadata()).toEqual({
+      deviceBrand: 'Generic',
+      deviceModel: 'Android Mobile',
+    });
+  });
+  it('prefere o modelo dos Client Hints e ignora marcas do navegador', async () => {
+    const getHighEntropyValues = vi
+      .fn()
+      .mockResolvedValue({ model: 'moto g84 5G', platform: 'Android', platformVersion: '13' });
+    vi.stubGlobal('navigator', {
+      userAgent: 'Mozilla/5.0 (Linux; Android 10; K) Mobile',
+      userAgentData: {
+        platform: 'Android',
+        mobile: true,
+        brands: [{ brand: 'Chromium' }],
+        getHighEntropyValues,
+      },
+    });
+    expect(await collectDeviceMetadata()).toEqual({
+      deviceBrand: 'Motorola',
+      deviceModel: 'moto g84 5G',
+    });
+    expect(getHighEntropyValues).toHaveBeenCalledWith(['model', 'platform', 'platformVersion']);
+  });
+  it('mantém fallback quando Client Hints falham ou não respondem', async () => {
+    const getHighEntropyValues = vi.fn().mockRejectedValue(new Error('blocked'));
+    vi.stubGlobal('navigator', {
+      userAgent: 'Windows NT 10.0',
+      userAgentData: { platform: 'Windows', getHighEntropyValues },
+    });
+    expect(await collectDeviceMetadata()).toEqual({
+      deviceBrand: 'Generic',
+      deviceModel: 'Windows Desktop',
+    });
+    vi.useFakeTimers();
+    getHighEntropyValues.mockImplementation(() => new Promise(() => {}));
+    const pending = collectDeviceMetadata();
+    await vi.advanceTimersByTimeAsync(150);
+    expect(await pending).toEqual({ deviceBrand: 'Generic', deviceModel: 'Windows Desktop' });
+    vi.useRealTimers();
+  });
   it('preserva campanhas e remove credenciais, tokens e fragmentos da URL', () => {
     const result = sanitizeMonitoringUrl(
       'https://user:password@example.com/pagina?access_token=secreto&email=pessoa@example.com&utm_campaign=novembro#token-privado',
