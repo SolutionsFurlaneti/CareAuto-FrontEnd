@@ -3,7 +3,7 @@
   "name": "CareAuto",
   "short_name": "CareAuto",
   "description": "Gestão de estacionamentos, veículos, estadias e pagamentos.",
-  "start_url": "./",
+  "start_url": "./visao-geral",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
@@ -24,5 +24,3 @@
     }
   ]
 }
-
-

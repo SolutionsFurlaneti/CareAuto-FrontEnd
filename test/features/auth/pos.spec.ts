@@ -7,7 +7,7 @@ const telas = [
   { width: 480, height: 800 },
 ];
 
-test('login fits card terminals: form first, 48px touch targets and a direct APK download', async ({
+test('login fits card terminals after location choice: touch targets and a direct APK download', async ({
   page,
   request,
 }, testInfo) => {
@@ -17,9 +17,16 @@ test('login fits card terminals: form first, 48px touch targets and a direct APK
   const { key } = (await sessao.json()) as { key: string };
   await page.context().setExtraHTTPHeaders({ 'X-AutoCare-Test-Session': key });
   try {
+    // Measure the login after an explicit optional-location choice. The compact control stays
+    // in the layout; consent itself is covered by the dedicated geolocation scenarios.
+    await page.goto('/login');
+    await page.getByTestId('location-consent-decline').click();
+    await expect(page.getByTestId('location-consent-choice')).toBeVisible();
     for (const tela of telas) {
       await page.setViewportSize(tela);
       await page.goto('/login');
+      await expect(page.getByTestId('location-consent')).toHaveCount(0);
+      await expect(page.getByTestId('location-consent-choice')).toBeVisible();
       const entrar = page.getByTestId('form-submit');
       await expect(entrar).toBeVisible();
       // Institutional copy gives way to the form; the brand stays.

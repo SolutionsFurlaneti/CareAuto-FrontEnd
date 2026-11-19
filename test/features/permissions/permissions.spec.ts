@@ -9,9 +9,9 @@ test('operator has read-only configuration and no financial access', async ({
   await expect(page.getByTestId('record-new')).toHaveCount(0);
   await expect(page.getByTestId('nav-integracoes')).toHaveCount(0);
   await page.goto('/integracoes');
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/visao-geral$/);
   await page.goto('/pagamentos');
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/visao-geral$/);
   const r = await request.post('http://127.0.0.1:5081/api/v1/categorias-veiculo', {
     headers: {
       'X-AutoCare-Test-Session': state.key,

@@ -135,7 +135,15 @@ O APK (Capacitor) traz o frontend embarcado e usa a API remota. Ao abrir a tela 
 
 ### Página de vendas
 
-Em `/sobrenos` (produção: `/autocare/sobrenos`), é a página de entrada das campanhas. Apresenta as funcionalidades, os planos ativos do backoffice e as perguntas frequentes, e os botões levam ao cadastro em `/primeiro-acesso`. O conteúdo fica em `src/features/landing/content.ts`: mantenha ali só o que o produto realmente faz.
+A rota `/` é a home pública em Material UI, com proposta de valor, guia de cadastro em três etapas, catálogo de funcionalidades, simuladores, depoimentos, planos e perguntas frequentes. O painel autenticado fica em `/visao-geral`; login e cadastro levam a esse painel. O APK mantém a entrada operacional e o PWA instalado inicia no painel.
+
+`/sobrenos` e `/sobrenos/` têm redirecionamento permanente 301 para `/#sobre` no Azure Static Web Apps (`public/staticwebapp.config.json`) e no servidor Express. A navegação interna possui fallback com React Router. Ao hospedar em subdiretório com `VITE_BASE_PATH`, ajuste também os caminhos estáticos desse arquivo à base publicada.
+
+Os planos vêm de `GET /api/v1/publico/planos`: são exibidos todos os planos ativos, separados em pré-pago e pós-pago, com preço mensal equivalente e valor total do período. O destaque indica maior desconto ou menor valor mensal equivalente, sem alegação de popularidade. Falha na consulta oferece nova tentativa; catálogo vazio tem estado próprio, sem preços inventados. O botão de cada plano leva a `/primeiro-acesso?planId=<id>`; o cadastro valida a seleção e envia `planoId` à API, que vincula o plano ativo à assinatura na mesma transação do estabelecimento. Publique a API atualizada junto com o frontend.
+
+O conteúdo institucional fica em `src/features/landing/content.ts`. Vídeos e relatos reais ficam em `src/features/landing/contentMedia.ts`: preencha `videoUrl` (YouTube, Vimeo ou arquivo HTTPS MP4/WebM/Ogg), `posterUrl` opcional e os depoimentos com nome, perfil, relato, avaliação e foto opcional. Sem URL, aparece **Vídeo tutorial em breve**; sem relatos, o estado vazio não fabrica pessoas ou avaliações. Players só são montados após ação explícita. Avatares usam iniciais quando a imagem está ausente ou falha.
+
+Os dois simuladores calculam receita bruta de serviços adicionais e valor do tempo operacional com premissas editáveis. As fórmulas são visíveis, entradas inválidas suspendem os resultados e os cenários são ilustrativos, sem promessa de lucro ou economia. O catálogo, a navegação móvel, os temas e os tamanhos de 320 a 1440 px são cobertos pelos testes de landing.
 
 ### Backoffice da plataforma
 

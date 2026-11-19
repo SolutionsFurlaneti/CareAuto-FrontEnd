@@ -20,7 +20,14 @@ export interface Funcionalidade {
   icone: LucideIcon;
   titulo: string;
   texto: string;
+  grupo?: 'operacao' | 'financeiro' | 'gestao';
 }
+
+export const gruposFuncionalidades = [
+  { id: 'operacao', titulo: 'Da entrada à saída' },
+  { id: 'financeiro', titulo: 'Preços, serviços e recebimentos' },
+  { id: 'gestao', titulo: 'Gestão e acesso da equipe' },
+] as const;
 
 /** Só o que o produto entrega hoje: cada item corresponde a um módulo existente do CareAuto. */
 export const destaques: Funcionalidade[] = [
@@ -34,13 +41,13 @@ export const destaques: Funcionalidade[] = [
     icone: Printer,
     titulo: 'Ticket com QR Code na impressora térmica',
     texto:
-      'O ticket de entrada sai direto na impressora da guarita, com placa, horário e um QR Code criptografado que não pode ser falsificado.',
+      'Imprima placa, horário e QR Code assinado pelo sistema. Use o diálogo do navegador ou configure o agente na máquina ligada à impressora térmica.',
   },
   {
     icone: ClipboardCheck,
     titulo: 'Checklist veicular com mapa de avarias',
     texto:
-      'Registre riscos, amassados e itens do veículo na entrada, marcando no desenho do carro. O relatório fica salvo e protege você em caso de reclamação.',
+      'Registre riscos, amassados e itens do veículo na entrada, marcando no desenho do carro. Consulte o relatório para conferir as condições registradas.',
   },
 ];
 
@@ -48,63 +55,74 @@ export const funcionalidades: Funcionalidade[] = [
   {
     icone: CarFront,
     titulo: 'Entrada e saída de veículos',
+    grupo: 'operacao',
     texto:
       'Pátio em tempo real, com quem está dentro, desde quando e quanto deve. O valor sai calculado pela sua tabela de preços.',
   },
   {
     icone: Search,
     titulo: 'Consulta de placa',
+    grupo: 'operacao',
     texto:
       'Busque os dados do veículo pela placa e agilize o cadastro, com histórico das consultas.',
   },
   {
     icone: Tags,
     titulo: 'Tabelas de preço e taxas dinâmicas',
+    grupo: 'financeiro',
     texto:
       'Monte tabelas por categoria de veículo e ajuste o preço por dia da semana, com multiplicador ou valor fixo por hora.',
   },
   {
     icone: CalendarClock,
     titulo: 'Mensalistas e assinaturas',
+    grupo: 'financeiro',
     texto: 'Controle os clientes mensalistas, os vínculos com os veículos e os encerramentos.',
   },
   {
     icone: Droplets,
     titulo: 'Serviços e lava-rápido',
+    grupo: 'financeiro',
     texto:
       'Cadastre lavagem, polimento e outros serviços com preço por categoria e adicione-os à estadia do cliente.',
   },
   {
     icone: CreditCard,
     titulo: 'Cobrança por Pix, boleto e cartão',
+    grupo: 'financeiro',
     texto:
       'Integração com o Asaas para emitir cobranças, acompanhar o pagamento e conciliar sem planilha.',
   },
   {
     icone: Users,
     titulo: 'Clientes e veículos',
+    grupo: 'operacao',
     texto: 'Cadastro com CPF ou CNPJ, categorias de veículo e histórico de cada cliente.',
   },
   {
     icone: UserCog,
     titulo: 'Equipe com permissões',
+    grupo: 'gestao',
     texto:
-      'O dono cria os acessos dos funcionários. Cada perfil (administrador, operador ou financeiro) vê só o que precisa.',
+      'O dono administra os acessos dos funcionários. Administradores e operadores usam os módulos e ações permitidos para o seu perfil.',
   },
   {
     icone: LayoutDashboard,
     titulo: 'Painel do dia',
+    grupo: 'gestao',
     texto:
       'Veículos no pátio, entradas, saídas, valores recebidos e a receber, e o movimento dos últimos sete dias.',
   },
   {
     icone: Smartphone,
     titulo: 'No celular, tablet ou computador',
+    grupo: 'gestao',
     texto: 'Funciona no navegador, sem instalar nada para operar. Tem tema claro e escuro.',
   },
   {
     icone: LockKeyhole,
     titulo: 'Seus dados separados e protegidos',
+    grupo: 'gestao',
     texto:
       'Cada estabelecimento tem seus dados isolados, com acesso por senha e as chaves das integrações guardadas com criptografia.',
   },
@@ -144,7 +162,7 @@ export const perguntas = [
   {
     pergunta: 'Preciso instalar algum programa?',
     resposta:
-      'Não para operar: o CareAuto funciona no navegador do celular, tablet ou computador. Só a impressão de tickets usa um pequeno agente instalado no computador ligado à impressora térmica.',
+      'O CareAuto funciona no navegador do celular, tablet ou computador. No computador, imprima pelo diálogo do navegador ou configure o agente de impressão ligado à impressora térmica.',
   },
   {
     pergunta: 'Serve para lava-rápido?',
@@ -157,4 +175,3 @@ export const perguntas = [
       'A inteligência artificial lê a placa e o operador sempre confere antes de registrar. A foto não fica armazenada.',
   },
 ];
-

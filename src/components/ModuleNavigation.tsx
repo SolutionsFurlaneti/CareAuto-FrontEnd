@@ -62,7 +62,7 @@ export const navigationSections: NavigationSection[] = [
     title: 'PRINCIPAL',
     items: [
       {
-        to: '/',
+        to: '/visao-geral',
         text: 'Visão geral',
         icon: LayoutDashboard,
         roles: ['Admin', 'Operador', 'Financeiro', 'Cliente'],
@@ -344,11 +344,11 @@ export function GridModuleMenu({
           <div className="grid grid-cols-2 content-start gap-2 min-[400px]:grid-cols-3 sm:gap-2.5">
             {filteredItems.map((item) => (
               <NavLink
-                end={item.to === '/'}
+                end={item.to === '/visao-geral'}
                 key={item.to}
                 to={item.to}
                 onClick={onClose}
-                data-testid={'nav-' + (item.to.slice(1) || 'overview')}
+                data-testid={'nav-' + (item.to === '/visao-geral' ? 'overview' : item.to.slice(1))}
                 className={({ isActive }) =>
                   `pos-grid-menu-card group relative flex min-h-[90px] min-w-0 flex-col justify-between rounded-2xl border p-2.5 text-app-ink transition hover:border-emerald-600 hover:bg-app-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:min-h-[94px] sm:p-3 ${
                     isActive
@@ -440,11 +440,13 @@ export function SidebarNavigation({
               <div className="space-y-0.5">
                 {section.items.map((item) => (
                   <NavLink
-                    end={item.to === '/'}
+                    end={item.to === '/visao-geral'}
                     key={item.to}
                     to={item.to}
                     onClick={onClose}
-                    data-testid={'nav-' + (item.to.slice(1) || 'overview')}
+                    data-testid={
+                      'nav-' + (item.to === '/visao-geral' ? 'overview' : item.to.slice(1))
+                    }
                     className={({ isActive }) =>
                       `flex min-h-11 items-center gap-3 rounded-xl px-3 text-xs font-medium transition hover:bg-app-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                         isActive

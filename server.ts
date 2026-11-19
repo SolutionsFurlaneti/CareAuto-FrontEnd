@@ -13,6 +13,12 @@ const HOST = '0.0.0.0';
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
+// Preserve inbound campaign links while making the public home the canonical entry point.
+app.get(['/sobrenos', '/sobrenos/'], (req, res) => {
+  const search = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  res.redirect(301, '/' + search + '#sobre');
+});
+
 function paginate<T>(items: T[], pageNumber = 1, pageSize = 20) {
   const page = Math.max(1, Number(pageNumber) || 1);
   const size = Math.max(1, Number(pageSize) || 20);
@@ -386,15 +392,19 @@ app.post('/api/v1/auth/logout', (_req, res) => {
   res.status(204).end();
 });
 
-app.post('/api/v1/auth/primeiro-acesso', (req, res) => {
-  const { nome, email, estabelecimentoNome } = req.body || {};
+app.post(['/api/v1/auth/configuracao-inicial', '/api/v1/auth/primeiro-acesso'], (req, res) => {
+  const { nome, email, estacionamento, estabelecimentoNome, planoId } = req.body || {};
+  if (planoId != null && !db.backofficePlans.some(plan => plan.planoId === planoId && plan.ativo)) {
+    res.status(400).json({ title: 'O plano escolhido não está disponível.', code: 'Validation' });
+    return;
+  }
   const userEmail = email || 'admin@autocare.com.br';
   res.json({
     accessToken: 'jwt_mock_token_autocare_operator_' + Date.now(),
     refreshToken: 'ref_mock_token_autocare_' + Date.now(),
     userId: 'usr-admin-1',
     estabelecimentoId: 1,
-    estabelecimentoNome: estabelecimentoNome || 'AutoCare Paulista Prime',
+    estabelecimentoNome: estacionamento || estabelecimentoNome || 'AutoCare Paulista Prime',
     userName: nome || (userEmail.includes('@') ? userEmail.split('@')[0] : 'Rodrigo Furlaneti'),
     email: userEmail,
     roles: ['Admin', 'Operador', 'Financeiro'],

@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { RequireAuth } from './components/RequireAuth';
 import { AppShell } from './components/AppShell';
 import { useAuthStore, hasRole, type Role } from './stores/authStore';
@@ -8,6 +8,7 @@ import { CallbackPage } from './features/auth/CallbackPage';
 import { Skeleton } from './ui';
 import { RequireBackoffice } from './features/backoffice/RequireBackoffice';
 import { PageViewTracker } from './features/monitoring/PageViewTracker';
+import { isNativeApp } from './lib/device';
 const UsersPage = lazy(() =>
   import('./features/users/UsersPage').then((m) => ({ default: m.UsersPage })),
 );
@@ -98,11 +99,19 @@ const Consultations = lazy(() =>
 );
 function Access({ roles, children }: { roles: Role[]; children: ReactNode }) {
   const own = useAuthStore((s) => s.session?.roles || []);
-  return hasRole(own, roles) ? children : <Navigate to="/" replace />;
+  return hasRole(own, roles) ? children : <Navigate to="/visao-geral" replace />;
 }
 const operation: Role[] = ['Admin', 'Operador'];
 const config: Role[] = ['Admin', 'Operador', 'Financeiro'];
 const financial: Role[] = ['Admin', 'Financeiro', 'Cliente'];
+function Home() {
+  // The installed Android app opens the operational area; the website opens the public home.
+  return isNativeApp() ? <Navigate to="/visao-geral" replace /> : <About />;
+}
+function LegacyHomeRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: '/', search, hash: '#sobre' }} replace />;
+}
 export function App() {
   return (
     <Suspense fallback={<Skeleton />}>
@@ -110,7 +119,8 @@ export function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/recuperar-senha" element={<Recovery />} />
-        <Route path="/sobrenos" element={<About />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/sobrenos" element={<LegacyHomeRedirect />} />
         <Route path="/primeiro-acesso" element={<Setup />} />
         <Route
           path="/trocar-senha"
@@ -157,7 +167,7 @@ export function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<Overview />} />
+          <Route path="/visao-geral" element={<Overview />} />
           <Route
             path="/estacionamento"
             element={

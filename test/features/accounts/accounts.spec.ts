@@ -32,7 +32,7 @@ test('two establishments personalize their own clients and retain isolation afte
       await page.getByTestId('field-confirmarSenha').fill(password);
       await expect(page.getByTestId('field-chaveInstalacao')).toHaveCount(0);
       await page.getByTestId('form-submit').click();
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL(/\/visao-geral$/);
       await openNav(page, 'nav-clientes');
       await expect(page.getByTestId('clientes-table-row')).toHaveCount(0);
       await page.getByTestId('record-new').click();
@@ -50,7 +50,7 @@ test('two establishments personalize their own clients and retain isolation afte
     await page.getByTestId('field-email').fill('dono1@example.test');
     await page.getByTestId('field-senha').fill(password);
     await page.getByTestId('form-submit').click();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/visao-geral$/);
     await openNav(page, 'nav-clientes');
     await expect(page.getByTestId('clientes-table-row')).toHaveCount(1);
     await expect(page.getByTestId('clientes-table-row')).toContainText('Cliente exclusivo 1');
@@ -94,7 +94,7 @@ test('owner onboards, creates employee, requires password change and revokes acc
     await page.getByTestId('field-confirmarSenha').fill(ownerPassword);
     await expect(page.getByTestId('field-chaveInstalacao')).toHaveCount(0);
     await page.getByTestId('form-submit').click();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/visao-geral$/);
     await openNav(page, 'nav-usuarios');
     await page.getByTestId('user-new').click();
     await page.getByTestId('field-nome').fill('Carlos Funcionário');
@@ -123,18 +123,18 @@ test('owner onboards, creates employee, requires password change and revokes acc
     await page.getByTestId('field-novaSenha').fill(personal);
     await page.getByTestId('field-confirmarSenha').fill(personal);
     await page.getByTestId('form-submit').click();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/visao-geral$/);
     await openNav(page, 'nav-clientes');
     await expect(page.getByTestId('record-new')).toBeVisible();
     await page.goto('/usuarios');
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/visao-geral$/);
     if ((page.viewportSize()?.width ?? 1440) < 900) await page.getByTestId('nav-open').click();
     await page.getByTestId('logout').click();
     await expect(page).toHaveURL(/\/login$/);
     await page.getByTestId('field-email').fill('dono@example.test');
     await page.getByTestId('field-senha').fill(ownerPassword);
     await page.getByTestId('form-submit').click();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/visao-geral$/);
     await openNav(page, 'nav-usuarios');
     const employee = page.getByTestId('users-table-row').filter({ hasText: 'Carlos' });
     await employee.getByTestId('user-reset').click();

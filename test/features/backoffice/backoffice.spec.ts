@@ -133,6 +133,6 @@ test('platform admin enters with admin/123456, sets a new password and manages p
   await page.screenshot({ path: testInfo.outputPath('backoffice-overview.png'), fullPage: true });
 
   // The parking-lot app keeps its own session: the backoffice login does not open it.
-  await page.goto('/');
+  await page.goto('/visao-geral');
   await expect(page).toHaveURL(/\/login/);
 });

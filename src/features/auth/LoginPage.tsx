@@ -121,7 +121,7 @@ export function LoginPage() {
                 Cadastrar meu estabelecimento
               </Link>
             )}
-            <Link to="/sobrenos" className="text-link" data-testid="about-link">
+            <Link to="/" className="text-link" data-testid="about-link">
               Conheça as funcionalidades e os planos
             </Link>
             <p className="login-help">
@@ -164,5 +164,3 @@ export function LoginPage() {
     </main>
   );
 }
-
-

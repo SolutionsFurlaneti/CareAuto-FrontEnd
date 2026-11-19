@@ -1,4 +1,8 @@
 {
+  "routes": [
+    { "route": "/sobrenos", "redirect": "/#sobre", "statusCode": 301 },
+    { "route": "/sobrenos/", "redirect": "/#sobre", "statusCode": 301 }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [

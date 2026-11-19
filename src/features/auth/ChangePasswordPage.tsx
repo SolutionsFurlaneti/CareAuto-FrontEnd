@@ -43,7 +43,7 @@ export function ChangePasswordPage() {
                 senhaAtual: values.senhaAtual,
                 novaSenha: values.novaSenha,
               });
-              navigate('/', { replace: true });
+              navigate('/visao-geral', { replace: true });
             } catch (e) {
               setError(e);
             }
@@ -51,7 +51,7 @@ export function ChangePasswordPage() {
         />
         <div className="page-actions">
           {!session?.mustChangePassword && (
-            <Link data-testid="password-back" className="text-link" to="/">
+            <Link data-testid="password-back" className="text-link" to="/visao-geral">
               Voltar
             </Link>
           )}

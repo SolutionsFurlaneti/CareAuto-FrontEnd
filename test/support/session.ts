@@ -32,7 +32,7 @@ export const test = base.extend<{ authenticated: Page; state: TestState; role: R
         ),
       state.session,
     );
-    await page.goto('/');
+    await page.goto('/visao-geral');
     await expect(page.locator('main')).toBeVisible();
     await provide(page);
     if (process.env.COVERAGE === 'true') {

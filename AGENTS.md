@@ -63,7 +63,7 @@ Use Field/SelectField/TextAreaField: useId, htmlFor, aria-invalid, descrição e
 
 ## 6. Sessão e rotas
 
-Rotas públicas: /login, /primeiro-acesso, /auth/callback e /sobrenos (página de vendas em features/landing, planos via GET /api/v1/publico/planos). /trocar-senha exige sessão e fica fora do shell. RequireAuth força essa rota para senha provisória. Uma guarda RequireAuth envolve AppShell; permissões por papel ficam em App.tsx e nas ações. O backend continua responsável pela autorização.
+Rotas públicas: / (home de vendas em features/landing), /login, /primeiro-acesso e /auth/callback. /sobrenos redireciona para /#sobre (301 no host Azure/servidor Express e fallback SPA). O painel autenticado fica em /visao-geral. Planos via GET /api/v1/publico/planos; /primeiro-acesso?planId=ID valida o plano publicado e envia planoId no cadastro, criando a assinatura com trial na mesma transação da conta. Sem parâmetro, mantém cadastro sem assinatura. /trocar-senha exige sessão e fica fora do shell. RequireAuth força essa rota para senha provisória. Uma guarda RequireAuth envolve AppShell; permissões por papel ficam em App.tsx e nas ações. O backend continua responsável pela autorização.
 
 authStore persiste `session: {userId,userName,email,estabelecimentoId,estabelecimentoNome,accessToken,expiresAtUtc,roles,mustChangePassword?,authMode?}` sob AutoCareManager-auth. Leia com seletores. Sessão sem estabelecimento positivo ou expirada retorna ao login. A configuração pública fornece mode e registrationEnabled; novos estabelecimentos podem ser cadastrados sem chave mesmo quando outras empresas existem. Não há refresh implementado. OIDC exige a claim assinada estabelecimento_id.
 

@@ -35,8 +35,8 @@ describe('session boundary', () => {
   });
   it('rejects malformed expiry and external return paths', () => {
     expect(isSessionValid(null)).toBe(false);
-    expect(safeReturnPath('//evil.example')).toBe('/');
-    expect(safeReturnPath('/\\evil')).toBe('/');
+    expect(safeReturnPath('//evil.example')).toBe('/visao-geral');
+    expect(safeReturnPath('/\\evil')).toBe('/visao-geral');
     expect(safeReturnPath('/pagamentos?page=2')).toBe('/pagamentos?page=2');
     expect(appPath('/login')).toMatch(/\/login$/);
     expect(hasRole(['Cliente'], ['Admin'])).toBe(false);

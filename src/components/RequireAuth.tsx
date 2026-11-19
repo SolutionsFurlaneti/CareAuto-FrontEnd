@@ -27,7 +27,7 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
         state={{ from: location.pathname + location.search, expired: !!session }}
       />
     );
-  if (roles && !hasRole(session.roles, roles)) return <Navigate to="/" replace />;
+  if (roles && !hasRole(session.roles, roles)) return <Navigate to="/visao-geral" replace />;
   if (session.mustChangePassword && location.pathname !== '/trocar-senha')
     return <Navigate to="/trocar-senha" replace />;
   return children;

@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import { existsSync } from 'node:fs';
 const isolated = process.env.E2E_ISOLATED === 'true';
+const browserHost = existsSync('../BackEnd/backend/test/AutoCareManager.BrowserHost')
+  ? '../BackEnd/backend/test/AutoCareManager.BrowserHost'
+  : '../backend/test/AutoCareManager.BrowserHost';
 export default defineConfig({
   testDir: './test/features',
   fullyParallel: false,
@@ -33,8 +37,7 @@ export default defineConfig({
   webServer: isolated
     ? [
         {
-          command:
-            'dotnet run --project ../backend/test/AutoCareManager.BrowserHost -c Release --no-launch-profile --no-restore',
+          command: `dotnet run --project ${browserHost} -c Release --no-launch-profile --no-restore`,
           url: 'http://127.0.0.1:5081/health/live',
           reuseExistingServer: false,
           timeout: 120000,

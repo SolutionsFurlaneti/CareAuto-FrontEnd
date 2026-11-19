@@ -1,14 +1,23 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Alert, Box, Button, Typography } from '@mui/material';
 import { RecordForm } from '../../components/RecordForm';
 import { QueryError } from '../../components/QueryError';
 import { Skeleton, Switch } from '../../ui';
 import { getAuthConfiguration, savePasswordSession } from './api';
 import { setupSchema } from './authSchema';
 import { isSessionValid, useAuthStore } from '../../stores/authStore';
+import { listarPlanosPublicos, oferta } from '../landing/plans';
+import { money } from '../../lib/format';
 export function SetupPage() {
   const navigate = useNavigate();
+  const [parameters] = useSearchParams();
+  const requestedPlan = parameters.get('planId');
+  const planId =
+    requestedPlan && /^[1-9]\d*$/.test(requestedPlan) && Number(requestedPlan) <= 2147483647
+      ? Number(requestedPlan)
+      : null;
   const session = useAuthStore((s) => s.session);
   const [error, setError] = useState<unknown>();
   const [consentimentoPublicidade, setConsentimentoPublicidade] = useState(false);
@@ -16,7 +25,14 @@ export function SetupPage() {
     queryKey: ['auth-config', session?.userId ?? null],
     queryFn: ({ signal }) => getAuthConfiguration(signal),
   });
-  if (isSessionValid(session)) return <Navigate to="/" replace />;
+  const plans = useQuery({
+    queryKey: ['planos-publicos'],
+    queryFn: ({ signal }) => listarPlanosPublicos(signal),
+    enabled: planId !== null && !isSessionValid(session),
+    staleTime: 60_000,
+  });
+  const selectedPlan = plans.data?.find((plan) => plan.planoId === planId);
+  if (isSessionValid(session)) return <Navigate to="/visao-geral" replace />;
   if (config.isPending) return <Skeleton />;
   if (config.isError)
     return (
@@ -28,6 +44,26 @@ export function SetupPage() {
     );
   if (!config.data.registrationEnabled || config.data.mode !== 'Internal')
     return <Navigate to="/login" replace />;
+  if (requestedPlan !== null && planId !== null && plans.isPending) return <Skeleton />;
+  if (requestedPlan !== null && plans.isError)
+    return (
+      <QueryError
+        error={plans.error}
+        what="o plano escolhido"
+        onRetry={() => void plans.refetch()}
+      />
+    );
+  if (requestedPlan !== null && !selectedPlan)
+    return (
+      <Box component="main" sx={{ maxWidth: 640, mx: 'auto', p: 3 }}>
+        <Alert severity="warning" data-testid="setup-plan-unavailable">
+          O plano escolhido não está disponível. Escolha um dos planos publicados para continuar.
+        </Alert>
+        <Button component={Link} to="/#planos" sx={{ mt: 2 }} data-testid="setup-change-plan">
+          Ver planos disponíveis
+        </Button>
+      </Box>
+    );
   return (
     <main className="account-page">
       <section className="panel account-panel">
@@ -37,6 +73,20 @@ export function SetupPage() {
           Cadastre seu estabelecimento e a conta do dono. Seus clientes, preços e funcionários ficam
           separados dos demais estabelecimentos.
         </p>
+        {selectedPlan && (
+          <Alert severity="info" data-testid="setup-selected-plan" sx={{ mb: 3 }}>
+            <Typography component="p" fontWeight={700}>
+              {selectedPlan.nome}
+            </Typography>
+            <Typography component="p">{money(oferta(selectedPlan).mensal)} por mês.</Typography>
+            <Typography component="p">
+              {oferta(selectedPlan).cobranca}. Comece com 7 dias grátis.
+            </Typography>
+            <Button component={Link} to="/#planos" size="small" data-testid="setup-change-plan">
+              Alterar plano
+            </Button>
+          </Alert>
+        )}
         <RecordForm
           submitLabel="Criar minha conta"
           spec={{
@@ -89,6 +139,7 @@ export function SetupPage() {
               ...values,
               telefone: consentimentoPublicidade ? values.telefone : null,
               consentimentoDadosPublicidade: consentimentoPublicidade,
+              ...(selectedPlan ? { planoId: selectedPlan.planoId } : {}),
             };
             delete data.confirmarSenha;
             const parametros = new URLSearchParams(window.location.search);
@@ -111,7 +162,7 @@ export function SetupPage() {
             data.metaBrowserId = metaBrowserId;
             try {
               await savePasswordSession('configuracao-inicial', data);
-              navigate('/', { replace: true });
+              navigate('/visao-geral', { replace: true });
             } catch (e) {
               setError(e);
             }
