@@ -3,25 +3,44 @@ export const password = z
   .string()
   .min(6, 'Use pelo menos 6 caracteres.')
   .max(128, 'Use até 128 caracteres.');
-export const email = z.string().trim().email('Informe um e-mail válido.').max(256);
+export const email = z
+  .string()
+  .trim()
+  .email('Informe um e-mail válido.')
+  .max(256, 'Use até 256 caracteres.');
 export const loginSchema = z.object({
   email,
-  senha: z.string().min(1, 'Informe sua senha.').max(128),
+  senha: z.string().min(1, 'Informe sua senha.').max(128, 'Use até 128 caracteres.'),
 });
 export const setupSchema = z
   .object({
-    estacionamento: z.string().trim().min(1).max(200),
-    tipoPessoa: z.enum(['PF', 'PJ']),
+    estacionamento: z
+      .string()
+      .trim()
+      .min(1, 'Informe o nome do estacionamento.')
+      .max(200, 'Use até 200 caracteres.'),
+    tipoPessoa: z.enum(['PF', 'PJ'], {
+      errorMap: () => ({ message: 'Selecione o tipo de pessoa.' }),
+    }),
     documento: z.string().regex(/^\d{11}(\d{3})?$/, 'Informe CPF ou CNPJ somente com dígitos.'),
-    nome: z.string().trim().min(1, 'Informe seu nome.').max(200),
+    nome: z.string().trim().min(1, 'Informe seu nome.').max(200, 'Use até 200 caracteres.'),
     email,
-    telefone: z.string().trim().max(30).refine((value) => {
-      if (!value) return true;
-      if (!/^[+\d\s().-]+$/.test(value)) return false;
-      const digits = value.replace(/\D/g, '');
-      return digits.length === 10 || digits.length === 11
-        || ((digits.length === 12 || digits.length === 13) && digits.startsWith('55'));
-    }, 'Informe um telefone brasileiro com DDD.').nullable().default(null),
+    telefone: z
+      .string()
+      .trim()
+      .max(30, 'Use até 30 caracteres.')
+      .refine((value) => {
+        if (!value) return true;
+        if (!/^[+\d\s().-]+$/.test(value)) return false;
+        const digits = value.replace(/\D/g, '');
+        return (
+          digits.length === 10 ||
+          digits.length === 11 ||
+          ((digits.length === 12 || digits.length === 13) && digits.startsWith('55'))
+        );
+      }, 'Informe um telefone brasileiro com DDD.')
+      .nullable()
+      .default(null),
     senha: password,
     confirmarSenha: password,
   })
@@ -40,7 +59,11 @@ export const setupSchema = z
       });
   });
 export const changePasswordSchema = z
-  .object({ senhaAtual: z.string().min(1).max(128), novaSenha: password, confirmarSenha: password })
+  .object({
+    senhaAtual: z.string().min(1, 'Informe sua senha.').max(128, 'Use até 128 caracteres.'),
+    novaSenha: password,
+    confirmarSenha: password,
+  })
   .superRefine((v, ctx) => {
     if (v.novaSenha !== v.confirmarSenha)
       ctx.addIssue({
@@ -57,5 +80,5 @@ export const changePasswordSchema = z
   });
 
 export const recoverySchema = z.object({
-  email: z.string().trim().email('Informe um e-mail válido.').max(256),
+  email,
 });

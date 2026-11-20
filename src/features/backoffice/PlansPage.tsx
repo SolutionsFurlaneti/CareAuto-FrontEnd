@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useId, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,6 +36,7 @@ function PlanForm({
   error?: unknown;
   onSubmit: (d: PlanoInput) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     control,
@@ -81,32 +83,32 @@ function PlanForm({
       )}
     >
       <Field
-        label="Nome"
+        label={t('Nome')}
         data-testid="bo-plan-nome"
         {...register('nome')}
-        error={errors.nome?.message}
+        error={errors.nome?.message ? t(errors.nome.message) : undefined}
       />
       <SelectField
-        label="Tipo"
+        label={t('Tipo')}
         data-testid="bo-plan-tipo"
         {...register('tipo')}
         hint={
           tipo === 'PRE_PAGO'
-            ? 'Paga antes; cada mês vale 30 dias.'
-            : 'Usa e paga depois; o boleto sai 2 dias antes do vencimento.'
+            ? t('Paga antes; cada mês vale 30 dias.')
+            : t('Usa e paga depois; o boleto sai 2 dias antes do vencimento.')
         }
       >
-        <option value="POS_PAGO">Pós-pago</option>
-        <option value="PRE_PAGO">Pré-pago</option>
+        <option value="POS_PAGO">{t('Pós-pago')}</option>
+        <option value="PRE_PAGO">{t('Pré-pago')}</option>
       </SelectField>
       <SelectField
-        label="Periodicidade"
+        label={t('Periodicidade')}
         data-testid="bo-plan-periodicidade"
         {...register('periodicidade')}
       >
         {Object.entries(periodicidadeLabel).map(([v, l]) => (
           <option key={v} value={v}>
-            {l}
+            {t(l)}
           </option>
         ))}
       </SelectField>
@@ -115,19 +117,19 @@ function PlanForm({
         name="valorMensal"
         render={({ field }) => (
           <MoneyField
-            label="Mensalidade (mínimo R$ 99,00)"
+            label={t('Mensalidade (mínimo R$ 99,00)')}
             data-testid="bo-plan-valor"
             name={field.name}
             ref={field.ref}
             value={field.value}
             onBlur={field.onBlur}
             onChange={(v) => field.onChange(v ?? 0)}
-            error={errors.valorMensal?.message}
+            error={errors.valorMensal?.message ? t(errors.valorMensal.message) : undefined}
           />
         )}
       />
       <Field
-        label="Desconto do pacote (%)"
+        label={t('Desconto do pacote (%)')}
         type="number"
         min={0}
         max={50}
@@ -135,29 +137,31 @@ function PlanForm({
         disabled={!permiteDesconto}
         hint={
           permiteDesconto
-            ? 'Contratação longa paga à vista.'
-            : 'Disponível para pré-pago de mais de um mês.'
+            ? t('Contratação longa paga à vista.')
+            : t('Disponível para pré-pago de mais de um mês.')
         }
         data-testid="bo-plan-desconto"
         {...register('descontoPercentual', { valueAsNumber: true })}
-        error={errors.descontoPercentual?.message}
+        error={
+          errors.descontoPercentual?.message ? t(errors.descontoPercentual.message) : undefined
+        }
       />
       <div className="field">
-        <span className="field-label">Valor por cobrança</span>
+        <span className="field-label">{t('Valor por cobrança')}</span>
         <strong data-testid="bo-plan-preview">
           {valido ? money(valorPeriodo(mensal, meses, permiteDesconto ? desconto : 0)) : '—'}
         </strong>
         <span className="field-hint">
-          {meses} {meses === 1 ? 'mês' : 'meses'}
-          {tipo === 'PRE_PAGO' ? ` · ${meses * 30} dias de uso` : ''}
+          {meses} {meses === 1 ? t('mês') : t('meses')}
+          {tipo === 'PRE_PAGO' ? t(' · {days} dias de uso', { days: meses * 30 }) : ''}
         </span>
       </div>
       <div className="form-span">
         <TextAreaField
-          label="Descrição (opcional)"
+          label={t('Descrição (opcional)')}
           rows={2}
           {...register('descricao')}
-          error={errors.descricao?.message}
+          error={errors.descricao?.message ? t(errors.descricao.message) : undefined}
         />
       </div>
       {plano && (
@@ -166,8 +170,8 @@ function PlanForm({
           name="ativo"
           render={({ field }) => (
             <Switch
-              label="Plano ativo"
-              description="Inativo deixa de ser oferecido; assinaturas existentes continuam."
+              label={t('Plano ativo')}
+              description={t('Inativo deixa de ser oferecido; assinaturas existentes continuam.')}
               checked={field.value}
               onChange={field.onChange}
               data-testid="bo-plan-ativo"
@@ -185,6 +189,7 @@ function PlanForm({
 }
 
 export function BackofficePlansPage() {
+  const { t, locale } = useI18n();
   const planos = usePlanos();
   const formId = useId();
   const [editing, setEditing] = useState<Plano | 'new' | null>(null);
@@ -196,8 +201,10 @@ export function BackofficePlansPage() {
     <>
       <PageHeader
         eyebrow="PLATAFORMA"
-        title="Planos"
-        description="Mensalidades pré-pagas e pós-pagas. Alterar o preço não muda assinaturas existentes."
+        title={t('Planos')}
+        description={t(
+          'Mensalidades pré-pagas e pós-pagas. Alterar o preço não muda assinaturas existentes.',
+        )}
         action={
           <Button
             data-testid="bo-plan-new"
@@ -206,7 +213,7 @@ export function BackofficePlansPage() {
               setEditing('new');
             }}
           >
-            <Plus size={16} /> Novo plano
+            <Plus size={16} /> {t('Novo plano')}{' '}
           </Button>
         }
       />
@@ -214,42 +221,48 @@ export function BackofficePlansPage() {
         {planos.isPending ? (
           <Skeleton />
         ) : planos.isError ? (
-          <QueryError error={planos.error} what="os planos" onRetry={() => void planos.refetch()} />
+          <QueryError
+            error={planos.error}
+            what={t('os planos')}
+            onRetry={() => void planos.refetch()}
+          />
         ) : !planos.data.length ? (
           <EmptyState
-            title="Nenhum plano"
-            description="Crie o primeiro plano para começar a assinar estabelecimentos."
+            title={t('Nenhum plano')}
+            description={t('Crie o primeiro plano para começar a assinar estabelecimentos.')}
           />
         ) : (
           <DataTable
             testId="bo-plans"
-            caption="Planos da plataforma"
+            caption={t('Planos da plataforma')}
             rows={planos.data}
             rowKey={(p) => p.planoId}
             columns={[
-              { label: 'Plano', render: (p) => <strong>{p.nome}</strong> },
+              { label: t('Plano'), render: (p) => <strong>{p.nome}</strong> },
               {
-                label: 'Tipo',
-                render: (p) => `${tipoLabel[p.tipo]} · ${periodicidadeLabel[p.periodicidade]}`,
+                label: t('Tipo'),
+                render: (p) =>
+                  `${t(tipoLabel[p.tipo])} · ${t(periodicidadeLabel[p.periodicidade])}`,
               },
-              { label: 'Mensalidade', render: (p) => money(p.valorMensal) },
+              { label: t('Mensalidade'), render: (p) => money(p.valorMensal) },
               {
-                label: 'Desconto',
-                render: (p) => (p.descontoPercentual ? `${p.descontoPercentual}%` : '—'),
+                label: t('Desconto'),
+                render: (p) =>
+                  p.descontoPercentual ? `${p.descontoPercentual.toLocaleString(locale)}%` : '—',
               },
-              { label: 'Por cobrança', render: (p) => money(p.valorPeriodo) },
-              { label: 'Assinaturas', render: (p) => p.assinaturas },
+              { label: t('Por cobrança'), render: (p) => money(p.valorPeriodo) },
+              { label: t('Assinaturas'), render: (p) => p.assinaturas },
               {
-                label: 'Situação',
+                label: t('Situação'),
                 render: (p) => (
                   <StatusBadge
                     status={p.ativo ? 'ATIVA' : 'ENCERRADA'}
-                    label={p.ativo ? 'Ativo' : 'Inativo'}
+                    label={p.ativo ? t('Ativo') : t('Inativo')}
                   />
                 ),
               },
               {
-                label: 'Ações',
+                label: t('Ações'),
                 render: (p) => (
                   <Button
                     variant="ghost"
@@ -259,7 +272,7 @@ export function BackofficePlansPage() {
                       setEditing(p);
                     }}
                   >
-                    Editar
+                    {t('Editar')}{' '}
                   </Button>
                 ),
               },
@@ -271,7 +284,7 @@ export function BackofficePlansPage() {
         <Modal
           open
           size="md"
-          title={editing === 'new' ? 'Novo plano' : 'Editar plano'}
+          title={editing === 'new' ? t('Novo plano') : t('Editar plano')}
           busy={salvar.isPending}
           onClose={() => setEditing(null)}
           actions={
@@ -281,10 +294,10 @@ export function BackofficePlansPage() {
                 disabled={salvar.isPending}
                 onClick={() => setEditing(null)}
               >
-                Cancelar
+                {t('Cancelar')}{' '}
               </Button>
               <Button type="submit" form={formId} busy={salvar.isPending} data-testid="form-submit">
-                Salvar plano
+                {t('Salvar plano')}{' '}
               </Button>
             </>
           }

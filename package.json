@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test:i18n": "node scripts/check-translations.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:coverage": "node scripts/e2e-coverage.mjs",

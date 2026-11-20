@@ -1,6 +1,7 @@
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { appPath, safeReturnPath } from '../../lib/basePath';
 import type { Role, Session } from '../../stores/authStore';
+import { translate } from '../../i18n';
 const authority = import.meta.env.VITE_OIDC_AUTHORITY as string | undefined;
 const clientId = import.meta.env.VITE_OIDC_CLIENT_ID as string | undefined;
 export const oidcConfigured = !!authority && !!clientId;
@@ -53,9 +54,9 @@ export async function completeSignIn(): Promise<{ session: Session; from: string
       estabelecimentoNome:
         typeof claims.estabelecimento_nome === 'string'
           ? claims.estabelecimento_nome
-          : `Estabelecimento ${estabelecimentoId}`,
+          : translate('Estabelecimento {id}', { id: estabelecimentoId }),
       authMode: 'oidc',
-      userName: user.profile.name || 'Minha conta',
+      userName: user.profile.name || translate('Minha conta'),
       email: user.profile.email || '',
       accessToken: user.access_token,
       expiresAtUtc: new Date(claims.exp * 1000).toISOString(),

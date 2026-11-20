@@ -1,3 +1,4 @@
+import { translate, useI18n, type TranslationParams } from '../../i18n';
 import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Camera, ImagePlus } from 'lucide-react';
@@ -7,6 +8,20 @@ import { describeError } from '../../lib/describeError';
 import type { FormValues } from '../shared/schema';
 import { isPlate, normalizePlate } from './plate';
 import { preparePlateImage, type PreparedPlateImage } from './preparePlateImage';
+import { integer } from '../../lib/format';
+
+type PlateNotice =
+  | string
+  | { text: string; params?: TranslationParams }
+  | { error: unknown; hint: string }
+  | { parts: PlateNotice[] };
+
+function noticeText(notice: PlateNotice): string {
+  if (typeof notice === 'string') return translate(notice);
+  if ('parts' in notice) return notice.parts.map(noticeText).join('');
+  if ('error' in notice) return `${describeError(notice.error)} ${translate(notice.hint)}`;
+  return translate(notice.text, notice.params);
+}
 
 interface PlateResult {
   placa: string;
@@ -27,16 +42,17 @@ const emptyCategory = (value: unknown) =>
 const dataFields = ['marca', 'modelo', 'cor', 'situacaoVeiculo'] as const;
 
 export function PlateCapture() {
+  useI18n();
   const {
     register,
     setValue,
     getValues,
     formState: { errors, isSubmitting },
   } = useFormContext<FormValues>();
-  const [message, setMessage] = useState(
+  const [message, setMessage] = useState<PlateNotice>(
     'Fotografe de perto, com a placa inteira e bem iluminada.',
   );
-  const [lookupMessage, setLookupMessage] = useState('');
+  const [lookupMessage, setLookupMessage] = useState<PlateNotice>('');
   const [busy, setBusy] = useState(false);
   const [consulting, setConsulting] = useState(false);
   const [preview, setPreview] = useState<string>();
@@ -121,7 +137,7 @@ export function PlateCapture() {
           }
         }
         const category = getValues('categoriaId');
-        let categoryNote = '';
+        let categoryNote: PlateNotice = '';
         if (
           data.categoriaId &&
           (emptyCategory(category) || category === autoCategory.current?.value)
@@ -131,13 +147,27 @@ export function PlateCapture() {
             previous: autoCategory.current ? autoCategory.current.previous : category,
           };
           setValue('categoriaId', data.categoriaId, { shouldValidate: true, shouldDirty: true });
-          categoryNote = ` Categoria sugerida: ${data.categoriaNome ?? 'selecionada'}${data.tipoVeiculo ? ` (${data.tipoVeiculo})` : ''}.`;
+          categoryNote = {
+            text: data.categoriaNome
+              ? 'Categoria sugerida: {category}{type}.'
+              : 'Categoria sugerida{type}.',
+            params: {
+              category: data.categoriaNome ?? '',
+              type: data.tipoVeiculo ? ` (${data.tipoVeiculo})` : '',
+            },
+          };
         } else if (!data.categoriaId && data.tipoVeiculo && emptyCategory(category)) {
-          categoryNote = ` Tipo informado: ${data.tipoVeiculo}. Escolha a categoria.`;
+          categoryNote = {
+            text: 'Tipo informado: {type}. Escolha a categoria.',
+            params: { type: data.tipoVeiculo },
+          };
         }
-        setLookupMessage(
-          `Dados encontrados. Confira as informações antes de salvar.${categoryNote}`,
-        );
+        setLookupMessage({
+          parts: [
+            'Dados encontrados. Confira as informações antes de salvar.',
+            ...(categoryNote ? [' ', categoryNote] : []),
+          ],
+        });
       } else {
         lastPlate.current = '';
         setLookupMessage(data.mensagem || 'Dados não encontrados. Preencha manualmente.');
@@ -145,7 +175,7 @@ export function PlateCapture() {
     } catch (error) {
       if (controller.signal.aborted) return;
       lastPlate.current = '';
-      setLookupMessage(`${describeError(error)} Você pode preencher manualmente.`);
+      setLookupMessage({ error, hint: 'Você pode preencher manualmente.' });
     } finally {
       if (lookup.current === controller) {
         lookup.current = undefined;
@@ -209,7 +239,7 @@ export function PlateCapture() {
         setMessage(
           controller.signal.aborted
             ? 'A leitura foi interrompida. Anexe outra foto ou digite a placa.'
-            : `${describeError(error)} Você pode digitar a placa.`,
+            : { error, hint: 'Você pode digitar a placa.' },
         );
     } finally {
       window.clearTimeout(timeout);
@@ -220,7 +250,7 @@ export function PlateCapture() {
   };
   const plateInput = register('placa', { onChange: changed });
   return (
-    <section className="plate-capture" aria-label="Identificação pela placa">
+    <section className="plate-capture" aria-label={translate('Identificação pela placa')}>
       <div className="plate-capture-actions">
         <Button
           type="button"
@@ -230,7 +260,7 @@ export function PlateCapture() {
           onClick={() => camera.current?.click()}
         >
           <Camera size={18} />
-          Tirar foto
+          {translate('Tirar foto')}
         </Button>
         <Button
           type="button"
@@ -240,7 +270,7 @@ export function PlateCapture() {
           onClick={() => upload.current?.click()}
         >
           <ImagePlus size={18} />
-          Anexar foto da placa
+          {translate('Anexar foto da placa')}
         </Button>
       </div>
       <input
@@ -267,22 +297,31 @@ export function PlateCapture() {
         }}
       />
       {preview && (
-        <img className="plate-preview" src={preview} alt="Foto selecionada para leitura da placa" />
+        <img
+          className="plate-preview"
+          src={preview}
+          alt={translate('Foto selecionada para leitura da placa')}
+        />
       )}
       {prepared && (
         <p data-testid="plate-image-size">
-          Foto preparada: {Math.ceil(prepared.originalBytes / 1024)} KB →{' '}
-          {Math.ceil(prepared.file.size / 1024)} KB · {prepared.width} × {prepared.height} px
+          {translate('Foto preparada: {original} KB → {size} KB · {width} × {height} px', {
+            original: integer(Math.ceil(prepared.originalBytes / 1024)),
+            size: integer(Math.ceil(prepared.file.size / 1024)),
+            width: integer(prepared.width),
+            height: integer(prepared.height),
+          })}
         </p>
       )}
       <small>
-        Ao tirar ou anexar uma foto, a leitura começa automaticamente com Claude. A foto reduzida é
-        enviada à Anthropic e não é armazenada pelo CareAuto.
+        {translate(
+          'Ao tirar ou anexar uma foto, a leitura começa automaticamente com Claude. A foto reduzida é enviada à Anthropic e não é armazenada pelo CareAuto.',
+        )}
       </small>
-      <p role="status">{message}</p>
+      <p role="status">{noticeText(message)}</p>
       <div className="plate-input-row">
         <Field
-          label="Placa"
+          label={translate('Placa')}
           data-testid="field-placa"
           {...plateInput}
           required
@@ -292,7 +331,9 @@ export function PlateCapture() {
             void consult(e.target.value);
           }}
           error={typeof errors.placa?.message === 'string' ? errors.placa.message : undefined}
-          hint="Mercosul ABC1D23 ou antiga ABC1234. A consulta é automática após a foto e ao sair do campo."
+          hint={translate(
+            'Mercosul ABC1D23 ou antiga ABC1234. A consulta é automática após a foto e ao sair do campo.',
+          )}
         />
         <Button
           type="button"
@@ -302,11 +343,10 @@ export function PlateCapture() {
           disabled={busy || isSubmitting}
           onClick={() => void consult(String(getValues('placa') || ''), true)}
         >
-          Consultar
+          {translate('Consultar')}
         </Button>
       </div>
-      {lookupMessage && <p role="status">{lookupMessage}</p>}
+      {lookupMessage && <p role="status">{noticeText(lookupMessage)}</p>}
     </section>
   );
 }
-

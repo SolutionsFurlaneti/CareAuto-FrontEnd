@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '../../lib/apiClient';
@@ -17,7 +18,7 @@ export interface AsaasConfiguration extends BaseConfiguration {
   caminhoWebhook: string;
 }
 const environmentLabel = (value: string) =>
-  value === 'PRODUCAO' ? 'Produção — cobranças reais' : 'Sandbox — testes';
+  translate(value === 'PRODUCAO' ? 'Produção — cobranças reais' : 'Sandbox — testes');
 
 /** Corpo completo do PUT com os valores salvos e as credenciais mantidas. */
 const savedBody = (data: AsaasConfiguration) => ({
@@ -99,6 +100,7 @@ function credentialsForm(data: AsaasConfiguration): TabFormSpec {
 }
 
 function ConnectionTest({ enabled }: { enabled: boolean }) {
+  const { t } = useI18n();
   const scope = useAuthStore((s) => sessionScope(s.session));
   const [testing, setTesting] = useState(false);
   async function test() {
@@ -106,7 +108,7 @@ function ConnectionTest({ enabled }: { enabled: boolean }) {
     try {
       await api(integrationPath('asaas') + '/teste', { method: 'POST' });
       if (scope === sessionScope(useAuthStore.getState().session))
-        toast.success('Conexão com o Asaas confirmada. Nenhuma cobrança foi criada.');
+        toast.success(translate('Conexão com o Asaas confirmada. Nenhuma cobrança foi criada.'));
     } catch (e) {
       if (scope === sessionScope(useAuthStore.getState().session)) toast.error(describeError(e));
     } finally {
@@ -116,9 +118,9 @@ function ConnectionTest({ enabled }: { enabled: boolean }) {
   return (
     <div className="integration-actions">
       <Button variant="secondary" busy={testing} disabled={!enabled} onClick={() => void test()}>
-        Testar conexão salva
+        {t('Testar conexão salva')}
       </Button>
-      {!enabled && <small>Salve uma chave de API na aba Credenciais para testar.</small>}
+      {!enabled && <small>{t('Salve uma chave de API na aba Credenciais para testar.')}</small>}
     </div>
   );
 }
@@ -135,41 +137,50 @@ export function AsaasTab({
   formKey: string;
   goTo: (tab: IntegrationTab) => void;
 }) {
+  const { t } = useI18n();
   if (tab === 'webhooks' && data.origem === 'PLATAFORMA')
     return (
       <p>
-        O webhook é configurado pela gestão da plataforma. Para usar sua própria conta Asaas,
-        configure as credenciais do estabelecimento.
+        {t(
+          'O webhook é configurado pela gestão da plataforma. Para usar sua própria conta Asaas, configure as credenciais do estabelecimento.',
+        )}
       </p>
     );
   if (tab === 'webhooks')
     return (
       <>
         <p>
-          Cadastre um webhook no Asaas com a URL pública HTTPS do backend, seguida deste caminho:
+          {t(
+            'Cadastre um webhook no Asaas com a URL pública HTTPS do backend, seguida deste caminho:',
+          )}
         </p>
         <code className="asaas-webhook-path" data-testid="asaas-webhook-path">
           {data.caminhoWebhook}
         </code>
         <p>
-          Selecione os eventos de cobranças (PAYMENT_*), com envio sequencial, e use o mesmo token
-          salvo na aba Credenciais. O Asaas precisa conseguir acessar essa URL pela internet.
+          {t(
+            'Selecione os eventos de cobranças (PAYMENT_*), com envio sequencial, e use o mesmo token salvo na aba Credenciais. O Asaas precisa conseguir acessar essa URL pela internet.',
+          )}
         </p>
         <dl className="integration-status">
           <div>
-            <dt>Token do webhook</dt>
-            <dd>{data.possuiTokenWebhook ? 'Salvo' : 'Não informado'}</dd>
+            <dt>{t('Token do webhook')}</dt>
+            <dd>{t(data.possuiTokenWebhook ? 'Salvo' : 'Não informado')}</dd>
           </div>
           <div>
-            <dt>Ambiente</dt>
+            <dt>{t('Ambiente')}</dt>
             <dd>{environmentLabel(data.ambiente)}</dd>
           </div>
         </dl>
         <div className="integration-actions">
           <Button variant="secondary" onClick={() => goTo('credenciais')}>
-            {data.possuiTokenWebhook ? 'Trocar token' : 'Definir token'} em Credenciais
+            {t(
+              data.possuiTokenWebhook
+                ? 'Trocar token em Credenciais'
+                : 'Definir token em Credenciais',
+            )}
           </Button>
-          <small>A chave de API e o token são salvos juntos, como o Asaas exige.</small>
+          <small>{t('A chave de API e o token são salvos juntos, como o Asaas exige.')}</small>
         </div>
       </>
     );
@@ -183,10 +194,10 @@ export function AsaasTab({
             label: 'Ambiente em uso',
             value: environmentLabel(data.ambienteEfetivo ?? data.ambiente),
           },
-          { label: 'Chave de API', value: data.possuiChaveApi ? 'Salva' : 'Não informada' },
+          { label: 'Chave de API', value: t(data.possuiChaveApi ? 'Salva' : 'Não informada') },
           {
             label: 'Token do webhook',
-            value: data.possuiTokenWebhook ? 'Salvo' : 'Não informado',
+            value: t(data.possuiTokenWebhook ? 'Salvo' : 'Não informado'),
           },
         ]}
       >
@@ -198,8 +209,8 @@ export function AsaasTab({
       slug="asaas"
       form={credentialsForm(data)}
       formKey={formKey}
-      submitLabel="Salvar credenciais"
-      success="Credenciais do Asaas salvas."
+      submitLabel={t('Salvar credenciais')}
+      success={t('Credenciais do Asaas salvas.')}
     />
   );
 }

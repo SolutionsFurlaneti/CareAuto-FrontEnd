@@ -1,0 +1,116 @@
+/** English copy for public account access; Portuguese source strings remain the keys. */
+export const authEnglish: Record<string, string> = {
+  'SEU NEGÓCIO EM BOAS MÃOS': 'YOUR BUSINESS IN GOOD HANDS',
+  'O cuidado começa': 'Care starts',
+  'com uma boa': 'with good',
+  'gestão.': 'management.',
+  'Conecte o estacionamento, os serviços e os recebimentos em uma rotina mais simples.':
+    'Bring parking, services, and payments together for a simpler daily routine.',
+  'BEM-VINDO AO CAREAUTO': 'WELCOME TO CAREAUTO',
+  'Vamos começar?': 'Ready to get started?',
+  'Entre com seu e-mail e senha para acessar o estacionamento.':
+    'Sign in with your email and password to access your parking business.',
+  'Sua sessão expirou. Entre novamente.': 'Your session has expired. Please sign in again.',
+  'a configuração de acesso': 'the sign-in settings',
+  'Entrar no sistema': 'Sign in',
+  'E-mail do operador / gestor': 'Operator / manager email',
+  'Senha de acesso': 'Password',
+  'Esqueci minha senha': 'Forgot my password',
+  'Cadastrar meu estabelecimento': 'Register my business',
+  'Conheça as funcionalidades e os planos': 'Explore features and plans',
+  'Funcionário sem acesso? Solicite seu cadastro ou uma nova senha ao administrador.':
+    'Need employee access? Ask your administrator to create an account or reset your password.',
+  'O acesso está aguardando configuração. Entre em contato com o administrador.':
+    'Sign-in has not been configured yet. Contact your administrator.',
+  'Não foi possível iniciar o acesso. Confira o provedor configurado.':
+    'Unable to start sign-in. Check the configured identity provider.',
+  'Entrar com minha conta': 'Sign in with my account',
+  'o plano escolhido': 'the selected plan',
+  'O plano escolhido não está disponível. Escolha um dos planos publicados para continuar.':
+    'The selected plan is unavailable. Choose one of the published plans to continue.',
+  'Ver planos disponíveis': 'View available plans',
+  'NOVO ESTABELECIMENTO': 'NEW BUSINESS',
+  'Etapa {current} de {total}': 'Step {current} of {total}',
+  'Seu estacionamento começa aqui.': 'Your parking business starts here.',
+  'Informe os dados do negócio e crie o acesso do dono. Não pedimos cartão de crédito.':
+    'Enter your business details and create the owner’s account. No credit card required.',
+  'por mês.': 'per month.',
+  'Comece com 7 dias grátis.': 'Start with 7 days free.',
+  'Alterar plano': 'Change plan',
+  'Criar minha conta': 'Create my account',
+  'Nome do estacionamento': 'Parking business name',
+  'Tipo de pessoa': 'Account holder type',
+  'Pessoa jurídica': 'Business',
+  'Pessoa física': 'Individual',
+  'CNPJ ou CPF': 'CNPJ or CPF',
+  'Somente dígitos.': 'Digits only.',
+  'Nome do dono': 'Owner’s name',
+  'E-mail de acesso': 'Sign-in email',
+  'Telefone com DDD (opcional)': 'Phone with area code (optional)',
+  'Ex.: (11) 99999-9999.': 'E.g.: (11) 99999-9999.',
+  Senha: 'Password',
+  'Pelo menos 6 caracteres.': 'At least 6 characters.',
+  'Confirmar senha': 'Confirm password',
+  'Autorizo a medição de conversões do Google Ads e Meta Ads':
+    'I consent to Google Ads and Meta Ads conversion measurement',
+  'Opcional. Se aceitar, o e-mail e o telefone informado serão enviados em formato hash, junto dos identificadores de anúncio disponíveis, para medir cadastros de teste e assinaturas.':
+    'Optional. If you agree, your email and phone number will be sent in hashed form, along with available ad identifiers, to measure trial signups and subscriptions.',
+  'Voltar para entrar': 'Back to sign in',
+  'Esqueceu sua senha?': 'Forgot your password?',
+  'Informe o e-mail usado para entrar. Você receberá uma senha provisória e criará sua própria senha no próximo acesso.':
+    'Enter the email you use to sign in. You will receive a temporary password and create your own password the next time you sign in.',
+  'Se houver uma conta ativa com este e-mail, você receberá uma senha provisória válida por 30 minutos. Confira também o spam. Se precisar solicitar novamente, aguarde 5 minutos.':
+    'If an active account exists for this email, you will receive a temporary password valid for 30 minutes. Check your spam folder too. Wait 5 minutes before requesting another password.',
+  'Enviar senha provisória': 'Send temporary password',
+  'E-mail cadastrado': 'Registered email',
+  'SUA CONTA': 'YOUR ACCOUNT',
+  'Crie sua senha pessoal.': 'Create your personal password.',
+  'Alterar senha': 'Change password',
+  'Para acessar o sistema, substitua a senha provisória recebida.':
+    'Replace the temporary password you received to access the system.',
+  'A troca encerra suas outras sessões.': 'Changing your password signs you out of other sessions.',
+  'Atualizar senha': 'Update password',
+  'Senha atual': 'Current password',
+  'Nova senha': 'New password',
+  'Confirmar nova senha': 'Confirm new password',
+  Voltar: 'Back',
+  'Sair da conta': 'Sign out',
+  'Não foi possível concluir o acesso. Tente entrar novamente.':
+    'Unable to complete sign-in. Please try signing in again.',
+  'Acesso não concluído': 'Sign-in incomplete',
+  'Voltar para o login': 'Back to sign in',
+  'Preparando seu ambiente': 'Preparing your workspace',
+  'Baixar para Android': 'Download for Android',
+  'Se o download não iniciar automaticamente, toque aqui. O Android pedirá confirmação para instalar.':
+    'If the download does not start automatically, tap here. Android will ask you to confirm installation.',
+  'APK para celular e maquininha (Smart POS)': 'APK for phones and payment terminals (Smart POS)',
+  'Acessar no iPhone': 'Open on iPhone',
+  'No Safari: Compartilhar → Adicionar à Tela de Início': 'In Safari: Share → Add to Home Screen',
+  'O acesso ainda não foi configurado. Solicite a configuração ao administrador.':
+    'Sign-in has not been configured yet. Ask your administrator to set it up.',
+  'O provedor não retornou um access token JWT.':
+    'The identity provider did not return a JWT access token.',
+  'Token inválido.': 'Invalid token.',
+  'O provedor não retornou um perfil de acesso válido.':
+    'The identity provider did not return a valid access role.',
+  'O provedor não vinculou a conta a um estabelecimento.':
+    'The identity provider did not link this account to a business.',
+  'Estabelecimento {id}': 'Business {id}',
+  'Minha conta': 'My account',
+  'Use pelo menos 6 caracteres.': 'Use at least 6 characters.',
+  'Use até 128 caracteres.': 'Use no more than 128 characters.',
+  'Use até 256 caracteres.': 'Use no more than 256 characters.',
+  'Use até 200 caracteres.': 'Use no more than 200 characters.',
+  'Use até 30 caracteres.': 'Use no more than 30 characters.',
+  'Informe um e-mail válido.': 'Enter a valid email address.',
+  'Informe sua senha.': 'Enter your password.',
+  'Informe o nome do estacionamento.': 'Enter the parking business name.',
+  'Selecione o tipo de pessoa.': 'Select an account holder type.',
+  'Informe CPF ou CNPJ somente com dígitos.': 'Enter a CPF or CNPJ using digits only.',
+  'Informe seu nome.': 'Enter your name.',
+  'Informe um telefone brasileiro com DDD.': 'Enter a Brazilian phone number with an area code.',
+  'Confira o tipo e o documento informado.': 'Check the account holder type and ID number.',
+  'As senhas precisam ser iguais.': 'Passwords must match.',
+  'Escolha uma senha diferente da atual.':
+    'Choose a password different from your current password.',
+};

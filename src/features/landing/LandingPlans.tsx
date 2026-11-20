@@ -24,10 +24,12 @@ import {
   Typography,
 } from '@mui/material';
 import { Check } from 'lucide-react';
+import { useI18n } from '../../i18n';
 import { money } from '../../lib/format';
 import { agrupar, destaque, listarPlanosPublicos, oferta, type PlanoPublico } from './plans';
 
 function PlanCard({ plano, recomendado }: { plano: PlanoPublico; recomendado: boolean }) {
+  const { t } = useI18n();
   const o = oferta(plano);
   return (
     <Card
@@ -49,9 +51,9 @@ function PlanCard({ plano, recomendado }: { plano: PlanoPublico; recomendado: bo
         slotProps={{ title: { component: 'h3', variant: 'h3', sx: { overflowWrap: 'anywhere' } } }}
         subheader={
           <Chip
-            label={
-              recomendado ? 'Recomendado' : plano.tipo === 'PRE_PAGO' ? 'Pré-pago' : 'Pós-pago'
-            }
+            label={t(
+              recomendado ? 'Recomendado' : plano.tipo === 'PRE_PAGO' ? 'Pré-pago' : 'Pós-pago',
+            )}
             color={recomendado ? 'primary' : 'default'}
             size="small"
             sx={{ mt: 1.5 }}
@@ -71,7 +73,7 @@ function PlanCard({ plano, recomendado }: { plano: PlanoPublico; recomendado: bo
           >
             {money(o.mensal)}
           </Typography>
-          <Typography color="text.secondary">/mês</Typography>
+          <Typography color="text.secondary">{t('/mês')}</Typography>
         </Stack>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {o.cobranca}
@@ -96,7 +98,7 @@ function PlanCard({ plano, recomendado }: { plano: PlanoPublico; recomendado: bo
               <ListItemIcon sx={{ minWidth: 28, color: 'primary.main' }}>
                 <SvgIcon component={Check} inheritViewBox sx={{ fontSize: 20 }} />
               </ListItemIcon>
-              <ListItemText primary={text} slotProps={{ primary: { variant: 'body2' } }} />
+              <ListItemText primary={t(text)} slotProps={{ primary: { variant: 'body2' } }} />
             </ListItem>
           ))}
         </List>
@@ -107,10 +109,10 @@ function PlanCard({ plano, recomendado }: { plano: PlanoPublico; recomendado: bo
           component={Link}
           to={`/primeiro-acesso?planId=${plano.planoId}`}
           variant={recomendado ? 'contained' : 'outlined'}
-          aria-label={`Começar grátis com ${plano.nome}`}
+          aria-label={t('Começar grátis com {plan}', { plan: plano.nome })}
           data-testid={`lp-plan-cta-${plano.planoId}`}
         >
-          Começar grátis
+          {t('Começar grátis')}
         </Button>
       </CardActions>
     </Card>
@@ -118,6 +120,7 @@ function PlanCard({ plano, recomendado }: { plano: PlanoPublico; recomendado: bo
 }
 
 export function LandingPlans() {
+  const { t } = useI18n();
   const planos = useQuery({
     queryKey: ['planos-publicos'],
     queryFn: ({ signal }) => listarPlanosPublicos(signal),
@@ -142,16 +145,22 @@ export function LandingPlans() {
     >
       <Container maxWidth="lg">
         <Typography variant="overline" color="primary">
-          Planos
+          {t('Planos')}
         </Typography>
         <Typography variant="h2" id="lp-plans-title">
-          Escolha como prefere pagar
+          {t('Escolha como prefere pagar')}
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 2, mb: 4 }}>
-          Todos os planos têm o CareAuto completo e começam com 7 dias grátis.
+          {t('Todos os planos têm o CareAuto completo e começam com 7 dias grátis.')}
         </Typography>
         {planos.isPending ? (
-          <Grid container spacing={3} aria-busy="true" role="status" aria-label="Carregando planos">
+          <Grid
+            container
+            spacing={3}
+            aria-busy="true"
+            role="status"
+            aria-label={t('Carregando planos')}
+          >
             {[0, 1, 2].map((i) => (
               <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
                 <Skeleton variant="rounded" height={380} />
@@ -164,27 +173,29 @@ export function LandingPlans() {
             data-testid="lp-plans-error"
             action={
               <Button color="inherit" onClick={() => void planos.refetch()}>
-                Tentar novamente
+                {t('Tentar novamente')}
               </Button>
             }
           >
-            Não foi possível carregar os planos. Tente novamente para conferir os valores
-            atualizados.
+            {t(
+              'Não foi possível carregar os planos. Tente novamente para conferir os valores atualizados.',
+            )}
           </Alert>
         ) : !planos.data.length ? (
           <Card variant="outlined" data-testid="lp-plans-fallback">
             <CardContent>
               <Typography variant="h3" sx={{ mb: 2 }}>
-                Novos planos em breve
+                {t('Novos planos em breve')}
               </Typography>
               <Typography color="text.secondary">
-                Os planos ainda não foram publicados. Você pode criar sua conta para conhecer o
-                sistema durante o teste grátis.
+                {t(
+                  'Os planos ainda não foram publicados. Você pode criar sua conta para conhecer o sistema durante o teste grátis.',
+                )}
               </Typography>
             </CardContent>
             <CardActions sx={{ p: 3, pt: 0 }}>
               <Button component={Link} to="/primeiro-acesso" variant="contained">
-                Começar 7 dias grátis
+                {t('Começar 7 dias grátis')}
               </Button>
             </CardActions>
           </Card>
@@ -194,21 +205,21 @@ export function LandingPlans() {
               <Tabs
                 value={atual}
                 onChange={(_, value: 'POS_PAGO' | 'PRE_PAGO') => setAba(value)}
-                aria-label="Modalidade de pagamento"
+                aria-label={t('Modalidade de pagamento')}
                 sx={{ mb: 3 }}
               >
                 <Tab
                   value="POS_PAGO"
                   id="plan-tab-POS_PAGO"
                   aria-controls="plan-panel"
-                  label="Pós-pago"
+                  label={t('Pós-pago')}
                   data-testid="lp-tab-POS_PAGO"
                 />
                 <Tab
                   value="PRE_PAGO"
                   id="plan-tab-PRE_PAGO"
                   aria-controls="plan-panel"
-                  label="Pré-pago · à vista"
+                  label={t('Pré-pago · à vista')}
                   data-testid="lp-tab-PRE_PAGO"
                 />
               </Tabs>

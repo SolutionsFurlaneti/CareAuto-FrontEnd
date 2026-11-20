@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import type { Avaria, Vista } from './api';
 import { damageLabel, viewLabel, views } from './catalog';
@@ -110,6 +111,7 @@ export function DamageMap({
   selected?: number | null;
   onSelect?: (index: number) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="damage-map" data-testid="damage-map">
       {views.map(({ value: vista }) => {
@@ -128,7 +130,12 @@ export function DamageMap({
           <figure key={vista} className={'damage-view damage-view-' + vista.toLowerCase()}>
             <figcaption>
               {viewLabel(vista)}
-              {direction[vista] && <small> · frente {direction[vista]}</small>}
+              {direction[vista] && (
+                <small>
+                  {' '}
+                  {t('· frente')} {direction[vista]}
+                </small>
+              )}
             </figcaption>
             <svg
               viewBox={`0 0 ${art.width} ${art.height}`}
@@ -137,8 +144,13 @@ export function DamageMap({
               tabIndex={onAdd ? 0 : undefined}
               aria-label={
                 onAdd
-                  ? `${viewLabel(vista)}: toque no ponto da avaria (Enter marca no centro)`
-                  : `${viewLabel(vista)}: ${markers.length} avaria(s)`
+                  ? t('{view}: toque no ponto da avaria (Enter marca no centro)', {
+                      view: viewLabel(vista),
+                    })
+                  : t('{view}: {count} avaria(s)', {
+                      view: viewLabel(vista),
+                      count: markers.length,
+                    })
               }
               className={onAdd ? 'editable' : undefined}
               onClick={(event) => {

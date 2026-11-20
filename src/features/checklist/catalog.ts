@@ -1,4 +1,5 @@
 import type { StatusItem, TipoAvaria, Vista } from './api';
+import { translate } from '../../i18n';
 
 /** Itens do formulário em papel, na mesma ordem. O servidor valida os mesmos códigos. */
 export const checklistItems: { item: string; label: string }[] = [
@@ -24,7 +25,7 @@ export const checklistItems: { item: string; label: string }[] = [
   { item: 'OUTRO', label: 'Outro' },
 ];
 export const itemLabel = (item: string) =>
-  checklistItems.find((x) => x.item === item)?.label ?? item;
+  translate(checklistItems.find((x) => x.item === item)?.label ?? item);
 
 export const statusOptions: { value: StatusItem; label: string }[] = [
   { value: 'BOM', label: 'Bom' },
@@ -32,7 +33,7 @@ export const statusOptions: { value: StatusItem; label: string }[] = [
   { value: 'FALTANTE_NAO_FUNCIONA', label: 'Faltante / não funciona' },
 ];
 export const statusLabel = (status: StatusItem) =>
-  statusOptions.find((x) => x.value === status)?.label ?? status;
+  translate(statusOptions.find((x) => x.value === status)?.label ?? status);
 
 export const damageTypes: { value: TipoAvaria; label: string }[] = [
   { value: 'A', label: 'Amassado' },
@@ -41,7 +42,7 @@ export const damageTypes: { value: TipoAvaria; label: string }[] = [
   { value: 'F', label: 'Faltante' },
 ];
 export const damageLabel = (tipo: TipoAvaria) =>
-  damageTypes.find((x) => x.value === tipo)?.label ?? tipo;
+  translate(damageTypes.find((x) => x.value === tipo)?.label ?? tipo);
 
 export const views: { value: Vista; label: string }[] = [
   { value: 'TOPO', label: 'Vista superior' },
@@ -50,5 +51,6 @@ export const views: { value: Vista; label: string }[] = [
   { value: 'FRENTE', label: 'Frente' },
   { value: 'TRASEIRA', label: 'Traseira' },
 ];
-export const viewLabel = (vista: Vista) => views.find((x) => x.value === vista)?.label ?? vista;
+export const viewLabel = (vista: Vista) =>
+  translate(views.find((x) => x.value === vista)?.label ?? vista);
 export const MAX_DAMAGES = 100;

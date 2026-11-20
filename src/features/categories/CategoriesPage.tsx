@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { ResourcePage, type ResourceSpec } from '../../components/ResourcePage';
 import type { Categoria } from '../../lib/types';
 import { categoriesSchema } from './categoriesSchema';
@@ -20,7 +21,7 @@ const spec: ResourceSpec<Categoria> = {
       render: (r) => (
         <StatusBadge
           status={r.ativo ? 'ATIVA' : 'ENCERRADA'}
-          label={r.ativo ? 'Ativo' : 'Inativo'}
+          label={r.ativo ? translate('Ativo') : translate('Inativo')}
         />
       ),
     },
@@ -35,5 +36,6 @@ const spec: ResourceSpec<Categoria> = {
   },
 };
 export function CategoriesPage() {
+  useI18n();
   return <ResourcePage spec={spec} />;
 }

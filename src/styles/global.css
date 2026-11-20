@@ -1,3 +1,29 @@
+.language-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  max-width: 100%;
+  flex-shrink: 0;
+  color: var(--ink);
+}
+.language-selector select {
+  min-height: 48px;
+  width: auto;
+  max-width: 100%;
+  padding: 8px 20px 8px 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: var(--bg-raise);
+  color: inherit;
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.language-selector select:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
 /* 01. Tokens */
 :root {
   color-scheme: dark;
@@ -1163,7 +1189,9 @@ tbody tr:hover {
   flex-direction: column;
   gap: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
   position: relative;
 }
 .patio-card:hover {
@@ -1297,7 +1325,9 @@ tbody tr:hover {
   outline-offset: 2px;
   line-height: 1.4;
   font-size: 14px;
-  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+  transition:
+    border-color var(--duration-fast),
+    box-shadow var(--duration-fast);
 }
 .field input:focus,
 .field select:focus,
@@ -1423,7 +1453,9 @@ tbody tr:hover {
   color: var(--ink-dim);
   font-size: 12px;
   font-weight: 500;
-  transition: background var(--duration-fast), color var(--duration-fast);
+  transition:
+    background var(--duration-fast),
+    color var(--duration-fast);
 }
 .tab:hover {
   background: var(--bg-press);
@@ -1594,8 +1626,15 @@ tbody tr:hover {
   animation: pulse-dot 2s infinite ease-in-out;
 }
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.75); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
 }
 .status-pendente,
 .status-em_execucao {
@@ -1796,6 +1835,27 @@ tbody tr:hover {
 .login-story > .brand {
   padding: 0;
   margin-bottom: 90px;
+}
+.login-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 90px;
+}
+.login-brand-row .brand {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+.login-brand-row .brand > span:last-child {
+  min-width: 0;
+  white-space: normal;
+}
+@media (max-width: 900px) {
+  .login-brand-row {
+    margin-bottom: 24px;
+  }
 }
 .login-story > .eyebrow {
   color: var(--mint-deep);
@@ -2114,7 +2174,10 @@ tbody tr:hover {
   .app-modal .MuiDialog-paper {
     margin: 0;
     width: min(calc(100% - 24px), 560px);
-    max-height: calc(var(--modal-viewport-height, 100dvh) - 24px - var(--app-safe-area-inset-top) - var(--app-safe-area-inset-bottom));
+    max-height: calc(
+      var(--modal-viewport-height, 100dvh) - 24px - var(--app-safe-area-inset-top) -
+        var(--app-safe-area-inset-bottom)
+    );
   }
   .app-modal .MuiDialogTitle-root {
     padding: 14px 18px;
@@ -2268,7 +2331,8 @@ tbody tr:hover {
     padding: 24px 18px;
   }
   .account-page {
-    padding: max(16px, var(--app-safe-area-inset-top)) 12px max(16px, var(--app-safe-area-inset-bottom));
+    padding: max(16px, var(--app-safe-area-inset-top)) 12px
+      max(16px, var(--app-safe-area-inset-bottom));
   }
 }
 
@@ -3321,14 +3385,23 @@ tbody tr:hover {
     align-content: start;
     min-height: 100dvh;
     gap: 12px;
-    padding: max(32px, calc(var(--app-safe-area-inset-top) + 12px)) 14px max(16px, var(--app-safe-area-inset-bottom));
+    padding: max(32px, calc(var(--app-safe-area-inset-top) + 12px)) 14px
+      max(16px, var(--app-safe-area-inset-bottom));
   }
   .login-theme {
     top: max(32px, calc(var(--app-safe-area-inset-top) + 8px));
     right: 10px;
   }
-  .login-story > :not(.brand) {
+  .login-story > :not(.brand):not(.login-brand-row) {
     display: none;
+  }
+  .login-brand-row {
+    gap: 8px;
+    min-height: var(--touch);
+    margin-bottom: 0;
+  }
+  .login-brand-row .brand {
+    font-size: 20px;
   }
   .login-story > .brand {
     margin: 0;
@@ -3401,7 +3474,6 @@ tbody tr:hover {
     white-space: nowrap;
   }
 }
-
 
 /* CareAuto navigation launcher and short POS viewports */
 .topbar-leading,
@@ -3502,7 +3574,9 @@ tbody tr:hover {
     top: max(8px, var(--app-safe-area-inset-top));
     left: 8px;
     width: calc(100vw - 16px);
-    height: calc(100dvh - max(16px, var(--app-safe-area-inset-top) + var(--app-safe-area-inset-bottom)));
+    height: calc(
+      100dvh - max(16px, var(--app-safe-area-inset-top) + var(--app-safe-area-inset-bottom))
+    );
     border-radius: 20px;
   }
   .pos-grid-menu-header {
@@ -3517,7 +3591,7 @@ tbody tr:hover {
   .pos-grid-menu-header input {
     height: 38px !important;
   }
-  .pos-grid-menu-header [aria-label="Filtrar módulos"] button {
+  .pos-grid-menu-header [aria-label='Filtrar módulos'] button {
     min-height: 30px !important;
     padding-inline: 8px !important;
     font-size: 9px !important;
@@ -3804,4 +3878,3 @@ tbody tr:hover {
     flex-basis: 100%;
   }
 }
-

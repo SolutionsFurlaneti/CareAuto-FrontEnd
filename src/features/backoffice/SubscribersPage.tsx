@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { PageHeader } from '../../components/PageHeader';
@@ -28,6 +29,7 @@ export const situacaoBadge: Record<Situacao, string> = {
 };
 
 function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
+  const { t, locale } = useI18n();
   const detalhe = useAssinante(id);
   const planos = usePlanos();
   const [planoId, setPlanoId] = useState('');
@@ -53,7 +55,10 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
     (r) =>
       r.emailStatus === 'ACEITO'
         ? 'Período grátis estendido em 7 dias. O provedor aceitou o e-mail.'
-        : `Período grátis estendido em 7 dias, mas o e-mail ficou ${r.emailStatus}. Verifique o provedor antes de tentar novamente.`,
+        : t(
+            'Período grátis estendido em 7 dias, mas o e-mail ficou {status}. Verifique o provedor antes de tentar novamente.',
+            { status: r.emailStatus },
+          ),
   );
   const ativa = d?.assinatura?.status === 'ATIVA';
   const trialEmAndamento = d?.assinatura?.situacao === 'TRIAL' ? d.assinatura : null;
@@ -67,17 +72,17 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
     <Modal
       open
       size="lg"
-      title={d?.assinante.nome ?? 'Assinante'}
+      title={d?.assinante.nome ?? t('Assinante')}
       busy={busy}
       onClose={onClose}
       actions={
         confirmCancel ? (
           <>
             <span className="modal-actions-note" role="alert">
-              Cancelar interrompe novas cobranças deste estabelecimento.
+              {t('Cancelar interrompe novas cobranças deste estabelecimento.')}{' '}
             </span>
             <Button variant="secondary" onClick={() => setConfirmCancel(false)}>
-              Voltar
+              {t('Voltar')}{' '}
             </Button>
             <Button
               variant="danger"
@@ -87,7 +92,7 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
                 cancelar.mutate(undefined, { onSuccess: () => setConfirmCancel(false) })
               }
             >
-              Confirmar cancelamento
+              {t('Confirmar cancelamento')}{' '}
             </Button>
           </>
         ) : (
@@ -98,11 +103,11 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
                 data-testid="bo-sub-cancel"
                 onClick={() => setConfirmCancel(true)}
               >
-                Cancelar assinatura
+                {t('Cancelar assinatura')}{' '}
               </Button>
             )}
             <Button variant="secondary" onClick={onClose}>
-              Fechar
+              {t('Fechar')}{' '}
             </Button>
           </>
         )
@@ -113,7 +118,7 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
       ) : detalhe.isError ? (
         <QueryError
           error={detalhe.error}
-          what="o assinante"
+          what={t('o assinante')}
           onRetry={() => void detalhe.refetch()}
         />
       ) : (
@@ -123,44 +128,49 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
               <span>{documento(d.assinante.tipoPessoa, d.assinante.documento)}</span>
               <StatusBadge
                 status={situacaoBadge[d.assinante.situacao]}
-                label={situacaoLabel[d.assinante.situacao]}
+                label={t(situacaoLabel[d.assinante.situacao])}
               />
             </div>
             <dl className="detail-grid">
               <div>
-                <dt>Dono</dt>
+                <dt>{t('Dono')}</dt>
                 <dd>{d.assinante.emailDono ?? '—'}</dd>
               </div>
               <div>
-                <dt>Cadastrado em</dt>
+                <dt>{t('Cadastrado em')}</dt>
                 <dd>{dateTime(d.assinante.criadoEm)}</dd>
               </div>
               {d.assinatura && (
                 <>
                   <div>
-                    <dt>Plano</dt>
+                    <dt>{t('Plano')}</dt>
                     <dd data-testid="bo-sub-plano">
-                      {d.assinatura.plano} · {tipoLabel[d.assinatura.tipoPlano]}{' '}
-                      {periodicidadeLabel[d.assinatura.periodicidade].toLowerCase()}
+                      {d.assinatura.plano} · {t(tipoLabel[d.assinatura.tipoPlano])}{' '}
+                      {t(periodicidadeLabel[d.assinatura.periodicidade]).toLocaleLowerCase(locale)}
                     </dd>
                   </div>
                   <div>
-                    <dt>Valor por cobrança</dt>
+                    <dt>{t('Valor por cobrança')}</dt>
                     <dd>{money(d.assinatura.valorPeriodo)}</dd>
                   </div>
                   {d.assinatura.trialFim && (
                     <div>
-                      <dt>Período grátis até</dt>
+                      <dt>{t('Período grátis até')}</dt>
                       <dd data-testid="bo-sub-trial">{dateOnly(d.assinatura.trialFim)}</dd>
                     </div>
                   )}
                   <div>
                     <dt>
-                      {d.assinatura.tipoPlano === 'POS_PAGO' ? 'Período atual' : 'Uso pago até'}
+                      {d.assinatura.tipoPlano === 'POS_PAGO'
+                        ? t('Período atual')
+                        : t('Uso pago até')}
                     </dt>
                     <dd data-testid="bo-sub-periodo">
                       {d.assinatura.tipoPlano === 'POS_PAGO'
-                        ? `${dateOnly(d.assinatura.periodoInicio)} a ${dateOnly(d.assinatura.periodoFim)} (vence no fim)`
+                        ? t('{start} a {end} (vence no fim)', {
+                            start: dateOnly(d.assinatura.periodoInicio),
+                            end: dateOnly(d.assinatura.periodoFim),
+                          })
                         : dateOnly(d.assinatura.periodoFim)}
                     </dd>
                   </div>
@@ -169,19 +179,21 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
             </dl>
             {trialEmAndamento && (
               <div className="inset-form">
-                <h3>Prorrogar período grátis</h3>
+                <h3>{t('Prorrogar período grátis')}</h3>
                 <p className="muted">
-                  Conceda mais 7 dias. A primeira data de cobrança será ajustada e o administrador
-                  receberá um e-mail.
+                  {t(
+                    'Conceda mais 7 dias. A primeira data de cobrança será ajustada e o administrador receberá um e-mail.',
+                  )}{' '}
                 </p>
                 {confirmTrialExtension ? (
                   <div className="form-grid">
                     <p className="notice" role="alert">
-                      O período grátis será estendido em 7 dias e o e-mail será enviado ao
-                      administrador cadastrado.
+                      {t(
+                        'O período grátis será estendido em 7 dias e o e-mail será enviado ao administrador cadastrado.',
+                      )}{' '}
                     </p>
                     <Button variant="secondary" onClick={() => setConfirmTrialExtension(false)}>
-                      Voltar
+                      {t('Voltar')}{' '}
                     </Button>
                     <Button
                       busy={prorrogar.isPending}
@@ -192,7 +204,7 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
                         })
                       }
                     >
-                      Confirmar +7 dias e enviar e-mail
+                      {t('Confirmar +7 dias e enviar e-mail')}{' '}
                     </Button>
                   </div>
                 ) : (
@@ -202,43 +214,46 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
                     data-testid="bo-sub-trial-extend"
                     onClick={() => setConfirmTrialExtension(true)}
                   >
-                    Conceder mais 7 dias grátis
+                    {t('Conceder mais 7 dias grátis')}{' '}
                   </Button>
                 )}
               </div>
             )}
             <div className="inset-form">
-              <h3>{acao}</h3>
+              <h3>{t(acao)}</h3>
               <div className="form-grid">
                 <SelectField
-                  label="Plano"
+                  label={t('Plano')}
                   value={planoId}
                   data-testid="bo-sub-plan"
                   onChange={(e) => setPlanoId(e.target.value)}
                   hint={
                     ativa
-                      ? 'A troca vale a partir da próxima cobrança (mesmo tipo de plano).'
+                      ? t('A troca vale a partir da próxima cobrança (mesmo tipo de plano).')
                       : undefined
                   }
                 >
-                  <option value="">Selecione</option>
+                  <option value="">{t('Selecione')}</option>
                   {opcoes.map((p) => (
                     <option key={p.planoId} value={p.planoId}>
-                      {p.nome} — {tipoLabel[p.tipo]}{' '}
-                      {periodicidadeLabel[p.periodicidade].toLowerCase()} · {money(p.valorPeriodo)}
+                      {p.nome} — {t(tipoLabel[p.tipo])}{' '}
+                      {t(periodicidadeLabel[p.periodicidade]).toLocaleLowerCase(locale)} ·{' '}
+                      {money(p.valorPeriodo)}
                     </option>
                   ))}
                 </SelectField>
                 {d.podeUsarTrial ? (
                   <Switch
-                    label="Oferecer 7 dias grátis"
-                    description="A primeira cobrança só acontece depois do período grátis."
+                    label={t('Oferecer 7 dias grátis')}
+                    description={t('A primeira cobrança só acontece depois do período grátis.')}
                     checked={trial}
                     onChange={setTrial}
                     data-testid="bo-sub-trial-switch"
                   />
                 ) : (
-                  <p className="muted">Período grátis já utilizado por este estabelecimento.</p>
+                  <p className="muted">
+                    {t('Período grátis já utilizado por este estabelecimento.')}
+                  </p>
                 )}
                 <Button
                   busy={salvar.isPending}
@@ -248,26 +263,26 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
                     salvar.mutate({ planoId: Number(planoId), comTrial: d.podeUsarTrial && trial })
                   }
                 >
-                  {acao}
+                  {t(acao)}
                 </Button>
               </div>
               {!planos.isPending && !opcoes.length && (
-                <p className="notice">Cadastre um plano ativo em Planos.</p>
+                <p className="notice">{t('Cadastre um plano ativo em Planos.')}</p>
               )}
             </div>
             {ativa && d.assinatura?.tipoPlano === 'PRE_PAGO' && (
               <div className="inset-form">
-                <h3>Cobrar próximo pacote</h3>
+                <h3>{t('Cobrar próximo pacote')}</h3>
                 <div className="form-grid">
                   <SelectField
-                    label="Forma de pagamento"
+                    label={t('Forma de pagamento')}
                     value={forma}
                     data-testid="bo-sub-forma"
                     onChange={(e) => setForma(e.target.value as FormaPagamento)}
                   >
                     {Object.entries(formaLabel).map(([v, l]) => (
                       <option key={v} value={v}>
-                        {l}
+                        {t(l)}
                       </option>
                     ))}
                   </SelectField>
@@ -277,18 +292,18 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
                     data-testid="bo-sub-charge"
                     onClick={() => cobrar.mutate(undefined)}
                   >
-                    Gerar cobrança
+                    {t('Gerar cobrança')}{' '}
                   </Button>
                 </div>
               </div>
             )}
             <div className="section-label">
-              <h3>Cobranças</h3>
+              <h3>{t('Cobranças')}</h3>
             </div>
             {d.cobrancas.length ? (
               <ChargesTable rows={d.cobrancas} testId="bo-sub-charges" />
             ) : (
-              <p className="muted">Nenhuma cobrança ainda.</p>
+              <p className="muted">{t('Nenhuma cobrança ainda.')}</p>
             )}
           </div>
         )
@@ -298,6 +313,7 @@ function SubscriberModal({ id, onClose }: { id: number; onClose: () => void }) {
 }
 
 export function BackofficeSubscribersPage() {
+  const { t } = useI18n();
   const [busca, setBusca] = useState('');
   const [termo, setTermo] = useState('');
   const [situacao, setSituacao] = useState('');
@@ -319,8 +335,10 @@ export function BackofficeSubscribersPage() {
     <>
       <PageHeader
         eyebrow="PLATAFORMA"
-        title="Assinantes"
-        description="Estabelecimentos cadastrados no CareAuto, seus planos e a situação da mensalidade."
+        title={t('Assinantes')}
+        description={t(
+          'Estabelecimentos cadastrados no CareAuto, seus planos e a situação da mensalidade.',
+        )}
       />
       <section className="panel">
         <div className="panel-toolbar bo-filters">
@@ -328,15 +346,15 @@ export function BackofficeSubscribersPage() {
             <Search size={16} aria-hidden="true" />
             <input
               type="search"
-              placeholder="Nome, CNPJ/CPF ou e-mail"
-              aria-label="Buscar assinante"
+              placeholder={t('Nome, CNPJ/CPF ou e-mail')}
+              aria-label={t('Buscar assinante')}
               value={busca}
               data-testid="bo-sub-search"
               onChange={(e) => setBusca(e.target.value)}
             />
           </label>
           <SelectField
-            label="Situação"
+            label={t('Situação')}
             value={situacao}
             data-testid="bo-sub-filter"
             onChange={(e) => {
@@ -344,10 +362,10 @@ export function BackofficeSubscribersPage() {
               setPagina(1);
             }}
           >
-            <option value="">Todas</option>
+            <option value="">{t('Todas')}</option>
             {Object.entries(situacaoLabel).map(([v, l]) => (
               <option key={v} value={v}>
-                {l}
+                {t(l)}
               </option>
             ))}
           </SelectField>
@@ -357,39 +375,39 @@ export function BackofficeSubscribersPage() {
         ) : lista.isError ? (
           <QueryError
             error={lista.error}
-            what="os assinantes"
+            what={t('os assinantes')}
             onRetry={() => void lista.refetch()}
           />
         ) : !lista.data.items.length ? (
           <EmptyState
-            title="Nenhum estabelecimento"
-            description="Nenhum estabelecimento corresponde ao filtro."
+            title={t('Nenhum estabelecimento')}
+            description={t('Nenhum estabelecimento corresponde ao filtro.')}
           />
         ) : (
           <>
             <DataTable<Assinante>
               testId="bo-subscribers"
-              caption="Assinantes"
+              caption={t('Assinantes')}
               rows={lista.data.items}
               rowKey={(a) => a.estabelecimentoId}
               columns={[
-                { label: 'Estabelecimento', render: (a) => <strong>{a.nome}</strong> },
-                { label: 'Documento', render: (a) => documento(a.tipoPessoa, a.documento) },
+                { label: t('Estabelecimento'), render: (a) => <strong>{a.nome}</strong> },
+                { label: t('Documento'), render: (a) => documento(a.tipoPessoa, a.documento) },
                 {
-                  label: 'Situação',
+                  label: t('Situação'),
                   render: (a) => (
                     <StatusBadge
                       status={situacaoBadge[a.situacao]}
-                      label={situacaoLabel[a.situacao]}
+                      label={t(situacaoLabel[a.situacao])}
                     />
                   ),
                 },
                 {
-                  label: 'Plano',
-                  render: (a) => (a.plano ? `${a.plano} · ${tipoLabel[a.tipoPlano!]}` : '—'),
+                  label: t('Plano'),
+                  render: (a) => (a.plano ? `${a.plano} · ${t(tipoLabel[a.tipoPlano!])}` : '—'),
                 },
                 {
-                  label: 'Grátis até / vencimento',
+                  label: t('Grátis até / vencimento'),
                   render: (a) =>
                     a.trialFim && a.situacao === 'TRIAL'
                       ? dateOnly(a.trialFim)
@@ -398,18 +416,18 @@ export function BackofficeSubscribersPage() {
                         : '—',
                 },
                 {
-                  label: 'Valor',
+                  label: t('Valor'),
                   render: (a) => (a.valorPeriodo === null ? '—' : money(a.valorPeriodo)),
                 },
                 {
-                  label: 'Ações',
+                  label: t('Ações'),
                   render: (a) => (
                     <Button
                       variant="ghost"
                       data-testid="bo-sub-open"
                       onClick={() => setAberto(a.estabelecimentoId)}
                     >
-                      Gerenciar
+                      {t('Gerenciar')}{' '}
                     </Button>
                   ),
                 },
@@ -429,4 +447,3 @@ export function BackofficeSubscribersPage() {
     </>
   );
 }
-

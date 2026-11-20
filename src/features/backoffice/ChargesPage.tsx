@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useState } from 'react';
 import { PageHeader } from '../../components/PageHeader';
 import { QueryError } from '../../components/QueryError';
@@ -8,6 +9,7 @@ import { cobrancaLabel } from './labels';
 import { ChargesTable } from './ChargesTable';
 
 export function BackofficeChargesPage() {
+  const { t } = useI18n();
   const [status, setStatus] = useState('');
   const [pagina, setPagina] = useState(1);
   const lista = useCobrancas({ status: status || undefined, pagina });
@@ -15,13 +17,15 @@ export function BackofficeChargesPage() {
     <>
       <PageHeader
         eyebrow="PLATAFORMA"
-        title="Cobranças"
-        description="Mensalidades emitidas no Asaas da plataforma. Pós-pagos são emitidos pela rotina diária; pré-pagos, pelo assinante."
+        title={t('Cobranças')}
+        description={t(
+          'Mensalidades emitidas no Asaas da plataforma. Pós-pagos são emitidos pela rotina diária; pré-pagos, pelo assinante.',
+        )}
       />
       <section className="panel">
         <div className="panel-toolbar bo-filters">
           <SelectField
-            label="Status"
+            label={t('Status')}
             value={status}
             data-testid="bo-charges-filter"
             onChange={(e) => {
@@ -29,10 +33,10 @@ export function BackofficeChargesPage() {
               setPagina(1);
             }}
           >
-            <option value="">Todos</option>
+            <option value="">{t('Todos')}</option>
             {Object.entries(cobrancaLabel).map(([v, l]) => (
               <option key={v} value={v}>
-                {l}
+                {t(l)}
               </option>
             ))}
           </SelectField>
@@ -42,13 +46,15 @@ export function BackofficeChargesPage() {
         ) : lista.isError ? (
           <QueryError
             error={lista.error}
-            what="as cobranças"
+            what={t('as cobranças')}
             onRetry={() => void lista.refetch()}
           />
         ) : !lista.data.items.length ? (
           <EmptyState
-            title="Nenhuma cobrança"
-            description="As cobranças aparecem aqui quando a rotina ou um assinante pré-pago as gerar."
+            title={t('Nenhuma cobrança')}
+            description={t(
+              'As cobranças aparecem aqui quando a rotina ou um assinante pré-pago as gerar.',
+            )}
           />
         ) : (
           <>

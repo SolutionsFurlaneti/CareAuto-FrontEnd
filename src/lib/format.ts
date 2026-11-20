@@ -1,18 +1,25 @@
+import { useLocaleStore } from '../stores/localeStore';
+
 export const money = (value: number | null | undefined) =>
   value == null
     ? '—'
-    : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    : new Intl.NumberFormat(useLocaleStore.getState().locale, {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(value);
 export const dateTime = (value: string | null | undefined) =>
   !value
     ? '—'
-    : new Intl.DateTimeFormat('pt-BR', {
+    : new Intl.DateTimeFormat(useLocaleStore.getState().locale, {
         dateStyle: 'short',
         timeStyle: 'short',
         timeZone: 'America/Sao_Paulo',
       }).format(new Date(/[Zz]|[+-]\d\d:\d\d$/.test(value) ? value : value + 'Z'));
 export const dateOnly = (value: string) => {
   const [y, m, d] = value.split('-');
-  return d + '/' + m + '/' + y;
+  return useLocaleStore.getState().locale === 'en-US'
+    ? m + '/' + d + '/' + y
+    : d + '/' + m + '/' + y;
 };
 export const todayIso = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -21,4 +28,5 @@ export const todayIso = () =>
     month: '2-digit',
     day: '2-digit',
   }).format(new Date());
-export const integer = (value: number) => new Intl.NumberFormat('pt-BR').format(value);
+export const integer = (value: number) =>
+  new Intl.NumberFormat(useLocaleStore.getState().locale).format(value);

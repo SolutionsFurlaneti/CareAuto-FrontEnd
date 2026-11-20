@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { CarFront, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button, Skeleton } from '../../ui';
 import { ThemeToggle } from '../../components/ThemeToggle';
+import { LanguageSelector } from '../../components/LanguageSelector';
+import { useI18n } from '../../i18n';
 import { RecordForm } from '../../components/RecordForm';
 import { QueryError } from '../../components/QueryError';
 import { useAuthStore, isSessionValid } from '../../stores/authStore';
@@ -14,6 +16,7 @@ import { safeReturnPath } from '../../lib/basePath';
 import { AndroidDownload } from './AndroidDownload';
 import { IosPwaLink } from './IosPwaLink';
 export function LoginPage() {
+  const { t } = useI18n();
   const session = useAuthStore((s) => s.session);
   const location = useLocation();
   const [busy, setBusy] = useState(false);
@@ -41,21 +44,26 @@ export function LoginPage() {
         <ThemeToggle />
       </div>
       <section className="login-story">
-        <span className="brand">
-          <span className="brand-symbol">
-            <CarFront size={25} />
+        <div className="login-brand-row">
+          <span className="brand">
+            <span className="brand-symbol">
+              <CarFront size={25} />
+            </span>
+            <span>CareAuto</span>
           </span>
-          <span>CareAuto</span>
-        </span>
-        <p className="eyebrow">SEU NEGÓCIO EM BOAS MÃOS</p>
+          <LanguageSelector />
+        </div>
+        <p className="eyebrow">{t('SEU NEGÓCIO EM BOAS MÃOS')}</p>
         <h1>
-          O cuidado começa
+          {t('O cuidado começa')}
           <br />
-          com uma boa
+          {t('com uma boa')}
           <br />
-          <em>gestão.</em>
+          <em>{t('gestão.')}</em>
         </h1>
-        <p>Conecte o estacionamento, os serviços e os recebimentos em uma rotina mais simples.</p>
+        <p>
+          {t('Conecte o estacionamento, os serviços e os recebimentos em uma rotina mais simples.')}
+        </p>
         <div className="login-road" aria-hidden="true">
           <CarFront size={100} />
           <span />
@@ -65,12 +73,12 @@ export function LoginPage() {
         <span className="login-lock">
           <ShieldCheck size={24} />
         </span>
-        <p className="eyebrow">BEM-VINDO AO CAREAUTO</p>
-        <h2>Vamos começar?</h2>
-        <p>Entre com seu e-mail e senha para acessar o estacionamento.</p>
+        <p className="eyebrow">{t('BEM-VINDO AO CAREAUTO')}</p>
+        <h2>{t('Vamos começar?')}</h2>
+        <p>{t('Entre com seu e-mail e senha para acessar o estacionamento.')}</p>
         {state?.expired && (
           <p role="status" className="notice">
-            Sua sessão expirou. Entre novamente.
+            {t('Sua sessão expirou. Entre novamente.')}
           </p>
         )}
         {config.isPending ? (
@@ -78,26 +86,26 @@ export function LoginPage() {
         ) : config.isError ? (
           <QueryError
             error={config.error}
-            what="a configuração de acesso"
+            what={t('a configuração de acesso')}
             onRetry={() => void config.refetch()}
           />
         ) : config.data.mode === 'Internal' ? (
           <>
             <RecordForm
-              submitLabel="Entrar no sistema"
+              submitLabel={t('Entrar no sistema')}
               spec={{
                 schema: loginSchema,
                 defaults: { email: '', senha: '' },
                 fields: [
                   {
                     name: 'email',
-                    label: 'E-mail do operador / gestor',
+                    label: t('E-mail do operador / gestor'),
                     kind: 'email',
                     autoComplete: 'username',
                   },
                   {
                     name: 'senha',
-                    label: 'Senha de acesso',
+                    label: t('Senha de acesso'),
                     kind: 'password',
                     autoComplete: 'current-password',
                   },
@@ -114,30 +122,32 @@ export function LoginPage() {
               }}
             />
             <Link to="/recuperar-senha" className="text-link" data-testid="forgot-password">
-              Esqueci minha senha
+              {t('Esqueci minha senha')}
             </Link>
             {config.data.registrationEnabled && (
               <Link to="/primeiro-acesso" className="text-link" data-testid="first-access">
-                Cadastrar meu estabelecimento
+                {t('Cadastrar meu estabelecimento')}
               </Link>
             )}
             <Link to="/" className="text-link" data-testid="about-link">
-              Conheça as funcionalidades e os planos
+              {t('Conheça as funcionalidades e os planos')}
             </Link>
             <p className="login-help">
-              Funcionário sem acesso? Solicite seu cadastro ou uma nova senha ao administrador.
+              {t(
+                'Funcionário sem acesso? Solicite seu cadastro ou uma nova senha ao administrador.',
+              )}
             </p>
           </>
         ) : (
           <>
             {!oidcConfigured && (
               <p className="notice" data-testid="auth-not-configured">
-                O acesso está aguardando configuração. Entre em contato com o administrador.
+                {t('O acesso está aguardando configuração. Entre em contato com o administrador.')}
               </p>
             )}
             {!!error && (
               <p role="alert" className="form-error">
-                Não foi possível iniciar o acesso. Confira o provedor configurado.
+                {t('Não foi possível iniciar o acesso. Confira o provedor configurado.')}
               </p>
             )}
             <Button
@@ -154,7 +164,7 @@ export function LoginPage() {
                 }
               }}
             >
-              Entrar com minha conta <ArrowRight size={18} />
+              {t('Entrar com minha conta')} <ArrowRight size={18} />
             </Button>
           </>
         )}

@@ -9,6 +9,7 @@ import { Button, Skeleton } from '../ui';
 import { signOut } from '../features/auth/api';
 import { toast } from 'sonner';
 import { EntryModal } from '../features/stays/EntryModal';
+import { useI18n } from '../i18n';
 import {
   GridModuleMenu,
   SidebarNavigation,
@@ -25,6 +26,7 @@ const roleVisibleSections = (roles: Role[], authMode?: string) =>
   }));
 
 export function AppShell() {
+  const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const [globalEntry, setGlobalEntry] = useState(false);
   const desktop = useMediaQuery('(min-width:900px)');
@@ -61,7 +63,7 @@ export function AppShell() {
       await signOut();
     } catch {
       toast.error(
-        'A sessão local foi encerrada, mas não foi possível encerrar as sessões no servidor.',
+        t('A sessão local foi encerrada, mas não foi possível encerrar as sessões no servidor.'),
       );
     }
     navigate('/login', { replace: true });
@@ -80,7 +82,7 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">
-        Pular para o conteúdo
+        {t('Pular para o conteúdo')}
       </a>
       <Drawer
         variant={isPermanent ? 'permanent' : 'temporary'}
@@ -89,7 +91,9 @@ export function AppShell() {
         className="sidebar"
         PaperProps={{
           className: menuMode === 'grid' ? 'sidebar-paper menu-grid-paper' : 'sidebar-paper',
-          'aria-label': menuMode === 'grid' ? 'Menu de módulos do CareAuto' : 'Navegação CareAuto',
+          'aria-label': t(
+            menuMode === 'grid' ? 'Menu de módulos do CareAuto' : 'Navegação CareAuto',
+          ),
         }}
       >
         {menuMode === 'grid' ? (
@@ -116,7 +120,7 @@ export function AppShell() {
             {!isPermanent && (
               <Button
                 variant="ghost"
-                aria-label="Abrir menu"
+                aria-label={t('Abrir menu')}
                 aria-expanded={open}
                 data-testid="nav-open"
                 className="mobile-menu"
@@ -135,9 +139,9 @@ export function AppShell() {
               onClick={openNavigation}
               aria-haspopup="dialog"
               aria-expanded={open}
-              aria-label={`Abrir menu: ${title}`}
+              aria-label={t('Abrir menu: {title}', { title: t(title) })}
             >
-              <span>{title}</span>
+              <span>{t(title)}</span>
               <ChevronDown size={13} aria-hidden="true" />
             </button>
           </div>
@@ -145,28 +149,28 @@ export function AppShell() {
             <Button
               variant="ghost"
               className="menu-mode-toggle"
-              aria-label={
-                menuMode === 'grid' ? 'Alternar para menu lateral' : 'Alternar para grade PDV'
-              }
-              title={menuMode === 'grid' ? 'Menu lateral' : 'Grade PDV'}
+              aria-label={t(
+                menuMode === 'grid' ? 'Alternar para menu lateral' : 'Alternar para grade PDV',
+              )}
+              title={t(menuMode === 'grid' ? 'Menu lateral' : 'Grade PDV')}
               onClick={switchMenuMode}
             >
               {menuMode === 'grid' ? <PanelLeft size={17} /> : <LayoutGrid size={17} />}
-              <span>{menuMode === 'grid' ? 'Menu lateral' : 'Grade PDV'}</span>
+              <span>{t(menuMode === 'grid' ? 'Menu lateral' : 'Grade PDV')}</span>
             </Button>
             {hasRole(session?.roles || [], ['Admin', 'Operador']) && (
               <Button
                 variant="primary"
                 className="topbar-entry"
-                aria-label="Nova entrada"
+                aria-label={t('Nova entrada')}
                 onClick={() => setGlobalEntry(true)}
               >
                 <Plus size={16} />
-                <span className="topbar-entry-label">Nova entrada</span>
+                <span className="topbar-entry-label">{t('Nova entrada')}</span>
               </Button>
             )}
             <span className="topbar-date">
-              {new Intl.DateTimeFormat('pt-BR', {
+              {new Intl.DateTimeFormat(locale, {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric',
@@ -191,7 +195,7 @@ export function AppShell() {
         </m.main>
         <footer className="app-footer">
           <span>CareAuto</span>
-          <span>Cuidado com os veículos. Clareza na gestão.</span>
+          <span>{t('Cuidado com os veículos. Clareza na gestão.')}</span>
         </footer>
       </div>
       {globalEntry && <EntryModal onClose={() => setGlobalEntry(false)} />}

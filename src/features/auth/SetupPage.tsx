@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Box, Button, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Typography } from '@mui/material';
 import { RecordForm } from '../../components/RecordForm';
 import { QueryError } from '../../components/QueryError';
+import { LanguageSelector } from '../../components/LanguageSelector';
+import { useI18n } from '../../i18n';
 import { Skeleton, Switch } from '../../ui';
 import { getAuthConfiguration, savePasswordSession } from './api';
 import { setupSchema } from './authSchema';
@@ -11,6 +13,7 @@ import { isSessionValid, useAuthStore } from '../../stores/authStore';
 import { listarPlanosPublicos, oferta } from '../landing/plans';
 import { money } from '../../lib/format';
 export function SetupPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [parameters] = useSearchParams();
   const requestedPlan = parameters.get('planId');
@@ -38,7 +41,7 @@ export function SetupPage() {
     return (
       <QueryError
         error={config.error}
-        what="a configuração de acesso"
+        what={t('a configuração de acesso')}
         onRetry={() => void config.refetch()}
       />
     );
@@ -49,46 +52,63 @@ export function SetupPage() {
     return (
       <QueryError
         error={plans.error}
-        what="o plano escolhido"
+        what={t('o plano escolhido')}
         onRetry={() => void plans.refetch()}
       />
     );
   if (requestedPlan !== null && !selectedPlan)
     return (
       <Box component="main" sx={{ maxWidth: 640, mx: 'auto', p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <LanguageSelector />
+        </Box>
         <Alert severity="warning" data-testid="setup-plan-unavailable">
-          O plano escolhido não está disponível. Escolha um dos planos publicados para continuar.
+          {t(
+            'O plano escolhido não está disponível. Escolha um dos planos publicados para continuar.',
+          )}
         </Alert>
         <Button component={Link} to="/#planos" sx={{ mt: 2 }} data-testid="setup-change-plan">
-          Ver planos disponíveis
+          {t('Ver planos disponíveis')}
         </Button>
       </Box>
     );
   return (
     <main className="account-page">
       <section className="panel account-panel">
-        <p className="eyebrow">NOVO ESTABELECIMENTO</p>
-        <h1>Seu estacionamento começa aqui.</h1>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <LanguageSelector />
+        </Box>
+        <p className="eyebrow">{t('NOVO ESTABELECIMENTO')}</p>
+        <Chip
+          label={t('Etapa {current} de {total}', { current: 1, total: 3 })}
+          color="primary"
+          variant="outlined"
+          aria-current="step"
+          data-testid="setup-progress"
+          sx={{ mb: 2 }}
+        />
+        <h1>{t('Seu estacionamento começa aqui.')}</h1>
         <p className="muted">
-          Cadastre seu estabelecimento e a conta do dono. Seus clientes, preços e funcionários ficam
-          separados dos demais estabelecimentos.
+          {t('Informe os dados do negócio e crie o acesso do dono. Não pedimos cartão de crédito.')}
         </p>
         {selectedPlan && (
           <Alert severity="info" data-testid="setup-selected-plan" sx={{ mb: 3 }}>
             <Typography component="p" fontWeight={700}>
               {selectedPlan.nome}
             </Typography>
-            <Typography component="p">{money(oferta(selectedPlan).mensal)} por mês.</Typography>
             <Typography component="p">
-              {oferta(selectedPlan).cobranca}. Comece com 7 dias grátis.
+              {money(oferta(selectedPlan).mensal)} {t('por mês.')}
+            </Typography>
+            <Typography component="p">
+              {oferta(selectedPlan).cobranca}. {t('Comece com 7 dias grátis.')}
             </Typography>
             <Button component={Link} to="/#planos" size="small" data-testid="setup-change-plan">
-              Alterar plano
+              {t('Alterar plano')}
             </Button>
           </Alert>
         )}
         <RecordForm
-          submitLabel="Criar minha conta"
+          submitLabel={t('Criar minha conta')}
           spec={{
             schema: setupSchema,
             defaults: {
@@ -102,34 +122,34 @@ export function SetupPage() {
               confirmarSenha: '',
             },
             fields: [
-              { name: 'estacionamento', label: 'Nome do estacionamento' },
+              { name: 'estacionamento', label: t('Nome do estacionamento') },
               {
                 name: 'tipoPessoa',
-                label: 'Tipo de pessoa',
+                label: t('Tipo de pessoa'),
                 kind: 'select',
                 options: [
-                  { value: 'PJ', label: 'Pessoa jurídica' },
-                  { value: 'PF', label: 'Pessoa física' },
+                  { value: 'PJ', label: t('Pessoa jurídica') },
+                  { value: 'PF', label: t('Pessoa física') },
                 ],
               },
-              { name: 'documento', label: 'CNPJ ou CPF', hint: 'Somente dígitos.' },
-              { name: 'nome', label: 'Nome do dono' },
-              { name: 'email', label: 'E-mail de acesso', kind: 'email' },
+              { name: 'documento', label: t('CNPJ ou CPF'), hint: t('Somente dígitos.') },
+              { name: 'nome', label: t('Nome do dono') },
+              { name: 'email', label: t('E-mail de acesso'), kind: 'email' },
               {
                 name: 'telefone',
-                label: 'Telefone com DDD (opcional)',
+                label: t('Telefone com DDD (opcional)'),
                 kind: 'tel',
                 optional: true,
                 autoComplete: 'tel',
-                hint: 'Ex.: (11) 99999-9999.',
+                hint: t('Ex.: (11) 99999-9999.'),
               },
               {
                 name: 'senha',
-                label: 'Senha',
+                label: t('Senha'),
                 kind: 'password',
-                hint: 'Pelo menos 6 caracteres.',
+                hint: t('Pelo menos 6 caracteres.'),
               },
-              { name: 'confirmarSenha', label: 'Confirmar senha', kind: 'password' },
+              { name: 'confirmarSenha', label: t('Confirmar senha'), kind: 'password' },
             ],
           }}
           error={error}
@@ -172,14 +192,16 @@ export function SetupPage() {
             <Switch
               checked={consentimentoPublicidade}
               onChange={setConsentimentoPublicidade}
-              label="Autorizo a medição de conversões do Google Ads e Meta Ads"
-              description="Opcional. Se aceitar, o e-mail e o telefone informado serão enviados em formato hash, junto dos identificadores de anúncio disponíveis, para medir cadastros de teste e assinaturas."
+              label={t('Autorizo a medição de conversões do Google Ads e Meta Ads')}
+              description={t(
+                'Opcional. Se aceitar, o e-mail e o telefone informado serão enviados em formato hash, junto dos identificadores de anúncio disponíveis, para medir cadastros de teste e assinaturas.',
+              )}
               data-testid="setup-google-ads-consent"
             />
           </div>
         </RecordForm>
         <Link className="text-link" data-testid="back-login" to="/login">
-          Voltar para entrar
+          {t('Voltar para entrar')}
         </Link>
       </section>
     </main>

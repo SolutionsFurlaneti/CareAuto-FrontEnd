@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { PageHeader } from '../../components/PageHeader';
@@ -9,11 +10,12 @@ import { Button, EmptyState, Modal, Skeleton, StatusBadge } from '../../ui';
 import { useRecords, useSaveRecord, useCommand } from '../shared/hooks';
 import { useAuthStore, hasRole } from '../../stores/authStore';
 import type { Assinatura } from '../../lib/types';
-import { money, dateTime } from '../../lib/format';
+import { money, dateTime, integer } from '../../lib/format';
 import { label } from '../../lib/labels';
 import { confirmAction } from '../../lib/swal';
 import { subscriptionSchema } from './subscriptionSchema';
 export function SubscriptionsPage() {
+  useI18n();
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const query = useRecords<Assinatura>('assinaturas', page);
@@ -52,7 +54,7 @@ export function SubscriptionsPage() {
                 action.mutate({ action: r.assinaturaId + '/encerramento' });
             }}
           >
-            Encerrar
+            {translate('Encerrar')}
           </Button>
         ) : (
           '—'
@@ -61,12 +63,12 @@ export function SubscriptionsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="FINANCEIRO"
-        title="Assinaturas"
+        eyebrow={translate('FINANCEIRO')}
+        title={translate('Assinaturas')}
         description={
           writable
-            ? 'Gerencie os vínculos dos clientes mensalistas.'
-            : 'Consulte as assinaturas vinculadas à sua conta.'
+            ? translate('Gerencie os vínculos dos clientes mensalistas.')
+            : translate('Consulte as assinaturas vinculadas à sua conta.')
         }
         action={
           writable && (
@@ -78,22 +80,24 @@ export function SubscriptionsPage() {
               }}
             >
               <Plus size={18} />
-              Adicionar assinatura
+              {translate('Adicionar assinatura')}
             </Button>
           )
         }
       />
       <section className="panel">
         <div className="panel-toolbar">
-          <h2>Clientes mensalistas</h2>
-          <span className="muted">{query.data?.total ?? '—'} registros</span>
+          <h2>{translate('Clientes mensalistas')}</h2>
+          <span className="muted">
+            {query.data ? integer(query.data.total) : '—'} {translate('registros')}
+          </span>
         </div>
         {query.isPending ? (
           <Skeleton />
         ) : query.isError ? (
           <QueryError
             error={query.error}
-            what="as assinaturas"
+            what={translate('as assinaturas')}
             onRetry={() => void query.refetch()}
           />
         ) : query.data.items.length ? (
@@ -102,12 +106,12 @@ export function SubscriptionsPage() {
             columns={columns}
             rowKey={(r) => r.assinaturaId}
             testId="subscriptions-table"
-            caption="Assinaturas"
+            caption={translate('Assinaturas')}
           />
         ) : (
           <EmptyState
-            title="Nenhuma assinatura registrada"
-            description="Os vínculos de mensalistas aparecerão aqui."
+            title={translate('Nenhuma assinatura registrada')}
+            description={translate('Os vínculos de mensalistas aparecerão aqui.')}
           />
         )}
         {query.data && (
@@ -123,7 +127,7 @@ export function SubscriptionsPage() {
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Adicionar assinatura"
+        title={translate('Adicionar assinatura')}
         busy={save.isPending}
         actions={
           <>
@@ -133,7 +137,7 @@ export function SubscriptionsPage() {
               disabled={save.isPending}
               onClick={() => setOpen(false)}
             >
-              Cancelar
+              {translate('Cancelar')}
             </Button>
             <Button
               type="submit"
@@ -141,7 +145,7 @@ export function SubscriptionsPage() {
               data-testid="form-submit"
               busy={save.isPending}
             >
-              Salvar assinatura
+              {translate('Salvar assinatura')}
             </Button>
           </>
         }
@@ -149,8 +153,9 @@ export function SubscriptionsPage() {
         {open && (
           <>
             <p className="muted">
-              A assinatura habilita a tabela mensal. Cobranças recorrentes não são emitidas
-              automaticamente.
+              {translate(
+                'A assinatura habilita a tabela mensal. Cobranças recorrentes não são emitidas automaticamente.',
+              )}
             </p>
             <RecordForm
               formId="subscription-form"

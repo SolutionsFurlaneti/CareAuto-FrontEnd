@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { Field } from './Field';
 import { money } from '../lib/format';
+import { useLocaleStore } from '../stores/localeStore';
 interface Props {
   label: string;
   value: number | null;
@@ -13,17 +14,20 @@ interface Props {
   'data-testid'?: string;
 }
 export const MoneyField = forwardRef<HTMLInputElement, Props>(
-  ({ value, onChange, nullable, ...props }, ref) => (
-    <Field
-      {...props}
-      ref={ref}
-      inputMode="numeric"
-      value={value === null ? '' : money(value)}
-      onChange={(e) => {
-        const digits = e.target.value.replace(/\D/g, '');
-        onChange(!digits && nullable ? null : Number(digits) / 100);
-      }}
-    />
-  ),
+  ({ value, onChange, nullable, ...props }, ref) => {
+    useLocaleStore((state) => state.locale);
+    return (
+      <Field
+        {...props}
+        ref={ref}
+        inputMode="numeric"
+        value={value === null ? '' : money(value)}
+        onChange={(e) => {
+          const digits = e.target.value.replace(/\D/g, '');
+          onChange(!digits && nullable ? null : Number(digits) / 100);
+        }}
+      />
+    );
+  },
 );
 MoneyField.displayName = 'MoneyField';

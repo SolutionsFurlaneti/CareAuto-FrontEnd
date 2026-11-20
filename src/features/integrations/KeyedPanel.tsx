@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import type { IntegrationTab } from './catalog';
 import { IntegrationForm } from './IntegrationForm';
 import { StatusSummary } from './StatusSummary';
@@ -21,6 +22,7 @@ export function KeyedTab({
   data: KeyedConfiguration;
   formKey: string;
 }) {
+  const { t } = useI18n();
   const success = 'Integração salva. A próxima consulta usará esta configuração.';
   if (tab === 'configuracoes')
     return (
@@ -28,7 +30,7 @@ export function KeyedTab({
         slug={slug}
         form={settingsForm(slug, data)}
         formKey={formKey}
-        submitLabel="Salvar configurações"
+        submitLabel={t('Salvar configurações')}
         success={success}
       />
     );
@@ -41,13 +43,15 @@ export function KeyedTab({
         rows={[
           {
             label: slug === 'claude' ? 'Chave de API' : 'Token',
-            value: hasSavedSecret(slug, data)
-              ? slug === 'claude'
-                ? 'Salva'
-                : 'Salvo'
-              : slug === 'claude'
-                ? 'Não informada'
-                : 'Não informado',
+            value: t(
+              hasSavedSecret(slug, data)
+                ? slug === 'claude'
+                  ? 'Salva'
+                  : 'Salvo'
+                : slug === 'claude'
+                  ? 'Não informada'
+                  : 'Não informado',
+            ),
           },
           ...(slug === 'claude'
             ? [
@@ -63,7 +67,7 @@ export function KeyedTab({
       slug={slug}
       form={credentialsForm(slug, data)}
       formKey={formKey}
-      submitLabel="Salvar credenciais"
+      submitLabel={t('Salvar credenciais')}
       success={success}
     />
   );

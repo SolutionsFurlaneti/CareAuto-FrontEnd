@@ -1,4 +1,5 @@
 import { api } from '../../lib/apiClient';
+import { getLocale, translate } from '../../i18n';
 
 export type TipoPlanoPublico = 'PRE_PAGO' | 'POS_PAGO';
 export interface PlanoPublico {
@@ -38,22 +39,31 @@ export interface OfertaPlano {
 }
 
 const reais = (v: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+  new Intl.NumberFormat(getLocale(), { style: 'currency', currency: 'BRL' }).format(v);
 
 export function oferta(p: PlanoPublico): OfertaPlano {
   const mensal = Math.round((p.valorPeriodo / Math.max(p.meses, 1)) * 100) / 100;
   const cobranca =
     p.tipo === 'PRE_PAGO'
       ? p.meses > 1
-        ? `${reais(p.valorPeriodo)} à vista por ${p.meses} meses`
-        : `${reais(p.valorPeriodo)} pagos antecipadamente por 30 dias`
+        ? translate('{amount} à vista por {months} meses', {
+            amount: reais(p.valorPeriodo),
+            months: p.meses,
+          })
+        : translate('{amount} pagos antecipadamente por 30 dias', { amount: reais(p.valorPeriodo) })
       : p.meses > 1
-        ? `${reais(p.valorPeriodo)} ${periodo[p.periodicidade]}, por boleto`
-        : 'Cobrança mensal por boleto';
+        ? translate('{amount} {period}, por boleto', {
+            amount: reais(p.valorPeriodo),
+            period: translate(periodo[p.periodicidade]),
+          })
+        : translate('Cobrança mensal por boleto');
   const economizado = p.valorMensal * p.meses - p.valorPeriodo;
   const economia =
     p.descontoPercentual > 0 && economizado > 0
-      ? `${p.descontoPercentual.toLocaleString('pt-BR')}% off · economize ${reais(economizado)}`
+      ? translate('{discount}% off · economize {amount}', {
+          discount: p.descontoPercentual.toLocaleString(getLocale()),
+          amount: reais(economizado),
+        })
       : null;
   return { mensal, cobranca, economia };
 }

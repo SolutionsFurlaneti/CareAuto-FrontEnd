@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useAuthStore, sessionScope } from '../../stores/authStore';
 import { describeError } from '../../lib/describeError';
 import { listRecords, allRecords, saveRecord, deactivateRecord, command } from './api';
+import { translate } from '../../i18n';
 export const resourceKeys = {
   all: (resource: string, userId: string | null) => [resource, userId] as const,
   list: (resource: string, userId: string | null, page: number) =>
@@ -34,7 +35,7 @@ export function useSaveRecord<T>(resource: string) {
     onSuccess: () => {
       void cache.invalidateQueries({ queryKey: resourceKeys.all(resource, userId) });
       void cache.invalidateQueries({ queryKey: ['overview', userId] });
-      toast.success('Registro salvo com sucesso.');
+      toast.success(translate('Registro salvo com sucesso.'));
     },
     onError: (error) => toast.error(describeError(error)),
   });
@@ -46,7 +47,7 @@ export function useDeactivate(resource: string) {
     mutationFn: (id: number) => deactivateRecord(resource, id),
     onSuccess: () => {
       void cache.invalidateQueries({ queryKey: resourceKeys.all(resource, userId) });
-      toast.success('Registro desativado.');
+      toast.success(translate('Registro desativado.'));
     },
     onError: (e) => toast.error(describeError(e)),
   });
@@ -59,7 +60,7 @@ export function useCommand<T>(resource: string) {
       command<T>(resource, action, data, method),
     onSuccess: () => {
       void cache.invalidateQueries({ predicate: (q) => q.queryKey.includes(userId) });
-      toast.success('Operação concluída.');
+      toast.success(translate('Operação concluída.'));
     },
     onError: (e) => toast.error(describeError(e)),
   });

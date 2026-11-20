@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { useState } from 'react';
 import { z } from 'zod';
 import { Plus } from 'lucide-react';
@@ -66,6 +67,7 @@ const resetSpec: FormSpec = {
   ],
 };
 export function UsersPage() {
+  useI18n();
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<{ type: 'new' | 'edit' | 'reset'; user?: User } | null>(null);
   const q = useRecords<User>('usuarios', page);
@@ -81,31 +83,36 @@ export function UsersPage() {
   return (
     <>
       <PageHeader
-        eyebrow="ADMINISTRAÇÃO"
-        title="Equipe e acesso"
-        description="Você administra o estacionamento. Sua equipe cuida da operação."
+        eyebrow={translate('ADMINISTRAÇÃO')}
+        title={translate('Equipe e acesso')}
+        description={translate('Você administra o estacionamento. Sua equipe cuida da operação.')}
         action={
           <Button data-testid="user-new" onClick={() => open('new')}>
             <Plus size={18} />
-            Adicionar funcionário
+            {translate('Adicionar funcionário')}
           </Button>
         }
       />
       <p className="notice">
-        Funcionários podem cadastrar clientes e veículos e operar estadias e serviços.
-        Configurações, financeiro e gestão de acessos ficam com o Administrador.
+        {translate(
+          'Funcionários podem cadastrar clientes e veículos e operar estadias e serviços. Configurações, financeiro e gestão de acessos ficam com o Administrador.',
+        )}
       </p>
       <section className="panel">
         {q.isPending ? (
           <Skeleton />
         ) : q.isError ? (
-          <QueryError error={q.error} what="os usuários" onRetry={() => void q.refetch()} />
+          <QueryError
+            error={q.error}
+            what={translate('os usuários')}
+            onRetry={() => void q.refetch()}
+          />
         ) : q.data.items.length ? (
           <DataTable
             rows={q.data.items}
             rowKey={(r) => r.usuarioId}
             testId="users-table"
-            caption="Equipe"
+            caption={translate('Equipe')}
             columns={[
               {
                 label: 'Pessoa',
@@ -118,7 +125,8 @@ export function UsersPage() {
               },
               {
                 label: 'Perfil',
-                render: (r) => (r.perfil === 'Admin' ? 'Administrador' : 'Funcionário'),
+                render: (r) =>
+                  r.perfil === 'Admin' ? translate('Administrador') : translate('Funcionário'),
               },
               {
                 label: 'Acesso',
@@ -128,9 +136,9 @@ export function UsersPage() {
                     label={
                       r.ativo
                         ? r.deveTrocarSenha
-                          ? 'Troca de senha pendente'
-                          : 'Ativo'
-                        : 'Desativado'
+                          ? translate('Troca de senha pendente')
+                          : translate('Ativo')
+                        : translate('Desativado')
                     }
                   />
                 ),
@@ -146,14 +154,14 @@ export function UsersPage() {
                         variant="ghost"
                         onClick={() => open('edit', r)}
                       >
-                        Editar
+                        {translate('Editar')}
                       </Button>
                       <Button
                         data-testid="user-reset"
                         variant="ghost"
                         onClick={() => open('reset', r)}
                       >
-                        Redefinir senha
+                        {translate('Redefinir senha')}
                       </Button>
                     </div>
                   ) : (
@@ -163,7 +171,10 @@ export function UsersPage() {
             ]}
           />
         ) : (
-          <EmptyState title="Nenhuma conta" description="As contas cadastradas aparecerão aqui." />
+          <EmptyState
+            title={translate('Nenhuma conta')}
+            description={translate('As contas cadastradas aparecerão aqui.')}
+          />
         )}
         {q.data && <Pagination page={page} size={20} total={q.data.total} onChange={setPage} />}
       </section>
@@ -173,10 +184,10 @@ export function UsersPage() {
         onClose={() => setModal(null)}
         title={
           modal?.type === 'reset'
-            ? 'Redefinir senha'
+            ? translate('Redefinir senha')
             : modal?.type === 'edit'
-              ? 'Editar funcionário'
-              : 'Adicionar funcionário'
+              ? translate('Editar funcionário')
+              : translate('Adicionar funcionário')
         }
         actions={
           <>
@@ -186,10 +197,10 @@ export function UsersPage() {
               disabled={pending}
               onClick={() => setModal(null)}
             >
-              Cancelar
+              {translate('Cancelar')}
             </Button>
             <Button data-testid="form-submit" type="submit" form="user-form" busy={pending}>
-              Salvar
+              {translate('Salvar')}
             </Button>
           </>
         }

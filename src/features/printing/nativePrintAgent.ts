@@ -14,5 +14,4 @@ export interface NativePrintAgentPlugin {
   stop(): Promise<void>;
 }
 
-export const nativePrintAgent =
-  registerPlugin<NativePrintAgentPlugin>('AndroidPrintAgent');
+export const nativePrintAgent = registerPlugin<NativePrintAgentPlugin>('AndroidPrintAgent');

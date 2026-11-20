@@ -101,13 +101,32 @@ test('visitor explores the public home and simulators, then registers with the p
       page.getByText(/Não\. Todos os planos incluem todas as funcionalidades/),
     ).toBeVisible();
 
-    await expect(page.getByTestId('lp-tutorial-coming-soon')).toBeVisible();
+    const tutorials = page.locator('#como-funciona');
+    await expect(tutorials.getByTestId('lp-tutorial-coming-soon')).toBeVisible();
+    await expect(tutorials.getByRole('tabpanel')).toContainText('Etapa 1 de 3');
+    await expect(page.getByRole('link', { name: 'Escolher plano e criar conta' })).toHaveAttribute(
+      'href',
+      '#planos',
+    );
+    await page.getByRole('button', { name: 'Ver orientações desta etapa' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Crie sua conta de administrador' }),
+    ).toBeFocused();
+    await tutorials.screenshot({ path: testInfo.outputPath('onboarding.png') });
     await page.getByRole('tab', { name: 'Configuração', exact: true }).click();
     await expect(
-      page.getByRole('tabpanel').filter({ hasText: 'Prepare a operação do seu negócio' }),
+      tutorials.getByRole('tabpanel').filter({ hasText: 'Prepare a operação do seu negócio' }),
     ).toBeVisible();
+    await expect(tutorials.getByRole('tabpanel')).toContainText('Etapa 2 de 3');
     await page.getByRole('tab', { name: 'Dia a dia', exact: true }).click();
     await expect(page.getByText('Da primeira entrada ao recebimento')).toBeVisible();
+    await expect(tutorials.getByRole('tabpanel')).toContainText('Etapa 3 de 3');
+    await expect(page.locator('#como-funciona .MuiStep-root.Mui-completed')).toHaveCount(0);
+    await page.getByRole('tab', { name: 'Cadastro', exact: true }).click();
+    await expect(tutorials.getByRole('tabpanel')).toContainText('Etapa 1 de 3');
+    await page.getByTestId('lp-next-step-0').click();
+    await expect(page.getByRole('tab', { name: 'Configuração', exact: true })).toBeFocused();
+    await expect(tutorials.getByRole('tabpanel')).toContainText('Etapa 2 de 3');
     await expect(page.locator('#como-funciona iframe, #como-funciona video')).toHaveCount(0);
     await expect(page.getByTestId('lp-testimonials-empty')).toContainText(
       'Relatos de clientes em breve',
@@ -141,6 +160,14 @@ test('visitor explores the public home and simulators, then registers with the p
     await expect(menu).not.toBeVisible();
     await expect(page).toHaveURL(/#simulador$/);
 
+    await page.getByRole('tab', { name: 'Cadastro', exact: true }).click();
+    const tutorialPreview = page.getByTestId('lp-tutorial-preview');
+    const tutorialHeading = page.getByRole('heading', {
+      name: 'Crie sua conta de administrador',
+    });
+    const tutorialCard = page
+      .locator('#como-funciona .MuiCard-root')
+      .filter({ has: tutorialPreview });
     for (const theme of ['light', 'dark']) {
       if ((await page.locator('html').getAttribute('data-theme')) !== theme) {
         const compact = page.viewportSize()!.width < 600;
@@ -151,6 +178,19 @@ test('visitor explores the public home and simulators, then registers with the p
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
       for (const width of [320, 390, 768, 1024, 1440]) {
         await page.setViewportSize({ width, height: 900 });
+        await page.getByRole('button', { name: 'Ver orientações desta etapa' }).click();
+        await expect(tutorialHeading).toBeFocused();
+        await expect.poll(() => tutorialCard.evaluate((card) => card.scrollLeft)).toBe(0);
+        const cardBounds = await tutorialCard.boundingBox();
+        expect(cardBounds).not.toBeNull();
+        for (const element of [tutorialPreview, tutorialHeading]) {
+          const bounds = await element.boundingBox();
+          expect(bounds).not.toBeNull();
+          expect(bounds!.x).toBeGreaterThanOrEqual(cardBounds!.x - 1);
+          expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(
+            cardBounds!.x + cardBounds!.width + 1,
+          );
+        }
         await expect
           .poll(() =>
             page.evaluate(

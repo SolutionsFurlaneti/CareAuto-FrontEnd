@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { toast } from 'sonner';
 import { Button } from '../../ui';
 import type { Pagamento } from '../../lib/types';
@@ -14,6 +15,7 @@ export function AsaasPayment({
   writable: boolean;
   refresh: () => void;
 }) {
+  const { t } = useI18n();
   const command = useCommand<Pagamento>('pagamentos');
   const linked = !!p.asaasCobrancaId || !!p.integracaoStatus;
   const emit = p.status === 'PENDENTE' && !linked && p.meio !== 'DINHEIRO' && !!p.clienteId;
@@ -24,15 +26,15 @@ export function AsaasPayment({
   return (
     <div className="asaas-payment-actions">
       {p.asaasOrigem === 'PLATAFORMA' && (
-        <small>Recebimento na plataforma — repasse pela gestão</small>
+        <small>{t('Recebimento na plataforma — repasse pela gestão')}</small>
       )}
       {p.asaasAmbiente && (
-        <small>{p.asaasAmbiente === 'SANDBOX' ? 'Sandbox — teste' : 'Asaas — produção'}</small>
+        <small>{t(p.asaasAmbiente === 'SANDBOX' ? 'Sandbox — teste' : 'Asaas — produção')}</small>
       )}
-      {linked && !p.asaasCobrancaId && <small>Emissão aguardando conciliação</small>}
+      {linked && !p.asaasCobrancaId && <small>{t('Emissão aguardando conciliação')}</small>}
       {invoice && p.status === 'PENDENTE' && (
         <a className="text-link" href={invoice} target="_blank" rel="noopener noreferrer">
-          Abrir fatura Asaas
+          {t('Abrir fatura Asaas')}
         </a>
       )}
       {p.pixCopiaECola && p.status === 'PENDENTE' && (
@@ -41,13 +43,13 @@ export function AsaasPayment({
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(p.pixCopiaECola!);
-              toast.success('Pix copiado.');
+              toast.success(translate('Pix copiado.'));
             } catch {
-              toast.error('Não foi possível copiar. Abra a fatura para pagar.');
+              toast.error(translate('Não foi possível copiar. Abra a fatura para pagar.'));
             }
           }}
         >
-          Copiar Pix
+          {t('Copiar Pix')}
         </Button>
       )}
       {writable && emit && (
@@ -57,20 +59,22 @@ export function AsaasPayment({
           onClick={async () => {
             if (
               await confirmAction(
-                'Emitir cobrança no Asaas?',
-                `${money(p.valorCentavos / 100)} será enviado ao ambiente configurado em Integrações.`,
-                'Emitir cobrança',
+                t('Emitir cobrança no Asaas?'),
+                t('{amount} será enviado ao ambiente configurado em Integrações.', {
+                  amount: money(p.valorCentavos / 100),
+                }),
+                t('Emitir cobrança'),
               )
             )
               action('emitir');
           }}
         >
-          Emitir no Asaas
+          {t('Emitir no Asaas')}
         </Button>
       )}
       {writable && linked && (
         <Button variant="ghost" busy={command.isPending} onClick={() => action('sincronizar')}>
-          Atualizar cobrança
+          {t('Atualizar cobrança')}
         </Button>
       )}
       {writable && p.asaasCobrancaId && p.status === 'PENDENTE' && (
@@ -80,15 +84,15 @@ export function AsaasPayment({
           onClick={async () => {
             if (
               await confirmAction(
-                'Cancelar cobrança no Asaas?',
-                'A cobrança será cancelada no provedor e o histórico será preservado.',
-                'Cancelar cobrança',
+                t('Cancelar cobrança no Asaas?'),
+                t('A cobrança será cancelada no provedor e o histórico será preservado.'),
+                t('Cancelar cobrança'),
               )
             )
               action('cancelar');
           }}
         >
-          Cancelar no Asaas
+          {t('Cancelar no Asaas')}
         </Button>
       )}
     </div>

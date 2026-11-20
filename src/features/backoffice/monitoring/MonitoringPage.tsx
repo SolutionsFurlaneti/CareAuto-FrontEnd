@@ -1,3 +1,4 @@
+import { getLocale, translate, useI18n } from '../../../i18n';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Activity, Clock3, Globe2, MonitorSmartphone, RefreshCw, Users } from 'lucide-react';
 import { Chip, Tooltip as MuiTooltip } from '@mui/material';
@@ -28,19 +29,21 @@ import type {
 } from './types';
 import './monitoring.css';
 
-const number = (value: number) => new Intl.NumberFormat('pt-BR').format(value);
+const number = (value: number) => new Intl.NumberFormat(getLocale()).format(value);
 const percent = (value: number) =>
-  new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(value) + '%';
+  new Intl.NumberFormat(getLocale(), { maximumFractionDigits: 1 }).format(value) + '%';
 const duration = (value: number | null | undefined) =>
-  value === null || value === undefined ? 'Sem amostras' : number(Math.round(value)) + ' ms';
+  value === null || value === undefined
+    ? translate('Sem amostras')
+    : number(Math.round(value)) + ' ms';
 const dateTime = (value: string) =>
-  new Intl.DateTimeFormat('pt-BR', {
+  new Intl.DateTimeFormat(getLocale(), {
     timeZone: 'America/Sao_Paulo',
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
 const shortDate = (value: string) =>
-  new Intl.DateTimeFormat('pt-BR', {
+  new Intl.DateTimeFormat(getLocale(), {
     timeZone: 'America/Sao_Paulo',
     day: '2-digit',
     month: '2-digit',
@@ -49,11 +52,12 @@ function Panel({ children, className = '' }: { children: ReactNode; className?: 
   return <section className={'telemetry-panel ' + className}>{children}</section>;
 }
 function Heading({ title, subtitle }: { title: string; subtitle?: string }) {
+  const { t } = useI18n();
   return (
     <div className="telemetry-panel-heading">
       <div>
-        <h2>{title}</h2>
-        {subtitle && <p>{subtitle}</p>}
+        <h2>{t(title)}</h2>
+        {subtitle && <p>{t(subtitle)}</p>}
       </div>
     </div>
   );
@@ -71,18 +75,19 @@ function Bars({
   limit?: number;
   blue?: boolean;
 }) {
+  const { t } = useI18n();
   const maximum = Math.max(1, ...items.map((item) => item.count));
   return (
     <div className={'telemetry-breakdown' + (blue ? ' is-blue' : '')}>
-      <h3>{title}</h3>
+      <h3>{t(title)}</h3>
       {!items.length ? (
-        <p className="telemetry-note">Sem dados no período.</p>
+        <p className="telemetry-note">{t('Sem dados no período.')}</p>
       ) : (
         <ul>
           {items.slice(0, limit).map((item) => (
             <li key={item.name}>
               <div>
-                <span>{item.name || 'Não informado'}</span>
+                <span>{item.name || t('Não informado')}</span>
                 <small>
                   {number(item.count)} · {percent(total ? (item.count / total) * 100 : 0)}
                 </small>
@@ -96,7 +101,7 @@ function Bars({
       )}
       {items.length > limit && (
         <details className="telemetry-table-toggle">
-          <summary>Ver todos ({items.length})</summary>
+          <summary>{t('Ver todos ({count})', { count: number(items.length) })}</summary>
           <ul>
             {items.slice(limit).map((item) => (
               <li key={item.name}>
@@ -115,6 +120,7 @@ function Bars({
   );
 }
 function Metrics({ data }: { data: MonitoringOverview }) {
+  const { t } = useI18n();
   const timing = data.pageViewTiming ?? data.initialPageTtfb;
   const mobile = timing.mobileSampleCount > 0;
   return (
@@ -123,11 +129,13 @@ function Metrics({ data }: { data: MonitoringOverview }) {
         <span className="telemetry-metric-icon">
           <Activity size={18} />
         </span>
-        <h2>Total de requisições</h2>
+        <h2>{t('Total de requisições')}</h2>
         <strong data-testid="monitoring-total-requests">{number(data.totalRequests)}</strong>
-        <p>No período selecionado</p>
+        <p>{t('No período selecionado')}</p>
         <div className="telemetry-metric-foot">
-          <span>{number(data.uniqueIps)} IPs únicos</span>
+          <span>
+            {number(data.uniqueIps)} {t('IPs únicos')}
+          </span>
           <span>{number(data.botRequests)} bots/crawlers</span>
         </div>
       </article>
@@ -135,35 +143,37 @@ function Metrics({ data }: { data: MonitoringOverview }) {
         <span className="telemetry-metric-icon">
           <Users size={18} />
         </span>
-        <h2>Sessões únicas</h2>
+        <h2>{t('Sessões únicas')}</h2>
         <strong data-testid="monitoring-unique-sessions">{number(data.uniqueSessions)}</strong>
-        <p>Identificadores analíticos distintos</p>
+        <p>{t('Identificadores analíticos distintos')}</p>
         <div className="telemetry-metric-foot">
-          <span>Uma sessão por aba do navegador</span>
+          <span>{t('Uma sessão por aba do navegador')}</span>
         </div>
       </article>
       <article className="telemetry-metric telemetry-metric-ttfb">
         <span className="telemetry-metric-icon">
           <Clock3 size={18} />
         </span>
-        <h2>Tempo de navegação</h2>
-        <small>{mobile ? 'p75 mobile' : 'p75 de todas as amostras'}</small>
+        <h2>{t('Tempo de navegação')}</h2>
+        <small>{mobile ? t('p75 mobile') : t('p75 de todas as amostras')}</small>
         <strong data-testid="monitoring-ttfb" className={!timing.sampleCount ? 'is-empty' : ''}>
           {duration(mobile ? timing.mobileP75Ms : timing.p75Ms)}
         </strong>
         <p>
           {mobile
-            ? number(timing.mobileSampleCount) + ' amostras mobile'
-            : number(timing.sampleCount) + ' amostras válidas'}
+            ? number(timing.mobileSampleCount) + t('amostras mobile')
+            : number(timing.sampleCount) + t('amostras válidas')}
         </p>
         <dl className="telemetry-mini-stats">
-          <dt>Todos os dispositivos</dt>
-          <dd>{number(timing.sampleCount)} amostras</dd>
+          <dt>{t('Todos os dispositivos')}</dt>
+          <dd>
+            {number(timing.sampleCount)} {t('amostras')}
+          </dd>
           <dt>p75</dt>
           <dd>{duration(timing.p75Ms)}</dd>
           <dt>p95</dt>
           <dd>{duration(timing.p95Ms)}</dd>
-          <dt>Média</dt>
+          <dt>{t('Média')}</dt>
           <dd>{duration(timing.averageMs)}</dd>
         </dl>
       </article>
@@ -171,18 +181,23 @@ function Metrics({ data }: { data: MonitoringOverview }) {
         <span className="telemetry-metric-icon">
           <MonitorSmartphone size={18} />
         </span>
-        <h2>Predominância mobile</h2>
+        <h2>{t('Predominância mobile')}</h2>
         <strong data-testid="monitoring-mobile-share">{percent(data.mobilePercentage)}</strong>
-        <p>Dos acessos no período</p>
+        <p>{t('Dos acessos no período')}</p>
         <div className="telemetry-metric-foot">
-          <span>{number(data.mobileRequests)} acessos mobile</span>
-          <span>{percent(data.touchPercentage)} com toque</span>
+          <span>
+            {number(data.mobileRequests)} {t('acessos mobile')}
+          </span>
+          <span>
+            {percent(data.touchPercentage)} {t('com toque')}
+          </span>
         </div>
       </article>
     </div>
   );
 }
 function Traffic({ data, filters }: { data: MonitoringOverview; filters: MonitoringFilters }) {
+  const { t } = useI18n();
   const traffic = completeMonitoringTraffic(
     data.traffic,
     filters.startDate,
@@ -192,7 +207,7 @@ function Traffic({ data, filters }: { data: MonitoringOverview; filters: Monitor
   const trafficLabel =
     data.trafficGranularity === 'hour'
       ? (value: string) =>
-          new Intl.DateTimeFormat('pt-BR', {
+          new Intl.DateTimeFormat(getLocale(), {
             timeZone: 'America/Sao_Paulo',
             hour: '2-digit',
             minute: '2-digit',
@@ -201,18 +216,18 @@ function Traffic({ data, filters }: { data: MonitoringOverview; filters: Monitor
   return (
     <Panel>
       <Heading
-        title="Evolução do tráfego"
-        subtitle="Volume de acessos e tempo de processamento da API. Horário de Brasília."
+        title={t('Evolução do tráfego')}
+        subtitle={t('Volume de acessos e tempo de processamento da API. Horário de Brasília.')}
       />
       {data.traffic.length ? (
         <>
           <div className="telemetry-charts">
             <div>
-              <h3>Requisições</h3>
+              <h3>{t('Requisições')}</h3>
               <div
                 className="telemetry-chart"
                 role="img"
-                aria-label="Gráfico de requisições. Valores disponíveis em Ver tabela."
+                aria-label={t('Gráfico de requisições. Valores disponíveis em Ver tabela.')}
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={traffic} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
@@ -239,7 +254,7 @@ function Traffic({ data, filters }: { data: MonitoringOverview; filters: Monitor
                     <Area
                       type="monotone"
                       dataKey="requests"
-                      name="Requisições"
+                      name={t('Requisições')}
                       stroke="var(--viz-6)"
                       fill="var(--viz-6)"
                       fillOpacity={0.2}
@@ -251,11 +266,13 @@ function Traffic({ data, filters }: { data: MonitoringOverview; filters: Monitor
               </div>
             </div>
             <div>
-              <h3>Tempo médio de resposta HTTP (ms)</h3>
+              <h3>{t('Tempo médio de resposta HTTP (ms)')}</h3>
               <div
                 className="telemetry-chart"
                 role="img"
-                aria-label="Gráfico de tempo médio de resposta HTTP. Valores disponíveis em Ver tabela."
+                aria-label={t(
+                  'Gráfico de tempo médio de resposta HTTP. Valores disponíveis em Ver tabela.',
+                )}
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={traffic} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
@@ -278,7 +295,7 @@ function Traffic({ data, filters }: { data: MonitoringOverview; filters: Monitor
                     <Line
                       type="monotone"
                       dataKey="averageResponseTimeMs"
-                      name="Tempo médio (ms)"
+                      name={t('Tempo médio (ms)')}
                       stroke="var(--viz-2)"
                       strokeWidth={2}
                       dot={false}
@@ -293,45 +310,49 @@ function Traffic({ data, filters }: { data: MonitoringOverview; filters: Monitor
           <div className="telemetry-traffic-footer">
             <span>
               <i />
-              Sucesso HTTP 2xx:{' '}
+              {t('Sucesso HTTP 2xx:')}{' '}
               <strong>
-                {data.httpRequests ? percent(data.successPercentage) : 'Sem amostras'}
+                {data.httpRequests ? percent(data.successPercentage) : t('Sem amostras')}
               </strong>
             </span>
             <span>
-              Erros HTTP:{' '}
+              {t('Erros HTTP:')}{' '}
               <strong>
                 {number(data.errorRequests)} (
-                {data.httpRequests ? percent(data.errorRate) : 'sem amostras'})
+                {data.httpRequests ? percent(data.errorRate) : t('sem amostras')})
               </strong>
             </span>
             <span>
-              Média HTTP: <strong>{duration(data.averageResponseTimeMs)}</strong>
+              {t('Média HTTP:')} <strong>{duration(data.averageResponseTimeMs)}</strong>
             </span>
           </div>
           <details className="telemetry-table-toggle">
-            <summary>Ver tabela da evolução</summary>
+            <summary>{t('Ver tabela da evolução')}</summary>
             <DataTable
               testId="monitoring-traffic-table"
-              caption="Evolução do tráfego"
+              caption={t('Evolução do tráfego')}
               rows={traffic}
               rowKey={(row) => row.timestamp}
               columns={[
-                { label: 'Data (Brasília)', render: (row) => dateTime(row.timestamp) },
-                { label: 'Requisições', render: (row) => number(row.requests) },
-                { label: 'Erros HTTP', render: (row) => number(row.errors) },
-                { label: 'Tempo médio HTTP', render: (row) => duration(row.averageResponseTimeMs) },
+                { label: t('Data (Brasília)'), render: (row) => dateTime(row.timestamp) },
+                { label: t('Requisições'), render: (row) => number(row.requests) },
+                { label: t('Erros HTTP'), render: (row) => number(row.errors) },
+                {
+                  label: t('Tempo médio HTTP'),
+                  render: (row) => duration(row.averageResponseTimeMs),
+                },
               ]}
             />
           </details>
         </>
       ) : (
-        <p className="telemetry-empty">Sem tráfego registrado no período.</p>
+        <p className="telemetry-empty">{t('Sem tráfego registrado no período.')}</p>
       )}
     </Panel>
   );
 }
 function Resolutions({ data }: { data: MonitoringOverview }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<'screen' | 'viewport' | 'density' | 'ranges'>('screen');
   const ranges = useMemo(() => {
     const counts = new Map<string, number>();
@@ -361,16 +382,16 @@ function Resolutions({ data }: { data: MonitoringOverview }) {
   return (
     <Panel>
       <Heading
-        title="Resoluções e viewport"
-        subtitle="Dimensões mais frequentes entre os acessos do período."
+        title={t('Resoluções e viewport')}
+        subtitle={t('Dimensões mais frequentes entre os acessos do período.')}
       />
-      <div className="telemetry-tabs" aria-label="Dimensão analisada">
+      <div className="telemetry-tabs" aria-label={t('Dimensão analisada')}>
         {(
           [
-            ['screen', 'Tela física'],
-            ['viewport', 'Área útil'],
-            ['density', 'Densidade'],
-            ['ranges', 'Faixas'],
+            ['screen', t('Tela física')],
+            ['viewport', t('Área útil')],
+            ['density', t('Densidade')],
+            ['ranges', t('Faixas')],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -380,25 +401,28 @@ function Resolutions({ data }: { data: MonitoringOverview }) {
             onClick={() => setTab(value)}
             data-testid={'monitoring-resolution-' + value}
           >
-            {label}
+            {t(label)}
           </button>
         ))}
       </div>
       <Bars
         title={
           tab === 'density'
-            ? 'Densidade de pixels (DPR)'
+            ? t('Densidade de pixels (DPR)')
             : tab === 'ranges'
-              ? 'Faixas de largura da tela'
-              : 'Largura × altura (px)'
+              ? t('Faixas de largura da tela')
+              : t('Largura × altura (px)')
         }
-        items={selected}
+        items={
+          tab === 'ranges' ? selected.map((item) => ({ ...item, name: t(item.name) })) : selected
+        }
         total={data.totalRequests}
         limit={8}
       />
       <p className="telemetry-note">
-        Screen e viewport são informados pelo navegador em pixels CSS. Recursos não disponíveis
-        aparecem como não informados.
+        {t(
+          'Screen e viewport são informados pelo navegador em pixels CSS. Recursos não disponíveis aparecem como não informados.',
+        )}{' '}
       </p>
     </Panel>
   );
@@ -449,14 +473,15 @@ const detailFields: { key: keyof MonitoringLogDetail; label: string }[] = [
   { key: 'sessionId', label: 'Sessão analítica' },
 ];
 function HttpStatus({ code }: { code: number | null }) {
+  const { t } = useI18n();
   return code === null ? (
-    'Não informado'
+    t('Não informado')
   ) : (
     <Chip
       size="small"
       variant="outlined"
       label={code}
-      aria-label={'Status HTTP ' + code}
+      aria-label={t('Status HTTP {code}', { code })}
       color={
         code >= 500
           ? 'error'
@@ -470,26 +495,27 @@ function HttpStatus({ code }: { code: number | null }) {
   );
 }
 function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) {
+  const { t } = useI18n();
   const query = useMonitoringDetail(id);
   const data = query.data;
   return (
     <Modal
       open={id !== null}
       onClose={onClose}
-      title={'Detalhes do acesso #' + (id ?? '')}
+      title={t('Detalhes do acesso #{id}', { id: id ?? '' })}
       size="lg"
       actions={
         <Button variant="secondary" onClick={onClose} data-testid="monitoring-detail-close">
-          Fechar
+          {t('Fechar')}{' '}
         </Button>
       }
     >
       {query.isPending ? (
-        <div role="status">Carregando detalhes…</div>
+        <div role="status">{t('Carregando detalhes…')}</div>
       ) : query.isError ? (
         <QueryError
           error={query.error}
-          what="os detalhes do acesso"
+          what={t('os detalhes do acesso')}
           onRetry={() => void query.refetch()}
         />
       ) : (
@@ -500,19 +526,19 @@ function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
                 const value = data[key];
                 return (
                   <div key={key}>
-                    <dt>{label}</dt>
+                    <dt>{t(label)}</dt>
                     <dd>
                       {value === null || value === undefined || value === '' ? (
-                        'Não informado'
+                        t('Não informado')
                       ) : key === 'createdAt' ? (
                         dateTime(String(value))
                       ) : key === 'statusCode' ? (
                         <HttpStatus code={data.statusCode} />
                       ) : typeof value === 'boolean' ? (
                         value ? (
-                          'Sim'
+                          t('Sim')
                         ) : (
-                          'Não'
+                          t('Não')
                         )
                       ) : (
                         String(value)
@@ -523,12 +549,12 @@ function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
               })}
             </dl>
             <p className="telemetry-note">
-              A localização usa coordenadas autorizadas quando disponíveis, com consulta do endereço
-              aproximado. Na ausência, usa a região do IP; campos sem dados recebem valores de
-              fallback. A região do IP e o provedor da conexão também aparecem separadamente.
+              {t(
+                'A localização usa coordenadas autorizadas quando disponíveis, com consulta do endereço aproximado. Na ausência, usa a região do IP; campos sem dados recebem valores de fallback. A região do IP e o provedor da conexão também aparecem separadamente.',
+              )}{' '}
             </p>
             <p className="telemetry-note">
-              Geocodificação, quando disponível:{' '}
+              {t('Geocodificação, quando disponível:')}{' '}
               <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">
                 Geoapify
               </a>
@@ -539,24 +565,25 @@ function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
               .
             </p>
             <p className="telemetry-note">
-              Dados técnicos informados pelo navegador e pela conexão. Informações sensíveis são
-              ocultadas na captura.
+              {t(
+                'Dados técnicos informados pelo navegador e pela conexão. Informações sensíveis são ocultadas na captura.',
+              )}{' '}
             </p>
             {(['headers', 'requestBody'] as const).map((key) => (
               <details className="telemetry-table-toggle" key={key}>
                 <summary>
                   {key === 'headers' ? (
-                    'Cabeçalhos sanitizados'
+                    t('Cabeçalhos sanitizados')
                   ) : (
                     <MuiTooltip
                       title={<pre className="telemetry-code">{data.requestBody || '{}'}</pre>}
                       describeChild
                     >
-                      <span tabIndex={0}>Corpo da requisição sanitizado</span>
+                      <span tabIndex={0}>{t('Corpo da requisição sanitizado')}</span>
                     </MuiTooltip>
                   )}
                 </summary>
-                <pre className="telemetry-code">{data[key] || 'Não capturado'}</pre>
+                <pre className="telemetry-code">{data[key] || t('Não capturado')}</pre>
               </details>
             ))}
           </>
@@ -566,6 +593,7 @@ function LogDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
   );
 }
 export function BackofficeMonitoringPage() {
+  const { t } = useI18n();
   const [period, setPeriod] = useState<MonitoringPeriod>('7');
   const [range, setRange] = useState(() => periodDates('7'));
   const [trafficType, setTrafficType] = useState('all');
@@ -605,30 +633,30 @@ export function BackofficeMonitoringPage() {
       <header className="telemetry-hero">
         <div>
           <span className="telemetry-eyebrow">
-            <Globe2 size={14} /> INTELIGÊNCIA DE ACESSOS
+            <Globe2 size={14} /> {t('INTELIGÊNCIA DE ACESSOS')}{' '}
           </span>
-          <h1>Monitoramento de Acessos e Dispositivos</h1>
-          <p>Acompanhe o volume, a origem, o perfil técnico e o desempenho dos acessos.</p>
+          <h1>{t('Monitoramento de Acessos e Dispositivos')}</h1>
+          <p>{t('Acompanhe o volume, a origem, o perfil técnico e o desempenho dos acessos.')}</p>
         </div>
         <span className="telemetry-timezone">
           <Clock3 size={14} />
-          Horário de Brasília
+          {t('Horário de Brasília')}{' '}
         </span>
       </header>
-      <section className="telemetry-filters" aria-label="Filtros de monitoramento">
+      <section className="telemetry-filters" aria-label={t('Filtros de monitoramento')}>
         <SelectField
-          label="Período"
+          label={t('Período')}
           value={period}
           data-testid="monitoring-period"
           onChange={(event) => changePeriod(event.target.value as MonitoringPeriod)}
         >
-          <option value="today">Hoje</option>
-          <option value="7">Últimos 7 dias</option>
-          <option value="30">Últimos 30 dias</option>
-          <option value="custom">Personalizado</option>
+          <option value="today">{t('Hoje')}</option>
+          <option value="7">{t('Últimos 7 dias')}</option>
+          <option value="30">{t('Últimos 30 dias')}</option>
+          <option value="custom">{t('Personalizado')}</option>
         </SelectField>
         <SelectField
-          label="Tipo de tráfego"
+          label={t('Tipo de tráfego')}
           value={trafficType}
           data-testid="monitoring-traffic-type"
           onChange={(event) => {
@@ -636,12 +664,12 @@ export function BackofficeMonitoringPage() {
             setPage(1);
           }}
         >
-          <option value="all">Todos os acessos</option>
-          <option value="humans">Ocultar Bots/Crawlers</option>
-          <option value="bots">Somente Bots/Crawlers</option>
+          <option value="all">{t('Todos os acessos')}</option>
+          <option value="humans">{t('Ocultar Bots/Crawlers')}</option>
+          <option value="bots">{t('Somente Bots/Crawlers')}</option>
         </SelectField>
         <SelectField
-          label="Host"
+          label={t('Host')}
           value={host}
           data-testid="monitoring-host"
           onChange={(event) => {
@@ -649,7 +677,7 @@ export function BackofficeMonitoringPage() {
             setPage(1);
           }}
         >
-          <option value="">Todos os hosts</option>
+          <option value="">{t('Todos os hosts')}</option>
           {Array.from(
             new Set([...(data?.hosts ?? []), ...(host && host !== '__unknown__' ? [host] : [])]),
           ).map((value) => (
@@ -657,14 +685,14 @@ export function BackofficeMonitoringPage() {
               {value}
             </option>
           ))}
-          <option value="__unknown__">Host não informado</option>
+          <option value="__unknown__">{t('Host não informado')}</option>
         </SelectField>
         <span className="telemetry-date-range">
           {displayDate(range.start)} – {displayDate(range.end)}
         </span>
         <Button
           variant="ghost"
-          aria-label="Atualizar monitoramento"
+          aria-label={t('Atualizar monitoramento')}
           data-testid="monitoring-refresh"
           disabled={overview.isFetching || !dates}
           onClick={() => {
@@ -677,7 +705,7 @@ export function BackofficeMonitoringPage() {
         {period === 'custom' && (
           <div className="telemetry-custom-range">
             <Field
-              label="Data inicial"
+              label={t('Data inicial')}
               type="date"
               value={range.start}
               max={range.end}
@@ -688,7 +716,7 @@ export function BackofficeMonitoringPage() {
               }}
             />
             <Field
-              label="Data final"
+              label={t('Data final')}
               type="date"
               value={range.end}
               min={range.start}
@@ -701,29 +729,29 @@ export function BackofficeMonitoringPage() {
           </div>
         )}
         <details className="telemetry-extra-filters">
-          <summary>Mais filtros</summary>
+          <summary>{t('Mais filtros')}</summary>
           <form onSubmit={applyExtra}>
             <Field
-              label="Endereço IP"
+              label={t('Endereço IP')}
               value={ipDraft}
               maxLength={45}
-              placeholder="IPv4 ou IPv6"
+              placeholder={t('IPv4 ou IPv6')}
               data-testid="monitoring-ip"
               onChange={(event) => setIpDraft(event.target.value)}
             />
             <Field
-              label="Status HTTP"
+              label={t('Status HTTP')}
               type="number"
               min={100}
               max={599}
               step={1}
               value={statusDraft}
-              placeholder="Ex.: 500"
+              placeholder={t('Ex.: 500')}
               data-testid="monitoring-status"
               onChange={(event) => setStatusDraft(event.target.value)}
             />
             <Button type="submit" variant="secondary" data-testid="monitoring-apply-filters">
-              Aplicar filtros
+              {t('Aplicar filtros')}{' '}
             </Button>
             <Button
               variant="ghost"
@@ -736,23 +764,25 @@ export function BackofficeMonitoringPage() {
                 setPage(1);
               }}
             >
-              Limpar IP e status
+              {t('Limpar IP e status')}{' '}
             </Button>
           </form>
         </details>
       </section>
       {!dates ? (
         <p role="alert" className="telemetry-empty">
-          Informe um período válido, com data final igual ou posterior à inicial e até 366 dias.
+          {t(
+            'Informe um período válido, com data final igual ou posterior à inicial e até 366 dias.',
+          )}{' '}
         </p>
       ) : overview.isPending ? (
-        <div role="status" aria-label="Carregando monitoramento">
+        <div role="status" aria-label={t('Carregando monitoramento')}>
           <Skeleton />
         </div>
       ) : overview.isError ? (
         <QueryError
           error={overview.error}
-          what="o monitoramento"
+          what={t('o monitoramento')}
           onRetry={() => void overview.refetch()}
         />
       ) : (
@@ -760,20 +790,20 @@ export function BackofficeMonitoringPage() {
           <>
             {overview.isFetching && (
               <p role="status" className="telemetry-note">
-                Atualizando indicadores…
+                {t('Atualizando indicadores…')}{' '}
               </p>
             )}
             <Metrics data={data} />
             {data.totalRequests === 0 && (
               <p className="telemetry-empty" data-testid="monitoring-empty">
-                Nenhum acesso encontrado para os filtros selecionados.
+                {t('Nenhum acesso encontrado para os filtros selecionados.')}{' '}
               </p>
             )}
             <div className="telemetry-origin-grid">
               <Panel>
                 <OriginMap locations={data.locations} />
                 <div className="telemetry-geography">
-                  <h3>Principais países e estados</h3>
+                  <h3>{t('Principais países e estados')}</h3>
                   <div>
                     {data.countries.slice(0, 4).map((item) => (
                       <span className="telemetry-location-chip" key={'country-' + item.name}>
@@ -789,26 +819,36 @@ export function BackofficeMonitoringPage() {
                     ))}
                   </div>
                   {!data.countries.length && !data.regions.length && (
-                    <p className="telemetry-note">Origem não informada no período.</p>
+                    <p className="telemetry-note">{t('Origem não informada no período.')}</p>
                   )}
                 </div>
               </Panel>
               <Panel>
-                <Heading title="Aparelhos e sistemas" />
+                <Heading title={t('Aparelhos e sistemas')} />
                 <Bars
-                  title="Tipo de aparelho"
+                  title={t('Tipo de aparelho')}
                   items={data.devices}
                   total={data.totalRequests}
                   limit={3}
                 />
                 <Bars
-                  title="Sistema operacional"
+                  title={t('Sistema operacional')}
                   items={data.operatingSystems}
                   total={data.totalRequests}
                   limit={3}
                 />
-                <Bars title="Marcas" items={data.brands} total={data.totalRequests} limit={3} />
-                <Bars title="Modelos" items={data.models} total={data.totalRequests} limit={3} />
+                <Bars
+                  title={t('Marcas')}
+                  items={data.brands}
+                  total={data.totalRequests}
+                  limit={3}
+                />
+                <Bars
+                  title={t('Modelos')}
+                  items={data.models}
+                  total={data.totalRequests}
+                  limit={3}
+                />
               </Panel>
             </div>
             <Traffic data={data} filters={filters} />
@@ -816,24 +856,29 @@ export function BackofficeMonitoringPage() {
               <Resolutions data={data} />
               <Panel>
                 <Heading
-                  title="Perfil técnico"
-                  subtitle="Navegador, protocolo, conexão e suporte ao toque."
+                  title={t('Perfil técnico')}
+                  subtitle={t('Navegador, protocolo, conexão e suporte ao toque.')}
                 />
                 <div className="telemetry-technical-grid">
-                  <Bars title="Navegador" items={data.browsers} total={data.totalRequests} />
-                  <Bars title="Protocolo" items={data.protocols} total={data.totalRequests} blue />
+                  <Bars title={t('Navegador')} items={data.browsers} total={data.totalRequests} />
                   <Bars
-                    title="Rede efetiva"
+                    title={t('Protocolo')}
+                    items={data.protocols}
+                    total={data.totalRequests}
+                    blue
+                  />
+                  <Bars
+                    title={t('Rede efetiva')}
                     items={data.connectionTypes}
                     total={data.totalRequests}
                     blue
                   />
                   <Bars
-                    title="Tela sensível ao toque"
+                    title={t('Tela sensível ao toque')}
                     items={[
-                      { name: 'Com toque', count: data.touchRequests },
+                      { name: t('Com toque'), count: data.touchRequests },
                       {
-                        name: 'Sem toque ou não informado',
+                        name: t('Sem toque ou não informado'),
                         count: Math.max(0, data.totalRequests - data.touchRequests),
                       },
                     ]}
@@ -844,13 +889,13 @@ export function BackofficeMonitoringPage() {
             </div>
             <Panel>
               <Heading
-                title="Acessos por localidade e dispositivo"
-                subtitle="Origem, perfil de navegação e desempenho dos grupos no período."
+                title={t('Acessos por localidade e dispositivo')}
+                subtitle={t('Origem, perfil de navegação e desempenho dos grupos no período.')}
               />
               {data.localityDevices.length ? (
                 <DataTable
                   testId="monitoring-localities"
-                  caption="Acessos por localidade e dispositivo"
+                  caption={t('Acessos por localidade e dispositivo')}
                   rows={data.localityDevices}
                   rowKey={(row) =>
                     [
@@ -862,37 +907,41 @@ export function BackofficeMonitoringPage() {
                     ].join('|')
                   }
                   columns={[
-                    { label: 'Localidade', render: (row) => row.location },
-                    { label: 'Aparelho', render: (row) => row.deviceType },
+                    { label: t('Localidade'), render: (row) => row.location },
+                    { label: t('Aparelho'), render: (row) => row.deviceType },
                     {
-                      label: 'SO / Navegador',
+                      label: t('SO / Navegador'),
                       render: (row) => row.operatingSystem + ' / ' + row.browser,
                     },
-                    { label: 'Tela predominante', render: (row) => row.screenResolution },
-                    { label: 'Requisições', render: (row) => number(row.requests) },
-                    { label: '% do total', render: (row) => percent(row.percentage) },
+                    { label: t('Tela predominante'), render: (row) => row.screenResolution },
+                    { label: t('Requisições'), render: (row) => number(row.requests) },
+                    { label: t('% do total'), render: (row) => percent(row.percentage) },
                     {
-                      label: 'Tempo médio HTTP',
+                      label: t('Tempo médio HTTP'),
                       render: (row) => duration(row.averageResponseTimeMs),
                     },
                   ]}
                 />
               ) : (
-                <p className="telemetry-empty">Sem dados de localidade e dispositivo.</p>
+                <p className="telemetry-empty">{t('Sem dados de localidade e dispositivo.')}</p>
               )}
             </Panel>
             <div className="telemetry-equal-grid">
               <Panel>
                 <Heading
-                  title="Origem do tráfego"
-                  subtitle="Referências identificadas nos acessos."
+                  title={t('Origem do tráfego')}
+                  subtitle={t('Referências identificadas nos acessos.')}
                 />
-                <Bars title="Referências" items={data.referrers} total={data.totalRequests} />
+                <Bars title={t('Referências')} items={data.referrers} total={data.totalRequests} />
               </Panel>
               <Panel>
-                <Heading title="Campanhas e respostas" />
-                <Bars title="Campanhas UTM" items={data.campaigns} total={data.totalRequests} />
-                <Bars title="Status HTTP" items={data.statusCodes} total={data.httpRequests} />
+                <Heading title={t('Campanhas e respostas')} />
+                <Bars
+                  title={t('Campanhas UTM')}
+                  items={data.campaigns}
+                  total={data.totalRequests}
+                />
+                <Bars title={t('Status HTTP')} items={data.statusCodes} total={data.httpRequests} />
               </Panel>
             </div>
           </>
@@ -901,73 +950,78 @@ export function BackofficeMonitoringPage() {
       {dates && (
         <Panel>
           <Heading
-            title="Histórico de acessos"
-            subtitle="Registros individuais, do mais recente ao mais antigo. Horário de Brasília."
+            title={t('Histórico de acessos')}
+            subtitle={t(
+              'Registros individuais, do mais recente ao mais antigo. Horário de Brasília.',
+            )}
           />
           {logs.isPending ? (
-            <div role="status">Carregando acessos…</div>
+            <div role="status">{t('Carregando acessos…')}</div>
           ) : logs.isError ? (
             <QueryError
               error={logs.error}
-              what="o histórico de acessos"
+              what={t('o histórico de acessos')}
               onRetry={() => void logs.refetch()}
             />
           ) : (
             logs.data && (
               <>
                 {!logs.data.items.length ? (
-                  <p className="telemetry-empty">Nenhum registro encontrado.</p>
+                  <p className="telemetry-empty">{t('Nenhum registro encontrado.')}</p>
                 ) : (
                   <DataTable
                     material
                     testId="monitoring-logs"
-                    caption="Histórico de acessos"
+                    caption={t('Histórico de acessos')}
                     rows={logs.data.items}
                     rowKey={(row) => row.id}
                     columns={[
-                      { label: 'Data', render: (row) => dateTime(row.createdAt) },
+                      { label: t('Data'), render: (row) => dateTime(row.createdAt) },
                       {
-                        label: 'IP / Host',
+                        label: t('IP / Host'),
                         render: (row) => (
                           <>
                             <strong>{row.ipAddress}</strong>
                             <small className="telemetry-cell-sub">
-                              {row.pageHost || 'Host não informado'}
+                              {row.pageHost || t('Host não informado')}
                             </small>
                           </>
                         ),
                       },
                       {
-                        label: 'Página / Método',
+                        label: t('Página / Método'),
                         render: (row) => (
                           <>
                             <span className="telemetry-url">{row.url}</span>
                             <small className="telemetry-cell-sub">
-                              {row.method === 'PAGEVIEW' ? 'Navegação da página' : row.method}
+                              {row.method === 'PAGEVIEW' ? t('Navegação da página') : row.method}
                             </small>
                           </>
                         ),
                       },
                       {
-                        label: 'Dispositivo',
+                        label: t('Dispositivo'),
                         render: (row) =>
                           [row.deviceType, row.browser].filter(Boolean).join(' / ') ||
-                          'Não informado',
+                          t('Não informado'),
                       },
                       {
-                        label: 'Status HTTP',
+                        label: t('Status HTTP'),
                         render: (row) => <HttpStatus code={row.statusCode} />,
                       },
-                      { label: 'Tempo registrado', render: (row) => duration(row.responseTimeMs) },
                       {
-                        label: 'Detalhes',
+                        label: t('Tempo registrado'),
+                        render: (row) => duration(row.responseTimeMs),
+                      },
+                      {
+                        label: t('Detalhes'),
                         render: (row) => (
                           <Button
                             variant="ghost"
                             data-testid={'monitoring-detail-' + row.id}
                             onClick={() => setDetail(row.id)}
                           >
-                            Ver detalhes
+                            {t('Ver detalhes')}{' '}
                           </Button>
                         ),
                       },
@@ -987,10 +1041,9 @@ export function BackofficeMonitoringPage() {
         </Panel>
       )}
       <p className="telemetry-note telemetry-coverage">
-        Cobertura: requisições recebidas pela API e navegações que executam JavaScript. Bots que
-        acessam somente arquivos estáticos precisam ser coletados pelo servidor ou proxy do
-        frontend. O tempo de navegação mede o carregamento do documento ou a transição da rota; o
-        tempo HTTP mede o processamento no servidor. Registros antigos podem conter TTFB.
+        {t(
+          'Cobertura: requisições recebidas pela API e navegações que executam JavaScript. Bots que acessam somente arquivos estáticos precisam ser coletados pelo servidor ou proxy do frontend. O tempo de navegação mede o carregamento do documento ou a transição da rota; o tempo HTTP mede o processamento no servidor. Registros antigos podem conter TTFB.',
+        )}{' '}
       </p>
       <LogDetail id={detail} onClose={() => setDetail(null)} />
     </div>

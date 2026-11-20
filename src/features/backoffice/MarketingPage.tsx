@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useEffect, useId, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -69,6 +70,7 @@ function GenerateForm({
   error?: unknown;
   onSubmit: (d: GerarCampanhaInput) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     control,
@@ -92,70 +94,76 @@ function GenerateForm({
       noValidate
       className="form-grid"
       data-testid="bo-campaign-generate"
-      onSubmit={handleSubmit((v) => onSubmit({
-        ...v,
-        regiao: v.regiao || null,
-        regioes: v.regioes.split(/[\n,;]+/).map((value) => value.trim()).filter(Boolean),
-      }))}
+      onSubmit={handleSubmit((v) =>
+        onSubmit({
+          ...v,
+          regiao: v.regiao || null,
+          regioes: v.regioes
+            .split(/[\n,;]+/)
+            .map((value) => value.trim())
+            .filter(Boolean),
+        }),
+      )}
     >
       <Field
-        label="Nome da campanha"
+        label={t('Nome da campanha')}
         data-testid="bo-campaign-nome"
         {...register('nome')}
-        error={errors.nome?.message}
+        error={errors.nome?.message ? t(errors.nome.message) : undefined}
       />
       <Field
-        label="Região (opcional)"
-        placeholder="Ex.: Grande São Paulo"
+        label={t('Região (opcional)')}
+        placeholder={t('Ex.: Grande São Paulo')}
         data-testid="bo-campaign-regiao"
         {...register('regiao')}
-        error={errors.regiao?.message}
+        error={errors.regiao?.message ? t(errors.regiao.message) : undefined}
       />
       <div>
         <TextAreaField
-          label="IDs de regiões do Google Ads (opcional)"
+          label={t('IDs de regiões do Google Ads (opcional)')}
           rows={2}
-          placeholder="Um ID por linha. Vazio = Brasil."
+          placeholder={t('Um ID por linha. Vazio = Brasil.')}
           data-testid="bo-campaign-regioes"
           {...register('regioes')}
-          error={errors.regioes?.message}
+          error={errors.regioes?.message ? t(errors.regioes.message) : undefined}
         />
       </div>
       <div className="form-span">
         <TextAreaField
-          label="Briefing para o Claude"
+          label={t('Briefing para o Claude')}
           rows={4}
-          placeholder="Público, região, diferenciais, oferta…"
+          placeholder={t('Público, região, diferenciais, oferta…')}
           data-testid="bo-campaign-briefing"
           {...register('briefing')}
-          error={errors.briefing?.message}
+          error={errors.briefing?.message ? t(errors.briefing.message) : undefined}
         />
       </div>
       <Field
-        label="URL final (https)"
+        label={t('URL final (https)')}
         data-testid="bo-campaign-url"
         {...register('urlFinal')}
-        error={errors.urlFinal?.message}
+        error={errors.urlFinal?.message ? t(errors.urlFinal.message) : undefined}
       />
       <Controller
         control={control}
         name="orcamentoDiario"
         render={({ field }) => (
           <MoneyField
-            label="Orçamento diário"
+            label={t('Orçamento diário')}
             data-testid="bo-campaign-orcamento"
             name={field.name}
             ref={field.ref}
             value={field.value}
             onBlur={field.onBlur}
             onChange={(v) => field.onChange(v ?? 0)}
-            error={errors.orcamentoDiario?.message}
+            error={errors.orcamentoDiario?.message ? t(errors.orcamentoDiario.message) : undefined}
           />
         )}
       />
       <p className="muted form-span">
-        O Claude da plataforma escreve contexto, títulos, descrições e palavras-chave. Nada é
-        publicado até você revisar.
+        {t(
+          'O Claude da plataforma escreve contexto, títulos, descrições e palavras-chave. Nada é publicado até você revisar.',
+        )}{' '}
       </p>
       {!!error && (
         <p className="field-error form-span" role="alert">
@@ -228,6 +236,7 @@ function TextList({
   onChange: (v: string[]) => void;
   readOnly: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <fieldset className="bo-list" data-testid={testId}>
       <legend>
@@ -241,14 +250,18 @@ function TextList({
             readOnly={readOnly}
             maxLength={limit + 20}
             data-testid={`${testId}-${i}`}
-            error={v.trim().length > limit ? `${v.trim().length}/${limit} caracteres` : undefined}
+            error={
+              v.trim().length > limit
+                ? t('{length}/{limit} caracteres', { length: v.trim().length, limit })
+                : undefined
+            }
             hint={`${v.trim().length}/${limit}`}
             onChange={(e) => onChange(values.map((x, j) => (j === i ? e.target.value : x)))}
           />
           {!readOnly && (
             <Button
               variant="ghost"
-              aria-label={`Remover ${label.toLowerCase()} ${i + 1}`}
+              aria-label={t('Remover {label} {index}', { label: t(label), index: i + 1 })}
               onClick={() => onChange(values.filter((_, j) => j !== i))}
             >
               <Trash2 size={16} />
@@ -262,7 +275,7 @@ function TextList({
           data-testid={`${testId}-add`}
           onClick={() => onChange([...values, ''])}
         >
-          <Plus size={14} /> Adicionar
+          <Plus size={14} /> {t('Adicionar')}{' '}
         </Button>
       )}
     </fieldset>
@@ -270,6 +283,7 @@ function TextList({
 }
 
 function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: () => void }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState<Draft>(() => draftDe(campanha));
   const [erros, setErros] = useState<string[]>([]);
   const [confirmar, setConfirmar] = useState(false);
@@ -313,11 +327,13 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
         confirmar ? (
           <>
             <span className="modal-actions-note" role="alert">
-              A campanha será criada PAUSADA no Google Ads, com orçamento de{' '}
-              {money(draft.orcamentoDiario)}/dia. Ative-a no painel do Google Ads.
+              {t(
+                'A campanha será criada PAUSADA no Google Ads, com orçamento de {budget}. Ative-a no painel do Google Ads.',
+                { budget: money(draft.orcamentoDiario) + t('/dia') },
+              )}
             </span>
             <Button variant="secondary" onClick={() => setConfirmar(false)}>
-              Voltar
+              {t('Voltar')}{' '}
             </Button>
             <Button
               busy={publicar.isPending || salvar.isPending}
@@ -332,7 +348,7 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
                 setConfirmar(false);
               }}
             >
-              Publicar pausada
+              {t('Publicar pausada')}{' '}
             </Button>
           </>
         ) : (
@@ -344,11 +360,11 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
                 data-testid="bo-campaign-archive"
                 onClick={() => arquivar.mutate(undefined)}
               >
-                Arquivar
+                {t('Arquivar')}{' '}
               </Button>
             )}
             <Button variant="secondary" onClick={onClose}>
-              Fechar
+              {t('Fechar')}{' '}
             </Button>
             {editavel && (
               <>
@@ -359,7 +375,7 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
                   data-testid="bo-campaign-save"
                   onClick={() => void salvarRascunho()}
                 >
-                  Salvar rascunho
+                  {t('Salvar rascunho')}{' '}
                 </Button>
                 <Button
                   data-testid="bo-campaign-publish"
@@ -369,7 +385,7 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
                     if (!e.length) setConfirmar(true);
                   }}
                 >
-                  Publicar no Google Ads
+                  {t('Publicar no Google Ads')}{' '}
                 </Button>
               </>
             )}
@@ -382,7 +398,7 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
           <span>{dateTime(campanha.criadoEm)}</span>
           <StatusBadge
             status={statusCampanha[campanha.status].badge}
-            label={statusCampanha[campanha.status].label}
+            label={t(statusCampanha[campanha.status].label)}
           />
         </div>
         {campanha.erro && (
@@ -392,19 +408,21 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
         )}
         {campanha.recursoGoogle && (
           <p className="notice" data-testid="bo-campaign-resource">
-            Criada no Google Ads como <code>{campanha.recursoGoogle}</code>, pausada. Revise e ative
-            no painel do Google Ads.
+            {t(
+              'Criada no Google Ads como {resource}, pausada. Revise e ative no painel do Google Ads.',
+              { resource: campanha.recursoGoogle },
+            )}{' '}
           </p>
         )}
         {campanha.contexto && (
           <details className="bo-context" open={editavel}>
-            <summary>Contexto sugerido pelo Claude</summary>
+            <summary>{t('Contexto sugerido pelo Claude')}</summary>
             <p>{campanha.contexto}</p>
           </details>
         )}
         <div className="form-grid">
           <Field
-            label="Nome"
+            label={t('Nome')}
             value={draft.nome}
             readOnly={!editavel}
             maxLength={100}
@@ -412,13 +430,13 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
             onChange={(e) => setDraft({ ...draft, nome: e.target.value })}
           />
           <MoneyField
-            label="Orçamento diário"
+            label={t('Orçamento diário')}
             value={draft.orcamentoDiario}
             onChange={(v) => editavel && setDraft({ ...draft, orcamentoDiario: v ?? 0 })}
           />
           <div className="form-span">
             <Field
-              label="URL final"
+              label={t('URL final')}
               value={draft.urlFinal}
               readOnly={!editavel}
               maxLength={500}
@@ -427,21 +445,26 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
           </div>
           <div className="form-span">
             <TextAreaField
-              label="IDs de regiões do Google Ads"
+              label={t('IDs de regiões do Google Ads')}
               rows={2}
               value={draft.regioes.join('\n')}
               readOnly={!editavel}
-              placeholder="Um ID por linha. Vazio = Brasil."
+              placeholder={t('Um ID por linha. Vazio = Brasil.')}
               data-testid="bo-campaign-edit-regioes"
-              onChange={(e) => setDraft({
-                ...draft,
-                regioes: e.target.value.split(/[\n,;]+/).map((value) => value.trim()).filter(Boolean),
-              })}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  regioes: e.target.value
+                    .split(/[\n,;]+/)
+                    .map((value) => value.trim())
+                    .filter(Boolean),
+                })
+              }
             />
           </div>
         </div>
         <TextList
-          label="Título"
+          label={t('Título')}
           values={draft.titulos}
           max={LIMITES.titulos[1]}
           limit={LIMITES.titulos[2]}
@@ -450,7 +473,7 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
           onChange={(titulos) => setDraft({ ...draft, titulos })}
         />
         <TextList
-          label="Descrição"
+          label={t('Descrição')}
           values={draft.descricoes}
           max={LIMITES.descricoes[1]}
           limit={LIMITES.descricoes[2]}
@@ -460,12 +483,12 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
         />
         <fieldset className="bo-list" data-testid="bo-keywords">
           <legend>
-            Palavras-chave ({draft.palavrasChave.length}/{LIMITES.palavras[1]})
+            {t('Palavras-chave')} ({draft.palavrasChave.length}/{LIMITES.palavras[1]})
           </legend>
           {draft.palavrasChave.map((p, i) => (
             <div className="bo-list-row" key={i}>
               <Field
-                label={`Palavra-chave ${i + 1}`}
+                label={t('Palavra-chave {index}', { index: i + 1 })}
                 value={p.texto}
                 readOnly={!editavel}
                 maxLength={100}
@@ -479,7 +502,7 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
                 }
               />
               <SelectField
-                label="Correspondência"
+                label={t('Correspondência')}
                 value={p.correspondencia}
                 disabled={!editavel}
                 onChange={(e) =>
@@ -498,14 +521,14 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
               >
                 {Object.entries(correspondencias).map(([v, l]) => (
                   <option key={v} value={v}>
-                    {l}
+                    {t(l)}
                   </option>
                 ))}
               </SelectField>
               {editavel && (
                 <Button
                   variant="ghost"
-                  aria-label={`Remover palavra-chave ${i + 1}`}
+                  aria-label={t('Remover palavra-chave {index}', { index: i + 1 })}
                   onClick={() =>
                     setDraft({
                       ...draft,
@@ -529,14 +552,14 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
                 })
               }
             >
-              <Plus size={14} /> Adicionar
+              <Plus size={14} /> {t('Adicionar')}{' '}
             </Button>
           )}
         </fieldset>
         {!!erros.length && (
           <ul className="field-error" role="alert" data-testid="bo-campaign-errors">
             {erros.map((e) => (
-              <li key={e}>{e}</li>
+              <li key={e}>{t(e)}</li>
             ))}
           </ul>
         )}
@@ -546,6 +569,7 @@ function CampaignEditor({ campanha, onClose }: { campanha: Campanha; onClose: ()
 }
 
 export function BackofficeMarketingPage() {
+  const { t } = useI18n();
   const campanhas = useCampanhas();
   const formId = useId();
   const [gerando, setGerando] = useState(false);
@@ -559,8 +583,10 @@ export function BackofficeMarketingPage() {
     <>
       <PageHeader
         eyebrow="CRESCIMENTO"
-        title="Marketing"
-        description="Campanhas de Pesquisa no Google Ads escritas com o Claude para atrair novos estacionamentos. Performance Max não é criada por esta tela; o grupo precisa de pelo menos 3 títulos, 1 título longo, 2 descrições e imagens paisagem e quadrada configuradas no Google Ads."
+        title={t('Marketing')}
+        description={t(
+          'Campanhas de Pesquisa no Google Ads escritas com o Claude para atrair novos estacionamentos. Performance Max não é criada por esta tela; o grupo precisa de pelo menos 3 títulos, 1 título longo, 2 descrições e imagens paisagem e quadrada configuradas no Google Ads.',
+        )}
         action={
           <Button
             data-testid="bo-campaign-new"
@@ -569,7 +595,7 @@ export function BackofficeMarketingPage() {
               setGerando(true);
             }}
           >
-            <Sparkles size={16} /> Nova campanha com Claude
+            <Sparkles size={16} /> {t('Nova campanha com Claude')}{' '}
           </Button>
         }
       />
@@ -579,47 +605,52 @@ export function BackofficeMarketingPage() {
         ) : campanhas.isError ? (
           <QueryError
             error={campanhas.error}
-            what="as campanhas"
+            what={t('as campanhas')}
             onRetry={() => void campanhas.refetch()}
           />
         ) : !campanhas.data.length ? (
           <EmptyState
-            title="Nenhuma campanha"
-            description="Gere a primeira campanha: o Claude sugere os textos e as palavras-chave, e você revisa antes de publicar."
+            title={t('Nenhuma campanha')}
+            description={t(
+              'Gere a primeira campanha: o Claude sugere os textos e as palavras-chave, e você revisa antes de publicar.',
+            )}
           />
         ) : (
           <DataTable
             testId="bo-campaigns"
-            caption="Campanhas"
+            caption={t('Campanhas')}
             rows={campanhas.data}
             rowKey={(c) => c.campanhaId}
             columns={[
-              { label: 'Campanha', render: (c) => <strong>{c.nome}</strong> },
+              { label: t('Campanha'), render: (c) => <strong>{c.nome}</strong> },
               {
-                label: 'Status',
+                label: t('Status'),
                 render: (c) => (
                   <StatusBadge
                     status={statusCampanha[c.status].badge}
-                    label={statusCampanha[c.status].label}
+                    label={t(statusCampanha[c.status].label)}
                   />
                 ),
               },
-              { label: 'Orçamento', render: (c) => money(c.orcamentoDiario) + '/dia' },
+              { label: t('Orçamento'), render: (c) => money(c.orcamentoDiario) + t('/dia') },
               {
-                label: 'Anúncio',
+                label: t('Anúncio'),
                 render: (c) =>
-                  `${c.titulos.length} títulos · ${c.palavrasChave.length} palavras-chave`,
+                  t('{titles} títulos · {keywords} palavras-chave', {
+                    titles: c.titulos.length,
+                    keywords: c.palavrasChave.length,
+                  }),
               },
-              { label: 'Atualizada', render: (c) => dateTime(c.atualizadoEm) },
+              { label: t('Atualizada'), render: (c) => dateTime(c.atualizadoEm) },
               {
-                label: 'Ações',
+                label: t('Ações'),
                 render: (c) => (
                   <Button
                     variant="ghost"
                     data-testid="bo-campaign-open"
                     onClick={() => setAberta(c.campanhaId)}
                   >
-                    {c.status === 'RASCUNHO' ? 'Revisar' : 'Ver'}
+                    {c.status === 'RASCUNHO' ? t('Revisar') : t('Ver')}
                   </Button>
                 ),
               },
@@ -631,7 +662,7 @@ export function BackofficeMarketingPage() {
         <Modal
           open
           size="md"
-          title="Nova campanha com Claude"
+          title={t('Nova campanha com Claude')}
           busy={gerar.isPending}
           onClose={() => setGerando(false)}
           actions={
@@ -641,10 +672,10 @@ export function BackofficeMarketingPage() {
                 disabled={gerar.isPending}
                 onClick={() => setGerando(false)}
               >
-                Cancelar
+                {t('Cancelar')}{' '}
               </Button>
               <Button type="submit" form={formId} busy={gerar.isPending} data-testid="form-submit">
-                {gerar.isPending ? 'O Claude está escrevendo…' : 'Gerar rascunho'}
+                {gerar.isPending ? t('O Claude está escrevendo…') : t('Gerar rascunho')}
               </Button>
             </>
           }

@@ -1,7 +1,9 @@
+import { translate } from '../../i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { describeError } from '../../lib/describeError';
+import { integer } from '../../lib/format';
 import { useAuthStore, sessionScope } from '../../stores/authStore';
 import {
   getBrowserTicket,
@@ -91,14 +93,18 @@ export function usePrintTicket() {
     },
     onSuccess: (result) => {
       if (result.mode === 'browser') {
-        toast.info('Diálogo de impressão aberto. Confirme a impressão na janela do sistema.');
+        toast.info(
+          translate('Diálogo de impressão aberto. Confirme a impressão na janela do sistema.'),
+        );
         return;
       }
       void cache.invalidateQueries({ queryKey: printKeys.jobs(scope) });
       toast.success(
         result.trabalhos > 1
-          ? `Ticket enviado para ${result.trabalhos} impressoras.`
-          : 'Ticket enviado para a impressora.',
+          ? translate('Ticket enviado para {count} impressoras.', {
+              count: integer(result.trabalhos),
+            })
+          : translate('Ticket enviado para a impressora.'),
       );
     },
     onError: (e) => toast.error(describeError(e)),

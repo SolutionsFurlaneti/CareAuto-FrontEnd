@@ -9,11 +9,13 @@ import type { Entity } from '../lib/types';
 import type { FormValues } from '../features/shared/schema';
 import { ApiError } from '../lib/apiClient';
 import { describeError } from '../lib/describeError';
+import { useI18n } from '../i18n';
 export interface FieldSpec {
   component?: React.ComponentType;
   name: string;
   label: string;
-  kind?: 'text' | 'email' | 'tel' | 'password' | 'number' | 'money' | 'select' | 'textarea' | 'date';
+  kind?:
+    'text' | 'email' | 'tel' | 'password' | 'number' | 'money' | 'select' | 'textarea' | 'date';
   optional?: boolean;
   autoComplete?: string;
   options?: { value: string | number; label: string }[];
@@ -26,13 +28,14 @@ export interface FormSpec {
   fields: FieldSpec[];
 }
 function LookupOptions({ resource, id, label }: { resource: string; id: string; label: string }) {
+  const { t } = useI18n();
   const query = useAllRecords<Entity>(resource);
   return (
     <>
       {query.isError ? (
-        <option disabled>Não foi possível carregar opções</option>
+        <option disabled>{t('Não foi possível carregar opções')}</option>
       ) : query.isPending ? (
-        <option disabled>Carregando…</option>
+        <option disabled>{t('Carregando…')}</option>
       ) : (
         query.data
           .filter((x) => x.ativo !== false)
@@ -62,6 +65,7 @@ export function RecordForm({
   children?: React.ReactNode;
   submitLabel?: string;
 }) {
+  const { t } = useI18n();
   const uid = useId();
   const formId = supplied || uid;
   const methods = useForm<FormValues>({
@@ -97,8 +101,8 @@ export function RecordForm({
           const message = errors[field.name]?.message;
           const errorText = typeof message === 'string' ? message : undefined;
           const common = {
-            label: field.label,
-            error: errorText,
+            label: t(field.label),
+            error: errorText ? t(errorText) : undefined,
             required: !field.optional,
             'data-testid': 'field-' + field.name,
           };
@@ -133,14 +137,19 @@ export function RecordForm({
           });
           if (field.kind === 'select' || field.lookup)
             return (
-              <SelectField {...common} {...props} key={field.name} hint={field.hint}>
-                <option value="">{field.optional ? 'Não informado' : 'Selecione'}</option>
+              <SelectField
+                {...common}
+                {...props}
+                key={field.name}
+                hint={field.hint ? t(field.hint) : undefined}
+              >
+                <option value="">{t(field.optional ? 'Não informado' : 'Selecione')}</option>
                 {field.lookup ? (
                   <LookupOptions {...field.lookup} />
                 ) : (
                   field.options?.map((o) => (
                     <option key={o.value} value={o.value}>
-                      {o.label}
+                      {t(o.label)}
                     </option>
                   ))
                 )}
@@ -152,7 +161,7 @@ export function RecordForm({
             <Field
               {...common}
               {...props}
-              hint={field.hint}
+              hint={field.hint ? t(field.hint) : undefined}
               key={field.name}
               type={field.kind || 'text'}
               autoComplete={field.autoComplete}
@@ -164,7 +173,7 @@ export function RecordForm({
         {children}
         {!supplied && (
           <Button data-testid="form-submit" type="submit" busy={isSubmitting}>
-            {submitLabel}
+            {t(submitLabel)}
           </Button>
         )}
       </form>

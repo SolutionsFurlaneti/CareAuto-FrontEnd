@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { ResourcePage, type ResourceSpec } from '../../components/ResourcePage';
 import type { Servico } from '../../lib/types';
 import { servicesSchema } from './servicesSchema';
@@ -22,7 +23,7 @@ const spec: ResourceSpec<Servico> = {
       render: (r) => (
         <StatusBadge
           status={r.ativo ? 'ATIVA' : 'ENCERRADA'}
-          label={r.ativo ? 'Ativo' : 'Inativo'}
+          label={r.ativo ? translate('Ativo') : translate('Inativo')}
         />
       ),
     },
@@ -47,5 +48,6 @@ const spec: ResourceSpec<Servico> = {
   },
 };
 export function ServicesPage() {
+  useI18n();
   return <ResourcePage spec={spec} />;
 }

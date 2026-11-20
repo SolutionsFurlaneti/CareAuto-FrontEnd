@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n';
 import { useId, useState } from 'react';
 import type { MonitoringLocation } from './types';
 
@@ -166,6 +167,7 @@ const point = ([longitude, latitude]: number[]) => [(longitude + 180) * 2, (90 -
 const path = (points: number[][]) =>
   points.map((entry, index) => `${index ? 'L' : 'M'}${point(entry).join(',')}`).join(' ') + ' Z';
 export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
+  const { t } = useI18n();
   const [region, setRegion] = useState<'world' | 'brazil'>('world');
   const titleId = useId();
   const dots = locations.filter(
@@ -179,17 +181,17 @@ export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
     <>
       <div className="telemetry-panel-heading">
         <div>
-          <h2>Mapa de origem das requisições</h2>
-          <p>O tamanho dos marcadores acompanha o volume de acessos.</p>
+          <h2>{t('Mapa de origem das requisições')}</h2>
+          <p>{t('O tamanho dos marcadores acompanha o volume de acessos.')}</p>
         </div>
-        <div className="telemetry-segment" aria-label="Região do mapa">
+        <div className="telemetry-segment" aria-label={t('Região do mapa')}>
           <button
             type="button"
             aria-pressed={region === 'world'}
             onClick={() => setRegion('world')}
             data-testid="monitoring-map-world"
           >
-            Mundo
+            {t('Mundo')}{' '}
           </button>
           <button
             type="button"
@@ -197,7 +199,7 @@ export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
             onClick={() => setRegion('brazil')}
             data-testid="monitoring-map-brazil"
           >
-            Brasil
+            {t('Brasil')}{' '}
           </button>
         </div>
       </div>
@@ -209,8 +211,13 @@ export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
           preserveAspectRatio="xMidYMid meet"
         >
           <title id={titleId}>
-            Mapa esquemático de {region === 'world' ? 'origens no mundo' : 'origens no Brasil'}.{' '}
-            {dots.length} localidades com coordenadas disponíveis nos registros.
+            {t(
+              'Mapa esquemático de {region}. {count} localidades com coordenadas disponíveis nos registros.',
+              {
+                region: t(region === 'world' ? 'origens no mundo' : 'origens no Brasil'),
+                count: dots.length,
+              },
+            )}
           </title>
           <g className="telemetry-map-grid">
             {[-60, -30, 0, 30, 60].map((latitude) => (
@@ -230,7 +237,7 @@ export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
             const [x, y] = point([location.longitude, location.latitude]);
             const label =
               [location.city, location.region, location.country].filter(Boolean).join(' / ') ||
-              'Localidade não informada';
+              t('Localidade não informada');
             return (
               <circle
                 key={index}
@@ -242,25 +249,31 @@ export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
                 }
                 className="telemetry-map-dot"
                 tabIndex={0}
-                aria-label={`${label}: ${location.count} acessos`}
+                aria-label={t('{location}: {count} acessos', {
+                  location: label,
+                  count: location.count,
+                })}
               >
                 <title>
-                  {label}: {location.count} acessos
+                  {t('{location}: {count} acessos', { location: label, count: location.count })}
                 </title>
               </circle>
             );
           })}
         </svg>
         {!dots.length && (
-          <p className="telemetry-map-empty">Sem coordenadas disponíveis para esta região.</p>
+          <p className="telemetry-map-empty">
+            {t('Sem coordenadas disponíveis para esta região.')}
+          </p>
         )}
       </div>
       <p className="telemetry-note">
-        Localização disponível nos registros · mapa esquemático. Registros legados podem ter origem
-        diferente da localização autorizada pelo visitante.
+        {t(
+          'Localização disponível nos registros · mapa esquemático. Registros legados podem ter origem diferente da localização autorizada pelo visitante.',
+        )}{' '}
       </p>
       <p className="telemetry-note">
-        Geocodificação, quando disponível:{' '}
+        {t('Geocodificação, quando disponível:')}{' '}
         <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">
           Geoapify
         </a>
@@ -271,19 +284,19 @@ export function OriginMap({ locations }: { locations: MonitoringLocation[] }) {
         .
       </p>
       <details className="telemetry-table-toggle">
-        <summary>Ver tabela de localidades</summary>
+        <summary>{t('Ver tabela de localidades')}</summary>
         <ul className="telemetry-map-list">
           {dots.map((location, index) => (
             <li key={index}>
               <span>
                 {[location.country, location.region, location.city].filter(Boolean).join(' / ') ||
-                  'Não informado'}
+                  t('Não informado')}
               </span>
               <strong>{location.count}</strong>
             </li>
           ))}
         </ul>
-        {!dots.length && <p>Sem localidades com coordenadas.</p>}
+        {!dots.length && <p>{t('Sem localidades com coordenadas.')}</p>}
       </details>
     </>
   );

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { translate } from '../../i18n';
 import { toast } from 'sonner';
 import { RecordForm, type FormSpec } from '../../components/RecordForm';
 import { useAuthStore, sessionScope } from '../../stores/authStore';
@@ -37,7 +38,7 @@ export function IntegrationForm({
   async function submit(values: FormValues) {
     setError(undefined);
     try {
-      if (await save(form.toBody(values))) toast.success(success);
+      if (await save(form.toBody(values))) toast.success(translate(success));
     } catch (e) {
       if (scope === sessionScope(useAuthStore.getState().session)) setError(e);
     }

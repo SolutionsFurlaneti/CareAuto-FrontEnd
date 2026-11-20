@@ -1,3 +1,4 @@
+import { getLocale, translate, type TranslationParams } from '../../i18n';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
 import type { TicketEntrada, TicketNavegador } from './api';
@@ -19,6 +20,9 @@ function escapeHtml(value: string | number | null | undefined): string {
   });
 }
 
+const text = (message: string, params?: TranslationParams) =>
+  escapeHtml(translate(message, params));
+
 function barcodeSvg(code: string): string {
   if (!/^\d+$/.test(code)) throw new Error('O código do ticket é inválido para impressão.');
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -34,7 +38,7 @@ function barcodeSvg(code: string): string {
   svg.removeAttribute('width');
   svg.removeAttribute('height');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Código do ticket ' + code);
+  svg.setAttribute('aria-label', translate('Código do ticket {code}', { code }));
   return svg.outerHTML;
 }
 
@@ -50,14 +54,14 @@ async function renderTicket(payload: TicketNavegador, test = false): Promise<str
   });
   const barcode = ticket.codigoTicket ? barcodeSvg(ticket.codigoTicket) : '';
   const promotion = ticket.promocaoRodape?.ativo ? ticket.promocaoRodape : null;
-  const title = test ? 'Teste de impressão' : 'Ticket de estacionamento';
+  const title = translate(test ? 'Teste de impressão' : 'Ticket de estacionamento');
   return `<!doctype html>
-<html lang="pt-BR">
+<html lang="${getLocale()}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     @page { size: auto; margin: 0; }
     * { box-sizing: border-box; }
@@ -80,23 +84,23 @@ async function renderTicket(payload: TicketNavegador, test = false): Promise<str
 </head>
 <body>
   <main class="ticket">
-    ${test ? '<p class="test center">TESTE DE IMPRESSÃO</p>' : ''}
+    ${test ? `<p class="test center">${text('TESTE DE IMPRESSÃO')}</p>` : ''}
     <header class="center">
       <h1>${escapeHtml(ticket.estabelecimento)}</h1>
       ${ticket.operadora ? `<p>${escapeHtml(ticket.operadora)}</p>` : ''}
-      <p>ENTRADA ${escapeHtml(ticket.pontoEntrada || 'PRINCIPAL')}</p>
-      ${ticket.toleranciaMinutos ? `<p class="small">Tolerância: ${escapeHtml(ticket.toleranciaMinutos)} minutos</p>` : ''}
+      <p>${text('ENTRADA')} ${escapeHtml(ticket.pontoEntrada || translate('PRINCIPAL'))}</p>
+      ${ticket.toleranciaMinutos ? `<p class="small">${text('Tolerância: {minutes} minutos', { minutes: ticket.toleranciaMinutos })}</p>` : ''}
     </header>
     ${barcode ? `<div class="barcode">${barcode}</div>` : ''}
     <div class="center">
-      ${ticket.sequencial ? `<p>Ticket/Seq: ${escapeHtml(ticket.sequencial)}</p>` : ''}
+      ${ticket.sequencial ? `<p>${text('Ticket/Seq:')} ${escapeHtml(ticket.sequencial)}</p>` : ''}
       ${ticket.codigoTicket ? `<p class="small">${escapeHtml(ticket.codigoTicket)}</p>` : ''}
-      <p>Data/Hora: ${escapeHtml(ticket.entrada)}</p>
+      <p>${text('Data/Hora:')} ${escapeHtml(ticket.entrada)}</p>
       <p class="plate">${escapeHtml(ticket.placa)}</p>
       ${ticket.veiculo ? `<p>${escapeHtml(ticket.veiculo)}</p>` : ''}
     </div>
     <div class="qr">${qr}</div>
-    ${test ? '<p class="small center">O QR Code de teste não representa uma estadia.</p>' : '<p class="small center">Guarde este ticket para a saída.</p>'}
+    <p class="small center">${text(test ? 'O QR Code de teste não representa uma estadia.' : 'Guarde este ticket para a saída.')}</p>
     ${barcode ? `<div class="barcode barcode-lower section">${barcode}</div>` : ''}
     ${promotion ? `<footer class="section center"><h2>${escapeHtml(promotion.nomeParceiro)}</h2><p class="promotion">${escapeHtml(promotion.mensagem)}</p></footer>` : ''}
   </main>
@@ -165,7 +169,7 @@ async function printDocument(
         loadTimeoutMs,
       );
       frame = document.createElement('iframe');
-      frame.title = 'Documento de impressão do ticket';
+      frame.title = translate('Documento de impressão do ticket');
       frame.setAttribute('aria-hidden', 'true');
       frame.tabIndex = -1;
       frame.dataset.testid = 'browser-print-frame';
@@ -229,8 +233,8 @@ export function printBrowserTest(
   const ticket: TicketEntrada = {
     estabelecimento: establishment,
     placa: 'ABC1D23',
-    veiculo: 'Teste da impressora',
-    entrada: new Date().toLocaleString('pt-BR'),
+    veiculo: translate('Teste da impressora'),
+    entrada: new Date().toLocaleString(getLocale(), { timeZone: 'America/Sao_Paulo' }),
     codigoQr: 'CARE-AUTO-TESTE-DE-IMPRESSAO',
     codigoTicket: '000000000000',
     sequencial: 'TESTE',

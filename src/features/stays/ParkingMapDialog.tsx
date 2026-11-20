@@ -1,7 +1,9 @@
+import { translate, useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { CarFront, Check, MapPinned } from 'lucide-react';
 import type { Estadia, Veiculo } from '../../lib/types';
 import { Button, Modal } from '../../ui';
+import { integer } from '../../lib/format';
 
 type ParkingMapDialogProps = {
   open: boolean;
@@ -20,6 +22,7 @@ export function ParkingMapDialog({
   onRegisterEntry,
   onSelectStay,
 }: ParkingMapDialogProps) {
+  useI18n();
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const activeStays = stays
     .filter((stay) => stay.status === 'EM_ANDAMENTO')
@@ -36,25 +39,27 @@ export function ParkingMapDialog({
     <Modal
       open={open}
       onClose={onClose}
-      title="Mapa do Estacionamento"
+      title={translate('Mapa do Estacionamento')}
       size="md"
       actions={
         <div className="parking-map-actions">
-          <span className="parking-map-legend" aria-label="Resumo das vagas">
+          <span className="parking-map-legend" aria-label={translate('Resumo das vagas')}>
             <span>
-              <i className="is-occupied" /> Ocupada ({assignedVisuals.length})
+              <i className="is-occupied" /> {translate('Ocupada (')}
+              {integer(assignedVisuals.length)})
             </span>
             <span>
-              <i /> Livre ({30 - assignedVisuals.length})
+              <i /> {translate('Livre (')}
+              {integer(30 - assignedVisuals.length)})
             </span>
           </span>
           {selectedSlot !== null && !selectedStay && (
             <Button data-testid="map-register-entry" onClick={onRegisterEntry}>
-              Registrar entrada
+              {translate('Registrar entrada')}
             </Button>
           )}
           <Button variant="secondary" onClick={onClose}>
-            Fechar
+            {translate('Fechar')}
           </Button>
         </div>
       }
@@ -64,11 +69,13 @@ export function ParkingMapDialog({
           <MapPinned size={18} />
         </span>
         <div>
-          <strong>{assignedVisuals.length} de 30 vagas ocupadas</strong>
-          <span>Toque em uma vaga para ver o detalhe ou iniciar uma entrada.</span>
+          <strong>
+            {translate('{count} de 30 vagas ocupadas', { count: integer(assignedVisuals.length) })}
+          </strong>
+          <span>{translate('Toque em uma vaga para ver o detalhe ou iniciar uma entrada.')}</span>
         </div>
       </div>
-      <div className="parking-map-grid" aria-label="Representação visual das 30 vagas">
+      <div className="parking-map-grid" aria-label={translate('Representação visual das 30 vagas')}>
         {Array.from({ length: 30 }, (_, index) => {
           const stay = assignedVisuals[index];
           const vehicle = stay ? byVehicle.get(stay.veiculoId) : undefined;
@@ -80,8 +87,11 @@ export function ParkingMapDialog({
               className={`parking-map-slot${stay ? ' occupied' : ''}${selectedSlot === slotNumber ? ' selected' : ''}`}
               aria-label={
                 stay
-                  ? `Vaga visual ${slotNumber}, ocupada pelo veículo ${vehicle?.placa || 'sem placa cadastrada'}`
-                  : `Vaga visual ${slotNumber}, livre`
+                  ? translate('Vaga visual {slot}, ocupada pelo veículo {plate}', {
+                      slot: integer(slotNumber),
+                      plate: vehicle?.placa || translate('sem placa cadastrada'),
+                    })
+                  : translate('Vaga visual {slot}, livre', { slot: integer(slotNumber) })
               }
               aria-pressed={selectedSlot === slotNumber}
               onClick={() => {
@@ -101,7 +111,7 @@ export function ParkingMapDialog({
               ) : (
                 <>
                   <span aria-hidden="true">·</span>
-                  <small>Livre</small>
+                  <small>{translate('Livre')}</small>
                 </>
               )}
             </button>
@@ -110,8 +120,9 @@ export function ParkingMapDialog({
       </div>
       <p className="parking-map-note" role="note">
         <Check size={14} aria-hidden="true" />
-        Mapa visual estimado pela quantidade de estadias abertas. A vaga individual não é salva na
-        estadia.
+        {translate(
+          'Mapa visual estimado pela quantidade de estadias abertas. A vaga individual não é salva na estadia.',
+        )}
       </p>
     </Modal>
   );

@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { z } from 'zod';
 import { vehiclesSchema } from '../vehicles/vehiclesSchema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +19,7 @@ import { usePrintConfig, usePrintTicket } from '../printing/hooks';
 import type { ConfiguracaoImpressao } from '../printing/api';
 
 export function EntryModal({ onClose }: { onClose: () => void }) {
+  useI18n();
   const [adding, setAdding] = useState(false);
   const [created, setCreated] = useState<Veiculo>();
   // Entrada salva aguardando a resposta "Deseja imprimir o ticket?".
@@ -60,7 +62,7 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
       <Modal
         open
         onClose={onClose}
-        title="Entrada registrada"
+        title={translate('Entrada registrada')}
         busy={print.isPending}
         actions={
           <>
@@ -70,7 +72,7 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
               disabled={print.isPending}
               onClick={onClose}
             >
-              Não
+              {translate('Não')}
             </Button>
             <Button
               data-testid="ticket-print"
@@ -78,23 +80,25 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
               autoFocus
               onClick={() => print.mutate(saved.estadiaId, { onSuccess: onClose })}
             >
-              Sim, imprimir
+              {translate('Sim, imprimir')}
             </Button>
           </>
         }
       >
         <p role="status" data-testid="ticket-question">
-          Entrada registrada com sucesso! Deseja imprimir o ticket de estacionamento?
+          {translate('Entrada registrada com sucesso! Deseja imprimir o ticket de estacionamento?')}
         </p>
         {!!printConfig.error && (
           <p role="alert" className="form-error">
-            {describeError(printConfig.error)} A entrada está registrada. Tente imprimir novamente
-            ou feche esta janela.
+            {describeError(printConfig.error)}{' '}
+            {translate(
+              ' A entrada está registrada. Tente imprimir novamente ou feche esta janela.',
+            )}
           </p>
         )}
         {!!print.error && (
           <p role="alert" className="form-error">
-            {describeError(print.error)} A entrada continua registrada.
+            {describeError(print.error)} {translate(' A entrada continua registrada.')}
           </p>
         )}
       </Modal>
@@ -105,7 +109,7 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
     <Modal
       open
       onClose={onClose}
-      title={adding ? 'Adicionar veículo' : 'Registrar entrada'}
+      title={adding ? translate('Adicionar veículo') : translate('Registrar entrada')}
       busy={busy}
       actions={
         <>
@@ -115,7 +119,7 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
             disabled={busy}
             onClick={() => (adding ? setAdding(false) : onClose())}
           >
-            {adding ? 'Voltar' : 'Cancelar'}
+            {adding ? translate('Voltar') : translate('Cancelar')}
           </Button>
           <Button
             type="submit"
@@ -123,7 +127,7 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
             data-testid="form-submit"
             busy={busy}
           >
-            {adding ? 'Salvar veículo e continuar' : 'Registrar entrada'}
+            {adding ? translate('Salvar veículo e continuar') : translate('Registrar entrada')}
           </Button>
         </>
       }
@@ -158,18 +162,20 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
               setAdding(true);
             }}
           >
-            Adicionar veículo por foto ou manualmente
+            {translate('Adicionar veículo por foto ou manualmente')}
           </Button>
           {created && (
             <p role="status">
-              Veículo {created.placa} selecionado. O cadastro existente é reutilizado. Escolha a
-              tabela e confirme a entrada.
+              {translate(
+                'Veículo {plate} selecionado. O cadastro existente é reutilizado. Escolha a tabela e confirme a entrada.',
+                { plate: created.placa },
+              )}
             </p>
           )}
           {(vehicles.isError || tables.isError) && (
             <QueryError
               error={vehicles.error || tables.error}
-              what="as opções de entrada"
+              what={translate('as opções de entrada')}
               onRetry={() => {
                 void vehicles.refetch();
                 void tables.refetch();
@@ -221,12 +227,12 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
                   marginBottom: '4px',
                 }}
               >
-                Digitação Rápida de Placa (opcional)
+                {translate('Digitação Rápida de Placa (opcional)')}
               </label>
               <input
                 id="quick-plate-search"
                 type="text"
-                placeholder="Ex: ABC1D23"
+                placeholder={translate('Ex: ABC1D23')}
                 value={plateSearch}
                 onChange={(e) => {
                   const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -252,12 +258,14 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
               />
             </div>
             <SelectField
-              label="Veículo"
+              label={translate('Veículo')}
               data-testid="field-veiculoId"
               {...register('veiculoId', { valueAsNumber: true })}
               error={errors.veiculoId?.message}
             >
-              <option value="">{vehicles.isPending ? 'Carregando…' : 'Selecione'}</option>
+              <option value="">
+                {vehicles.isPending ? translate('Carregando…') : translate('Selecione')}
+              </option>
               {options.map((v) => (
                 <option key={v.veiculoId} value={v.veiculoId}>
                   {v.placa}
@@ -265,12 +273,14 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
               ))}
             </SelectField>
             <SelectField
-              label="Tabela de preços"
+              label={translate('Tabela de preços')}
               data-testid="field-tabelaId"
               {...register('tabelaId', { valueAsNumber: true })}
               error={errors.tabelaId?.message}
             >
-              <option value="">{tables.isPending ? 'Carregando…' : 'Selecione'}</option>
+              <option value="">
+                {tables.isPending ? translate('Carregando…') : translate('Selecione')}
+              </option>
               {tables.data
                 ?.filter((t) => t.ativo)
                 .map((t) => (
@@ -280,7 +290,7 @@ export function EntryModal({ onClose }: { onClose: () => void }) {
                 ))}
             </SelectField>
             <TextAreaField
-              label="Observação"
+              label={translate('Observação')}
               data-testid="field-observacao"
               rows={3}
               {...register('observacao', { setValueAs: toNullableText })}

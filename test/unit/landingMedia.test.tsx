@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   LandingTutorials,
   TutorialPlayer,
@@ -70,18 +70,64 @@ describe('landing tutorials', () => {
     expect(screen.getByTitle('Vídeo de cadastro')).toHaveAttribute('controls');
   });
 
+  it('keeps written guidance available when a direct video fails to load', async () => {
+    const onReadInstructions = vi.fn();
+    const { container } = render(
+      <TutorialPlayer
+        tutorial={{ ...tutorial, videoUrl: 'https://example.com/tutorial.mp4' }}
+        instructionsId="test-instructions"
+        onReadInstructions={onReadInstructions}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Assistir ao tutorial' }));
+    fireEvent.error(screen.getByTitle('Vídeo de cadastro'));
+
+    expect(screen.getByText('Não foi possível carregar o vídeo')).toBeVisible();
+    expect(screen.getByText('Enquanto isso, siga as orientações desta etapa.')).toBeVisible();
+    expect(container.querySelector('iframe, video')).toBeNull();
+    const guidance = screen.getByRole('button', { name: 'Ver orientações desta etapa' });
+    expect(guidance).toHaveAttribute('aria-controls', 'test-instructions');
+    await userEvent.click(guidance);
+    expect(onReadInstructions).toHaveBeenCalledOnce();
+  });
+
+  it('focuses the current written instructions from the tutorial preview', async () => {
+    const { container } = render(<LandingTutorials />);
+    const heading = screen.getByRole('heading', { name: 'Crie sua conta de administrador' });
+    await userEvent.click(screen.getByRole('button', { name: 'Ver orientações desta etapa' }));
+    expect(heading).toHaveFocus();
+    expect(container.querySelector('iframe, video')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Escolher plano e criar conta' })).toHaveAttribute(
+      'href',
+      '#planos',
+    );
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Configuração' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ver orientações desta etapa' }));
+    expect(
+      screen.getByRole('heading', { name: 'Prepare a operação do seu negócio' }),
+    ).toHaveFocus();
+  });
+
   it('lets visitors browse every onboarding stage with the matching written instructions', async () => {
     const { container } = render(<LandingTutorials />);
     expect(screen.getByRole('tabpanel')).toHaveTextContent('Crie sua conta de administrador');
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('Etapa 1 de 3');
     await userEvent.click(screen.getByRole('tab', { name: 'Configuração' }));
     expect(screen.getByRole('tab', { name: 'Configuração' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
     expect(screen.getByRole('tabpanel')).toHaveTextContent('Prepare a operação do seu negócio');
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('Etapa 2 de 3');
     expect(screen.getByRole('tabpanel')).toHaveTextContent('Cadastre as categorias de veículo');
     await userEvent.click(screen.getByRole('tab', { name: 'Dia a dia' }));
     expect(screen.getByRole('tabpanel')).toHaveTextContent('Da primeira entrada ao recebimento');
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('Etapa 3 de 3');
+    expect(container.querySelector('.MuiStep-root.Mui-completed')).toBeNull();
+    await userEvent.click(screen.getByRole('tab', { name: 'Cadastro' }));
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('Etapa 1 de 3');
+    expect(container.querySelector('.MuiStep-root.Mui-completed')).toBeNull();
     expect(container.querySelector('iframe, video')).toBeNull();
   });
 

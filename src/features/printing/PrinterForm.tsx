@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
@@ -19,6 +20,7 @@ export function PrinterForm({
   error?: unknown;
   onSubmit: (data: ImpressoraInput) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     control,
@@ -62,41 +64,53 @@ export function PrinterForm({
       )}
     >
       <Field
-        label="Nome da impressora"
-        placeholder="Guarita 1"
+        label={t('Nome da impressora')}
+        placeholder={t('Guarita 1')}
         required
         data-testid="field-nome"
         {...register('nome')}
         error={errors.nome?.message}
       />
       <SelectField
-        label="Tipo de conexão"
+        label={t('Tipo de conexão')}
         data-testid="field-tipoConexao"
         {...register('tipoConexao')}
         error={errors.tipoConexao?.message}
       >
-        <option value="REDE_TCP">Rede TCP/IP (porta 9100)</option>
-        <option value="USB_WINDOWS">USB (driver do Windows)</option>
-        <option value="ANDROID_POS">POS Android integrado (agente local)</option>
+        <option value="REDE_TCP">{t('Rede TCP/IP (porta 9100)')}</option>
+        <option value="USB_WINDOWS">{t('USB (driver do Windows)')}</option>
+        <option value="ANDROID_POS">{t('POS Android integrado (agente local)')}</option>
       </SelectField>
       <Field
-        label={androidPos ? 'ID do agente Android' : network ? 'Endereço IP' : 'Nome do driver no Windows'}
-        placeholder={androidPos ? 'ID exibido no POS Android' : network ? '192.168.0.50' : 'EPSON TM-T20X Receipt'}
+        label={t(
+          androidPos
+            ? 'ID do agente Android'
+            : network
+              ? 'Endereço IP'
+              : 'Nome do driver no Windows',
+        )}
+        placeholder={
+          androidPos
+            ? t('ID exibido no POS Android')
+            : network
+              ? '192.168.0.50'
+              : 'EPSON TM-T20X Receipt'
+        }
         required
         data-testid="field-enderecoDriverOuIp"
         {...register('enderecoDriverOuIp')}
         hint={
           androidPos
-            ? 'Identificador mostrado em Configurações > Impressão no próprio POS.'
+            ? t('Identificador mostrado em Configurações > Impressão no próprio POS.')
             : network
-              ? 'IP fixo da impressora na rede da guarita.'
-              : 'Nome exato exibido em Configurações do Windows › Impressoras e scanners.'
+              ? t('IP fixo da impressora na rede da guarita.')
+              : t('Nome exato exibido em Configurações do Windows › Impressoras e scanners.')
         }
         error={errors.enderecoDriverOuIp?.message}
       />
       {network && (
         <Field
-          label="Porta TCP"
+          label={t('Porta TCP')}
           type="number"
           inputMode="numeric"
           required
@@ -106,13 +120,13 @@ export function PrinterForm({
         />
       )}
       <fieldset className="switch-group">
-        <legend>Função</legend>
+        <legend>{t('Função')}</legend>
         <Controller
           control={control}
           name="imprimeEntrada"
           render={({ field }) => (
             <Switch
-              label="Imprime tickets de entrada"
+              label={t('Imprime tickets de entrada')}
               data-testid="field-imprimeEntrada"
               checked={field.value}
               onChange={field.onChange}
@@ -126,8 +140,8 @@ export function PrinterForm({
           name="imprimeFechamento"
           render={({ field }) => (
             <Switch
-              label="Imprime comprovantes de fechamento"
-              description="Usado quando o fechamento passar a ser impresso."
+              label={t('Imprime comprovantes de fechamento')}
+              description={t('Usado quando o fechamento passar a ser impresso.')}
               data-testid="field-imprimeFechamento"
               checked={field.value}
               onChange={field.onChange}
@@ -138,7 +152,7 @@ export function PrinterForm({
         />
         {errors.imprimeFechamento?.message && (
           <span className="field-error" role="alert">
-            {errors.imprimeFechamento.message}
+            {t(errors.imprimeFechamento.message)}
           </span>
         )}
       </fieldset>
@@ -148,7 +162,7 @@ export function PrinterForm({
           name="ativo"
           render={({ field }) => (
             <Switch
-              label="Impressora ativa"
+              label={t('Impressora ativa')}
               data-testid="field-ativo"
               checked={field.value}
               onChange={field.onChange}

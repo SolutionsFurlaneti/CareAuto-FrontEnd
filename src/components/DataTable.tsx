@@ -1,6 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableRow, useMediaQuery } from '@mui/material';
 import type { ReactNode } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
+import { useI18n } from '../i18n';
 
 export interface Column<T> {
   label: string;
@@ -22,22 +23,25 @@ export function DataTable<T>({
   caption: string;
   material?: boolean;
 }) {
+  const { t, locale } = useI18n();
   const cards = useMediaQuery('(max-width:1199px)');
   const reduced = useReducedMotion();
   const actionColumn = columns.find((column) =>
-    ['detalhes', 'ações', 'opções'].some((label) =>
-      column.label.toLocaleLowerCase('pt-BR').includes(label),
+    ['detalhes', 'ações', 'opções', 'details', 'actions', 'options'].some((label) =>
+      column.label.toLocaleLowerCase(locale).includes(label),
     ),
   );
   const dataColumns = columns.filter((column) => column !== actionColumn);
   const containsImmediateValues = columns.some((column) =>
-    /valor|total|pre[cç]o|saldo|receita|recebimento|cobran[cç]a/i.test(column.label),
+    /valor|total|pre[cç]o|saldo|receita|recebimento|cobran[cç]a|value|amount|price|balance|revenue|payment|charge/i.test(
+      column.label,
+    ),
   );
   const animateCards = !reduced && !containsImmediateValues;
 
   if (cards) {
     return (
-      <div className="record-cards" data-testid={testId} role="list" aria-label={caption}>
+      <div className="record-cards" data-testid={testId} role="list" aria-label={t(caption)}>
         <AnimatePresence initial={animateCards}>
           {rows.map((row, index) => (
             <m.article
@@ -62,7 +66,7 @@ export function DataTable<T>({
               <dl>
                 {dataColumns.map((c) => (
                   <div key={c.label}>
-                    <dt>{c.label}</dt>
+                    <dt>{t(c.label)}</dt>
                     <dd>{c.render(row)}</dd>
                   </div>
                 ))}
@@ -84,12 +88,12 @@ export function DataTable<T>({
           data-testid={testId}
           sx={{ '& .MuiTableCell-root': { font: 'inherit', color: 'inherit' } }}
         >
-          <caption className="sr-only">{caption}</caption>
+          <caption className="sr-only">{t(caption)}</caption>
           <TableHead>
             <TableRow>
               {columns.map((column) => (
                 <TableCell scope="col" key={column.label}>
-                  {column.label}
+                  {t(column.label)}
                 </TableCell>
               ))}
             </TableRow>
@@ -110,12 +114,12 @@ export function DataTable<T>({
   return (
     <div className="table-wrap">
       <table data-testid={testId}>
-        <caption className="sr-only">{caption}</caption>
+        <caption className="sr-only">{t(caption)}</caption>
         <thead>
           <tr>
             {columns.map((c) => (
               <th scope="col" key={c.label}>
-                {c.label}
+                {t(c.label)}
               </th>
             ))}
           </tr>

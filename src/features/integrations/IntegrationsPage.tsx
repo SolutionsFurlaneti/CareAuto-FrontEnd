@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { OrigemIntegracoesControle } from './OrigemIntegracoes';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
@@ -9,6 +10,7 @@ import { useIntegration } from './hooks';
 import { ActiveBadge } from './StatusSummary';
 
 function IntegrationCard({ def }: { def: IntegrationDefinition }) {
+  const { t } = useI18n();
   const { query } = useIntegration<BaseConfiguration>(def.slug);
   const Icon = def.icon;
   return (
@@ -21,19 +23,19 @@ function IntegrationCard({ def }: { def: IntegrationDefinition }) {
         <span className="integration-icon" aria-hidden="true">
           <Icon size={22} />
         </span>
-        <h3>{def.title}</h3>
+        <h3>{t(def.title)}</h3>
         {query.data ? (
           <ActiveBadge active={query.data.disponivel ?? query.data.ativo} />
         ) : query.isError ? (
-          <StatusBadge status="ERRO" label="Indisponível" />
+          <StatusBadge status="ERRO" label={t('Indisponível')} />
         ) : (
-          <StatusBadge status="CARREGANDO" label="Verificando…" />
+          <StatusBadge status="CARREGANDO" label={t('Verificando…')} />
         )}
       </div>
-      <p className="integration-card-text">{def.summary}</p>
-      {query.data?.origem === 'PLATAFORMA' && <p>Usando a integração da plataforma</p>}
+      <p className="integration-card-text">{t(def.summary)}</p>
+      {query.data?.origem === 'PLATAFORMA' && <p>{t('Usando a integração da plataforma')}</p>}
       <span className="integration-card-cta" aria-hidden="true">
-        Configurar <ChevronRight size={14} />
+        {t('Configurar')} <ChevronRight size={14} />
       </span>
     </Link>
   );
@@ -41,22 +43,25 @@ function IntegrationCard({ def }: { def: IntegrationDefinition }) {
 
 /** Hub de integrações: um card por serviço; os formulários ficam na tela de cada um. */
 export function IntegrationsPage() {
+  const { t } = useI18n();
   const scope = useAuthStore((s) => sessionScope(s.session));
   return (
     <>
       <PageHeader
-        eyebrow="CONFIGURAÇÕES"
-        title="Integrações"
-        description="Configure os serviços utilizados pelo seu estabelecimento."
+        eyebrow={t('CONFIGURAÇÕES')}
+        title={t('Integrações')}
+        description={t('Configure os serviços utilizados pelo seu estabelecimento.')}
       />
       <p className="notice">
-        As credenciais ficam protegidas. Salvar não realiza consultas nem gera cobrança. Para trocar
-        uma credencial, informe a nova no campo correspondente.
+        {t(
+          'As credenciais ficam protegidas. Salvar não realiza consultas nem gera cobrança. Para trocar uma credencial, informe a nova no campo correspondente.',
+        )}
       </p>
       <OrigemIntegracoesControle />
       <div className="section-label">
         <h2>
-          Serviços disponíveis <span className="integration-count">({integrations.length})</span>
+          {t('Serviços disponíveis')}{' '}
+          <span className="integration-count">({integrations.length})</span>
         </h2>
       </div>
       <ul className="integration-hub" key={scope} data-testid="integration-hub">

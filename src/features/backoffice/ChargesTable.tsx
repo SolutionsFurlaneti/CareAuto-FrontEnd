@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { ExternalLink, RefreshCw, Send } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import { Button, StatusBadge } from '../../ui';
@@ -24,47 +25,53 @@ export function ChargesTable({
   testId: string;
   showSubscriber?: boolean;
 }) {
+  const { t } = useI18n();
   const emitir = useBackofficeAction(emitirCobranca, (c: Cobranca) =>
     c.status === 'PENDENTE_EMISSAO'
       ? 'A emissão não foi concluída. Veja o motivo na cobrança.'
       : 'Cobrança emitida no Asaas.',
   );
-  const sincronizar = useBackofficeAction(
-    sincronizarCobranca,
-    (c: Cobranca) => 'Status atualizado: ' + cobrancaLabel[c.status] + '.',
+  const sincronizar = useBackofficeAction(sincronizarCobranca, (c: Cobranca) =>
+    t('Status atualizado: {status}.', { status: t(cobrancaLabel[c.status]) }),
   );
   return (
     <DataTable
       testId={testId}
-      caption="Cobranças da mensalidade"
+      caption={t('Cobranças da mensalidade')}
       rows={rows}
       rowKey={(c) => c.cobrancaId}
       columns={[
         ...(showSubscriber
-          ? [{ label: 'Assinante', render: (c: Cobranca) => <strong>{c.estabelecimento}</strong> }]
+          ? [
+              {
+                label: t('Assinante'),
+                render: (c: Cobranca) => <strong>{c.estabelecimento}</strong>,
+              },
+            ]
           : []),
-        { label: 'Vencimento', render: (c) => dateOnly(c.vencimento) },
+        { label: t('Vencimento'), render: (c) => dateOnly(c.vencimento) },
         {
-          label: 'Período',
-          render: (c) => `${dateOnly(c.periodoInicio)} a ${dateOnly(c.periodoFim)}`,
-        },
-        { label: 'Valor', render: (c) => money(c.valor) },
-        {
-          label: 'Forma',
+          label: t('Período'),
           render: (c) =>
-            `${formaLabel[c.formaPagamento]} · ${c.origem === 'ROTINA' ? 'rotina' : 'manual'}`,
+            t('{start} a {end}', { start: dateOnly(c.periodoInicio), end: dateOnly(c.periodoFim) }),
+        },
+        { label: t('Valor'), render: (c) => money(c.valor) },
+        {
+          label: t('Forma'),
+          render: (c) =>
+            `${t(formaLabel[c.formaPagamento])} · ${c.origem === 'ROTINA' ? t('rotina') : t('manual')}`,
         },
         {
-          label: 'Status',
+          label: t('Status'),
           render: (c) => (
             <span className="bo-status-cell">
-              <StatusBadge status={badge[c.status]} label={cobrancaLabel[c.status]} />
+              <StatusBadge status={badge[c.status]} label={t(cobrancaLabel[c.status])} />
               {c.erro && <small className="field-error">{c.erro}</small>}
             </span>
           ),
         },
         {
-          label: 'Ações',
+          label: t('Ações'),
           render: (c) => (
             <span className="bo-actions">
               {c.urlFatura && (
@@ -74,7 +81,7 @@ export function ChargesTable({
                   target="_blank"
                   rel="noreferrer noopener"
                 >
-                  Fatura <ExternalLink size={12} />
+                  {t('Fatura')} <ExternalLink size={12} />
                 </a>
               )}
               {c.status === 'PENDENTE_EMISSAO' && (
@@ -84,7 +91,7 @@ export function ChargesTable({
                   data-testid="bo-charge-emit"
                   onClick={() => emitir.mutate(c.cobrancaId)}
                 >
-                  <Send size={14} /> Emitir
+                  <Send size={14} /> {t('Emitir')}{' '}
                 </Button>
               )}
               {(c.status === 'EMITIDA' || c.status === 'VENCIDA') && (
@@ -94,7 +101,7 @@ export function ChargesTable({
                   data-testid="bo-charge-sync"
                   onClick={() => sincronizar.mutate(c.cobrancaId)}
                 >
-                  <RefreshCw size={14} /> Atualizar
+                  <RefreshCw size={14} /> {t('Atualizar')}{' '}
                 </Button>
               )}
             </span>

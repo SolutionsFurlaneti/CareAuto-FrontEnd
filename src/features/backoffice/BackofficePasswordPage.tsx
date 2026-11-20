@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -7,6 +8,7 @@ import { Button, Field } from '../../ui';
 import { describeError } from '../../lib/describeError';
 import { useBackofficeStore } from './store';
 import { sairBackoffice, trocarSenhaBackoffice } from './api';
+import { LanguageSelector } from '../../components/LanguageSelector';
 
 const schema = z
   .object({
@@ -50,6 +52,7 @@ export async function sairDoBackoffice() {
 }
 
 export function BackofficePasswordPage() {
+  const { t } = useI18n();
   const session = useBackofficeStore((s) => s.session);
   const navigate = useNavigate();
   const [error, setError] = useState<unknown>();
@@ -66,12 +69,15 @@ export function BackofficePasswordPage() {
   return (
     <main className="account-page">
       <section className="panel account-panel">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <LanguageSelector />
+        </div>
         <p className="eyebrow">BACKOFFICE · {session?.login}</p>
-        <h1>{obrigatoria ? 'Defina uma nova senha.' : 'Alterar senha'}</h1>
+        <h1>{obrigatoria ? t('Defina uma nova senha.') : t('Alterar senha')}</h1>
         <p className="muted">
           {obrigatoria
-            ? 'O acesso inicial usa a senha padrão. Troque-a agora para usar o backoffice.'
-            : 'A troca encerra suas outras sessões no backoffice.'}
+            ? t('O acesso inicial usa a senha padrão. Troque-a agora para usar o backoffice.')
+            : t('A troca encerra suas outras sessões no backoffice.')}
         </p>
         <form
           noValidate
@@ -90,29 +96,29 @@ export function BackofficePasswordPage() {
           })}
         >
           <Field
-            label="Senha atual"
+            label={t('Senha atual')}
             type="password"
             autoComplete="current-password"
             data-testid="bo-senha-atual"
             {...register('senhaAtual')}
-            error={errors.senhaAtual?.message}
+            error={errors.senhaAtual?.message ? t(errors.senhaAtual.message) : undefined}
           />
           <Field
-            label="Nova senha"
+            label={t('Nova senha')}
             type="password"
             autoComplete="new-password"
-            hint="Pelo menos 8 caracteres."
+            hint={t('Pelo menos 8 caracteres.')}
             data-testid="bo-nova-senha"
             {...register('novaSenha')}
-            error={errors.novaSenha?.message}
+            error={errors.novaSenha?.message ? t(errors.novaSenha.message) : undefined}
           />
           <Field
-            label="Confirmar nova senha"
+            label={t('Confirmar nova senha')}
             type="password"
             autoComplete="new-password"
             data-testid="bo-confirmar-senha"
             {...register('confirmarSenha')}
-            error={errors.confirmarSenha?.message}
+            error={errors.confirmarSenha?.message ? t(errors.confirmarSenha.message) : undefined}
           />
           {!!error && (
             <p className="field-error" role="alert">
@@ -120,13 +126,13 @@ export function BackofficePasswordPage() {
             </p>
           )}
           <Button type="submit" busy={isSubmitting} data-testid="bo-password-submit">
-            Salvar nova senha
+            {t('Salvar nova senha')}{' '}
           </Button>
         </form>
         <div className="page-actions">
           {!obrigatoria && (
             <Link className="text-link" to="/backoffice">
-              Voltar
+              {t('Voltar')}{' '}
             </Link>
           )}
           <Button
@@ -137,7 +143,7 @@ export function BackofficePasswordPage() {
               navigate('/backoffice/login', { replace: true });
             }}
           >
-            Sair
+            {t('Sair')}{' '}
           </Button>
         </div>
       </section>

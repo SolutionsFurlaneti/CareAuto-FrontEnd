@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button, Field, Modal, Skeleton, TextAreaField } from '../../ui';
@@ -70,6 +71,7 @@ function toInput(draft: Draft, versao: string | null): ChecklistInput {
 
 /** Checklist veicular da estadia: preenchido a qualquer momento enquanto a estadia está aberta. */
 export function ChecklistModal({ estadiaId, onClose }: { estadiaId: number; onClose: () => void }) {
+  const { t } = useI18n();
   const query = useChecklist(estadiaId);
   const save = useSaveChecklist(estadiaId);
   const data = query.data;
@@ -123,17 +125,17 @@ export function ChecklistModal({ estadiaId, onClose }: { estadiaId: number; onCl
     setEditing(false);
   };
 
-  const title = 'Checklist veicular' + (data ? ' · ' + data.placa : '');
+  const title = t('Checklist veicular') + (data ? ' · ' + data.placa : '');
   const actions = discarding ? (
     <>
       <span className="modal-actions-note" role="alert">
-        As alterações não salvas serão perdidas.
+        {t('As alterações não salvas serão perdidas.')}
       </span>
       <Button variant="secondary" data-testid="checklist-keep" onClick={() => setDiscarding(null)}>
-        Continuar editando
+        {t('Continuar editando')}
       </Button>
       <Button variant="danger" data-testid="checklist-discard" onClick={() => perform(discarding)}>
-        Descartar alterações
+        {t('Descartar alterações')}
       </Button>
     </>
   ) : data && editing ? (
@@ -144,20 +146,20 @@ export function ChecklistModal({ estadiaId, onClose }: { estadiaId: number; onCl
         disabled={save.isPending}
         onClick={() => leave('cancel')}
       >
-        {data.checkList ? 'Cancelar edição' : 'Fechar'}
+        {t(data.checkList ? 'Cancelar edição' : 'Fechar')}
       </Button>
       <Button data-testid="checklist-save" busy={save.isPending} onClick={() => void submit()}>
-        Salvar checklist
+        {t('Salvar checklist')}
       </Button>
     </>
   ) : (
     <>
       <Button variant="secondary" data-testid="checklist-close" onClick={() => leave('close')}>
-        Fechar
+        {t('Fechar')}
       </Button>
       {data?.editavel && data.checkList && (
         <Button data-testid="checklist-edit" onClick={() => setEditing(true)}>
-          Editar checklist
+          {t('Editar checklist')}
         </Button>
       )}
     </>
@@ -175,7 +177,11 @@ export function ChecklistModal({ estadiaId, onClose }: { estadiaId: number; onCl
       {query.isPending ? (
         <Skeleton />
       ) : query.isError ? (
-        <QueryError error={query.error} what="o checklist" onRetry={() => void query.refetch()} />
+        <QueryError
+          error={query.error}
+          what={t('o checklist')}
+          onRetry={() => void query.refetch()}
+        />
       ) : (
         <div className="checklist" data-testid="checklist">
           <Header data={data!} />
@@ -204,30 +210,31 @@ export function ChecklistModal({ estadiaId, onClose }: { estadiaId: number; onCl
 }
 
 function Header({ data }: { data: ChecklistEstadia }) {
+  const { t } = useI18n();
   const vehicle = [data.marca, data.modelo].filter(Boolean).join(' ') || '—';
   return (
     <dl className="detail-grid checklist-header" data-testid="checklist-header">
       <div>
-        <dt>Placa</dt>
+        <dt>{t('Placa')}</dt>
         <dd className="plate">{data.placa}</dd>
       </div>
       <div>
-        <dt>Marca / modelo</dt>
+        <dt>{t('Marca / modelo')}</dt>
         <dd>
           {vehicle}
           {data.cor ? ' · ' + data.cor : ''}
         </dd>
       </div>
       <div>
-        <dt>Cliente</dt>
-        <dd>{data.clienteNome ?? 'Não informado'}</dd>
+        <dt>{t('Cliente')}</dt>
+        <dd>{data.clienteNome ?? t('Não informado')}</dd>
       </div>
       <div>
-        <dt>Telefone</dt>
+        <dt>{t('Telefone')}</dt>
         <dd>{data.clienteTelefone ?? '—'}</dd>
       </div>
       <div>
-        <dt>Entrada</dt>
+        <dt>{t('Entrada')}</dt>
         <dd>{dateTime(data.dataEntrada)}</dd>
       </div>
     </dl>
@@ -251,6 +258,7 @@ function Form({
   selected: number | null;
   setSelected: (index: number | null) => void;
 }) {
+  const { t } = useI18n();
   const full = draft.avarias.length >= MAX_DAMAGES;
   const updateDamage = (index: number, patch: Partial<Avaria>) =>
     change({ avarias: draft.avarias.map((x, i) => (i === index ? { ...x, ...patch } : x)) });
@@ -258,7 +266,7 @@ function Form({
     <>
       <div className="form-grid checklist-fields">
         <Field
-          label="Km atual"
+          label={t('Km atual')}
           inputMode="numeric"
           data-testid="checklist-km"
           value={draft.km}
@@ -266,7 +274,7 @@ function Form({
           onChange={(e) => change({ km: e.target.value.replace(/\D/g, '').slice(0, 7) })}
         />
         <Field
-          label="Última manutenção"
+          label={t('Última manutenção')}
           type="date"
           max={todayIso()}
           data-testid="checklist-last-maintenance"
@@ -277,13 +285,13 @@ function Form({
       </div>
 
       <div className="section-label">
-        <h3>Itens verificados</h3>
-        <small className="muted">Toque novamente para limpar a escolha.</small>
+        <h3>{t('Itens verificados')}</h3>
+        <small className="muted">{t('Toque novamente para limpar a escolha.')}</small>
       </div>
       <div className="checklist-items" data-testid="checklist-items">
         {checklistItems.map(({ item, label }) => (
           <div className="checklist-item" key={item}>
-            <span id={'item-' + item}>{label}</span>
+            <span id={'item-' + item}>{t(label)}</span>
             <div className="choice-group" role="radiogroup" aria-labelledby={'item-' + item}>
               {statusOptions.map((option) => {
                 const active = draft.itens[item] === option.value;
@@ -303,14 +311,14 @@ function Form({
                       })
                     }
                   >
-                    {option.value === 'FALTANTE_NAO_FUNCIONA' ? 'Faltante' : option.label}
+                    {t(option.value === 'FALTANTE_NAO_FUNCIONA' ? 'Faltante' : option.label)}
                   </button>
                 );
               })}
             </div>
             {item === 'OUTRO' && draft.itens.OUTRO && (
               <Field
-                label="Qual item?"
+                label={t('Qual item?')}
                 data-testid="checklist-other"
                 maxLength={100}
                 value={draft.outro}
@@ -323,13 +331,15 @@ function Form({
       </div>
 
       <div className="section-label">
-        <h3>Mapa de avarias</h3>
-        <small className="muted">{draft.avarias.length} marcada(s)</small>
+        <h3>{t('Mapa de avarias')}</h3>
+        <small className="muted">
+          {draft.avarias.length} {t('marcada(s)')}
+        </small>
       </div>
       <div
         className="choice-group damage-tools"
         role="radiogroup"
-        aria-label="Tipo de avaria a marcar"
+        aria-label={t('Tipo de avaria a marcar')}
       >
         {damageTypes.map((type) => (
           <button
@@ -341,14 +351,18 @@ function Form({
             data-testid={'damage-tool-' + type.value}
             onClick={() => setTool(type.value)}
           >
-            <b>{type.value}</b> {type.label}
+            <b>{type.value}</b> {t(type.label)}
           </button>
         ))}
       </div>
       <p className="muted checklist-help">
         {full
-          ? `Limite de ${MAX_DAMAGES} marcações atingido. Remova alguma para marcar outra.`
-          : 'Escolha o tipo e toque no desenho onde está a avaria. Toque numa marcação para selecioná-la.'}
+          ? t('Limite de {count} marcações atingido. Remova alguma para marcar outra.', {
+              count: MAX_DAMAGES,
+            })
+          : t(
+              'Escolha o tipo e toque no desenho onde está a avaria. Toque numa marcação para selecioná-la.',
+            )}
       </p>
       <DamageMap
         damages={draft.avarias}
@@ -372,14 +386,14 @@ function Form({
               <button
                 type="button"
                 className="damage-tag"
-                aria-label={`Selecionar avaria ${index + 1}`}
+                aria-label={t('Selecionar avaria {number}', { number: index + 1 })}
                 onClick={() => setSelected(index)}
               >
                 <b>{damage.tipo}</b> {damageLabel(damage.tipo)} · {viewLabel(damage.vista)}
               </button>
               <input
-                aria-label={`Observação da avaria ${index + 1}`}
-                placeholder="Observação (opcional)"
+                aria-label={t('Observação da avaria {number}', { number: index + 1 })}
+                placeholder={t('Observação (opcional)')}
                 maxLength={200}
                 data-testid="damage-note"
                 value={damage.observacao ?? ''}
@@ -388,7 +402,7 @@ function Form({
               />
               <Button
                 variant="ghost"
-                aria-label={`Remover avaria ${index + 1}`}
+                aria-label={t('Remover avaria {number}', { number: index + 1 })}
                 data-testid="damage-remove"
                 onClick={() => {
                   change({ avarias: draft.avarias.filter((_, i) => i !== index) });
@@ -403,7 +417,7 @@ function Form({
       )}
 
       <TextAreaField
-        label="Observações"
+        label={t('Observações')}
         rows={3}
         maxLength={1000}
         data-testid="checklist-notes"
@@ -416,11 +430,12 @@ function Form({
 }
 
 function Report({ data }: { data: ChecklistEstadia }) {
+  const { t, locale } = useI18n();
   const saved = data.checkList;
   if (!saved)
     return (
       <p className="notice" data-testid="checklist-missing">
-        O checklist não foi realizado nesta estadia.
+        {t('O checklist não foi realizado nesta estadia.')}
       </p>
     );
   const pending = checklistItems.length - saved.itens.length;
@@ -428,30 +443,34 @@ function Report({ data }: { data: ChecklistEstadia }) {
     <div data-testid="checklist-report">
       <dl className="detail-grid">
         <div>
-          <dt>Km atual</dt>
-          <dd>{saved.kmAtual == null ? '—' : saved.kmAtual.toLocaleString('pt-BR') + ' km'}</dd>
+          <dt>{t('Km atual')}</dt>
+          <dd>{saved.kmAtual == null ? '—' : saved.kmAtual.toLocaleString(locale) + ' km'}</dd>
         </div>
         <div>
-          <dt>Última manutenção</dt>
+          <dt>{t('Última manutenção')}</dt>
           <dd>{saved.dataUltimaManutencao ? dateOnly(saved.dataUltimaManutencao) : '—'}</dd>
         </div>
         <div>
-          <dt>Atendente</dt>
+          <dt>{t('Atendente')}</dt>
           <dd>{saved.atendente}</dd>
         </div>
         <div>
-          <dt>Atualizado em</dt>
+          <dt>{t('Atualizado em')}</dt>
           <dd>{dateTime(saved.atualizadoEm)}</dd>
         </div>
       </dl>
       {!data.editavel && (
         <p className="notice">
-          Estadia encerrada: o checklist está disponível apenas para consulta.
+          {t('Estadia encerrada: o checklist está disponível apenas para consulta.')}
         </p>
       )}
       <div className="section-label">
-        <h3>Itens verificados</h3>
-        {pending > 0 && <small className="muted">{pending} não avaliado(s)</small>}
+        <h3>{t('Itens verificados')}</h3>
+        {pending > 0 && (
+          <small className="muted">
+            {pending} {t('não avaliado(s)')}
+          </small>
+        )}
       </div>
       {saved.itens.length ? (
         <ul className="checklist-report-items" data-testid="checklist-report-items">
@@ -468,11 +487,13 @@ function Report({ data }: { data: ChecklistEstadia }) {
           ))}
         </ul>
       ) : (
-        <p className="muted">Nenhum item avaliado.</p>
+        <p className="muted">{t('Nenhum item avaliado.')}</p>
       )}
       <div className="section-label">
-        <h3>Mapa de avarias</h3>
-        <small className="muted">{saved.avarias.length} marcada(s)</small>
+        <h3>{t('Mapa de avarias')}</h3>
+        <small className="muted">
+          {saved.avarias.length} {t('marcada(s)')}
+        </small>
       </div>
       <DamageMap damages={saved.avarias} />
       {saved.avarias.length > 0 && (
@@ -490,7 +511,7 @@ function Report({ data }: { data: ChecklistEstadia }) {
       {saved.observacoes && (
         <>
           <div className="section-label">
-            <h3>Observações</h3>
+            <h3>{t('Observações')}</h3>
           </div>
           <p className="detail-note">{saved.observacoes}</p>
         </>

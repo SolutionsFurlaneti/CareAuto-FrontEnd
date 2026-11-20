@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { ResourcePage, type ResourceSpec } from '../../components/ResourcePage';
 import type { Veiculo } from '../../lib/types';
 import { vehicleFormSpec } from './vehicleFormSpec';
@@ -18,8 +19,10 @@ const spec: ResourceSpec<Veiculo> = {
       label: 'Veículo',
       render: (r) => (
         <div>
-          <strong>{[r.marca, r.modelo].filter(Boolean).join(' ') || 'Não informado'}</strong>
-          <small>{r.cor || 'Cor não informada'}</small>
+          <strong>
+            {[r.marca, r.modelo].filter(Boolean).join(' ') || translate('Não informado')}
+          </strong>
+          <small>{r.cor || translate('Cor não informada')}</small>
         </div>
       ),
     },
@@ -49,5 +52,6 @@ const spec: ResourceSpec<Veiculo> = {
   form: vehicleFormSpec,
 };
 export function VehiclesPage() {
+  useI18n();
   return <ResourcePage spec={spec} />;
 }

@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Drawer, useMediaQuery } from '@mui/material';
@@ -20,6 +21,7 @@ import { ThemeToggle } from '../../components/ThemeToggle';
 import { Button, Skeleton } from '../../ui';
 import { useBackofficeStore } from './store';
 import { sairDoBackoffice } from './BackofficePasswordPage';
+import { LanguageSelector } from '../../components/LanguageSelector';
 
 const items = [
   { to: '/backoffice', text: 'Visão geral', icon: LayoutDashboard, id: 'overview' },
@@ -40,6 +42,7 @@ const items = [
 
 /** Layout do backoffice: mesmo design system do app, navegação própria e sessão separada. */
 export function BackofficeShell() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const desktop = useMediaQuery('(min-width:900px)');
   const session = useBackofficeStore((s) => s.session);
@@ -63,10 +66,10 @@ export function BackofficeShell() {
           <small>BACKOFFICE</small>
         </span>
       </NavLink>
-      <p className="tenant-name">Gestão da plataforma</p>
-      <nav aria-label="Navegação do backoffice">
+      <p className="tenant-name">{t('Gestão da plataforma')}</p>
+      <nav aria-label={t('Navegação do backoffice')}>
         <div className="nav-section">
-          <p>PLATAFORMA</p>
+          <p>{t('PLATAFORMA')}</p>
           {items.map((item) => (
             <NavLink
               end={item.to === '/backoffice' || ('end' in item && item.end)}
@@ -76,14 +79,15 @@ export function BackofficeShell() {
               className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
             >
               <item.icon size={18} />
-              <span>{item.text}</span>
+              <span>{t(item.text)}</span>
             </NavLink>
           ))}
         </div>
       </nav>
       <NavLink className="nav-item" data-testid="bo-change-password" to="/backoffice/trocar-senha">
-        Alterar minha senha
+        {t('Alterar minha senha')}{' '}
       </NavLink>
+      <LanguageSelector />
       <div className="sidebar-bottom">
         <span className="avatar">{session?.login.slice(0, 2).toUpperCase()}</span>
         <div>
@@ -92,7 +96,7 @@ export function BackofficeShell() {
         </div>
         <Button
           variant="ghost"
-          aria-label="Sair do backoffice"
+          aria-label={t('Sair do backoffice')}
           data-testid="bo-logout"
           onClick={async () => {
             await sairDoBackoffice();
@@ -107,7 +111,7 @@ export function BackofficeShell() {
   return (
     <div className="app-shell backoffice-shell">
       <a className="skip-link" href="#main">
-        Pular para o conteúdo
+        {t('Pular para o conteúdo')}{' '}
       </a>
       <Drawer
         variant={desktop ? 'permanent' : 'temporary'}
@@ -123,16 +127,16 @@ export function BackofficeShell() {
           <div>
             <Button
               variant="ghost"
-              aria-label="Abrir menu"
+              aria-label={t('Abrir menu')}
               data-testid="nav-open"
               className="mobile-menu"
               onClick={() => setOpen(true)}
             >
               <Menu size={22} />
             </Button>
-            <span className="breadcrumb-brand">Backoffice</span>
+            <span className="breadcrumb-brand">{t('Backoffice')}</span>
             <ChevronRight size={14} />
-            <span>{title}</span>
+            <span>{t(title)}</span>
           </div>
           <div>
             <ThemeToggle />
@@ -153,7 +157,7 @@ export function BackofficeShell() {
         </m.main>
         <footer className="app-footer">
           <span>CareAuto Backoffice</span>
-          <span>Assinaturas, cobranças e crescimento da plataforma.</span>
+          <span>{t('Assinaturas, cobranças e crescimento da plataforma.')}</span>
         </footer>
       </div>
     </div>

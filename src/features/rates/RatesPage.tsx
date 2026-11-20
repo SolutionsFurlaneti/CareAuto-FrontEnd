@@ -1,3 +1,4 @@
+import { getLocale, translate, useI18n } from '../../i18n';
 import { ResourcePage, type ResourceSpec } from '../../components/ResourcePage';
 import type { Taxa } from '../../lib/types';
 import { ratesSchema } from './ratesSchema';
@@ -29,12 +30,15 @@ const spec: ResourceSpec<Taxa> = {
     {
       label: 'Dia',
       render: (r) =>
-        ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][r.diaSemana - 1],
+        translate(
+          ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][r.diaSemana - 1] ??
+            '—',
+        ),
     },
     {
       label: 'Multiplicador',
       render: (r) =>
-        r.multiplicador === null ? '—' : r.multiplicador.toLocaleString('pt-BR') + '×',
+        r.multiplicador === null ? '—' : r.multiplicador.toLocaleString(getLocale()) + '×',
     },
     { label: 'Hora fixa', render: (r) => money(r.valorFixoHora) },
     {
@@ -42,7 +46,7 @@ const spec: ResourceSpec<Taxa> = {
       render: (r) => (
         <StatusBadge
           status={r.ativo ? 'ATIVA' : 'ENCERRADA'}
-          label={r.ativo ? 'Ativo' : 'Inativo'}
+          label={r.ativo ? translate('Ativo') : translate('Inativo')}
         />
       ),
     },
@@ -82,5 +86,6 @@ const spec: ResourceSpec<Taxa> = {
   },
 };
 export function RatesPage() {
+  useI18n();
   return <ResourcePage spec={spec} />;
 }

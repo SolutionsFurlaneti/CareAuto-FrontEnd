@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Capacitor } from '@capacitor/core';
@@ -34,6 +35,7 @@ const jobStatus: Record<TrabalhoImpressao['status'], { badge: string; label: str
   FALHOU: { badge: 'ERRO', label: 'Falhou' },
 };
 function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
+  const { t } = useI18n();
   const cache = useQueryClient();
   const scope = usePrintScope();
   const printers = usePrinters();
@@ -69,7 +71,7 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
       }),
     onSuccess: (data) => {
       cache.setQueryData(printKeys.config(scope), data);
-      toast.success('Preferências de impressão salvas.');
+      toast.success(translate('Preferências de impressão salvas.'));
     },
   });
   const dirty =
@@ -88,16 +90,18 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
   return (
     <section className="panel" aria-labelledby="print-preferences" data-testid="print-preferences">
       <div className="panel-toolbar">
-        <h2 id="print-preferences">Ao registrar entrada</h2>
+        <h2 id="print-preferences">{t('Ao registrar entrada')}</h2>
       </div>
       <div className="integration-body">
         <div className="switch-group">
           <Switch
-            label="Imprimir utilizando o navegador"
+            label={t('Imprimir utilizando o navegador')}
             description={
               Capacitor.isNativePlatform()
-                ? 'Disponível ao abrir o CareAuto no navegador do computador.'
-                : 'Abre o diálogo do sistema para escolher sua impressora USB ou de rede. Cada impressão precisa de confirmação.'
+                ? t('Disponível ao abrir o CareAuto no navegador do computador.')
+                : t(
+                    'Abre o diálogo do sistema para escolher sua impressora USB ou de rede. Cada impressão precisa de confirmação.',
+                  )
             }
             data-testid="field-imprimirPeloNavegador"
             checked={browser}
@@ -106,31 +110,31 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
           />
           {browser && (
             <SelectField
-              label="Largura do papel"
+              label={t('Largura do papel')}
               data-testid="field-larguraPapelNavegadorMm"
               value={paperWidth}
               onChange={(event) => setPaperWidth(event.target.value === '58' ? 58 : 80)}
             >
-              <option value="58">58 mm</option>
-              <option value="80">80 mm</option>
+              <option value="58">{t('58 mm')}</option>
+              <option value="80">{t('80 mm')}</option>
             </SelectField>
           )}
           <Switch
-            label="Perguntar se deseja imprimir na entrada"
+            label={t('Perguntar se deseja imprimir na entrada')}
             description={
               browser
-                ? 'Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.'
+                ? t('Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.')
                 : hasEntryPrinter
                   ? config.possuiTokenAgente
-                    ? 'Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.'
-                    : 'Gere o token e instale o agente de impressão para enviar os tickets.'
-                  : 'Cadastre e ative uma impressora térmica para habilitar esta opção.'
+                    ? t('Mostra “Deseja imprimir o ticket de estacionamento?” depois de salvar.')
+                    : t('Gere o token e instale o agente de impressão para enviar os tickets.')
+                  : t('Cadastre e ative uma impressora térmica para habilitar esta opção.')
             }
             data-testid="field-perguntarAoSalvarEntrada"
             checked={effectiveAsk}
             onChange={(enabled) => {
               if (enabled && !canPrint) {
-                void alertAction('Impressora necessária', blockedMessage);
+                void alertAction(t('Impressora necessária'), t(blockedMessage));
                 return;
               }
               setAsk(enabled);
@@ -138,24 +142,26 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
             }}
           />
           <Switch
-            label="Imprimir automaticamente"
+            label={t('Imprimir automaticamente')}
             description={
               browser
-                ? 'Abre o diálogo após registrar a entrada. Confirme a impressão na janela do sistema.'
+                ? t(
+                    'Abre o diálogo após registrar a entrada. Confirme a impressão na janela do sistema.',
+                  )
                 : !hasEntryPrinter
-                  ? 'Cadastre e ative uma impressora térmica para habilitar esta opção.'
+                  ? t('Cadastre e ative uma impressora térmica para habilitar esta opção.')
                   : effectiveAsk
-                    ? 'Desative a pergunta para imprimir sem confirmação.'
+                    ? t('Desative a pergunta para imprimir sem confirmação.')
                     : config.possuiTokenAgente
-                      ? 'Imprime o ticket sem perguntar.'
-                      : 'Gere o token e instale o agente de impressão para enviar os tickets.'
+                      ? t('Imprime o ticket sem perguntar.')
+                      : t('Gere o token e instale o agente de impressão para enviar os tickets.')
             }
             data-testid="field-imprimirCupomEntradaAutomatico"
             checked={effectiveAutomatic}
             disabled={effectiveAsk}
             onChange={(enabled) => {
               if (enabled && !canPrint) {
-                void alertAction('Impressora necessária', blockedMessage);
+                void alertAction(t('Impressora necessária'), t(blockedMessage));
                 return;
               }
               setAutomatic(enabled);
@@ -164,17 +170,18 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
           />
         </div>
         <p className="muted" role="status">
-          {summary}
+          {t(summary)}
         </p>
         {!browser && hasEntryPrinter && !config.possuiTokenAgente && (
           <p className="notice" role="status">
-            A impressora está cadastrada. Para os tickets chegarem até ela, gere o token do agente e
-            instale o agente no computador da guarita.
+            {t(
+              'A impressora está cadastrada. Para os tickets chegarem até ela, gere o token do agente e instale o agente no computador da guarita.',
+            )}
           </p>
         )}
         {config.imprimirPeloNavegador && !browser && (
           <p className="notice" role="status">
-            Ao voltar ao agente, os trabalhos pendentes do histórico poderão ser impressos.
+            {t('Ao voltar ao agente, os trabalhos pendentes do histórico poderão ser impressos.')}
           </p>
         )}
         {!!save.error && (
@@ -189,9 +196,13 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
             disabled={!dirty}
             onClick={() => save.mutate()}
           >
-            Salvar preferências
+            {t('Salvar preferências')}
           </Button>
-          {config.atualizadoEm && <small>Última alteração: {dateTime(config.atualizadoEm)}</small>}
+          {config.atualizadoEm && (
+            <small>
+              {t('Última alteração:')} {dateTime(config.atualizadoEm)}
+            </small>
+          )}
         </div>
       </div>
     </section>
@@ -199,6 +210,7 @@ function PreferencesPanel({ config }: { config: ConfiguracaoImpressao }) {
 }
 
 function BrowserPrintPanel({ config }: { config: ConfiguracaoImpressao }) {
+  const { t } = useI18n();
   const establishment = useAuthStore((state) => state.session?.estabelecimentoNome ?? 'CareAuto');
   const scope = usePrintScope();
   const nativePlatform = Capacitor.isNativePlatform();
@@ -220,7 +232,9 @@ function BrowserPrintPanel({ config }: { config: ConfiguracaoImpressao }) {
       await printBrowserTest(establishment, config.larguraPapelNavegadorMm ?? 80, assertSession);
     },
     onSuccess: () =>
-      toast.info('Diálogo de impressão aberto. Confirme a impressão na janela do sistema.'),
+      toast.info(
+        translate('Diálogo de impressão aberto. Confirme a impressão na janela do sistema.'),
+      ),
     onError: (error) => toast.error(describeError(error)),
   });
   return (
@@ -230,21 +244,24 @@ function BrowserPrintPanel({ config }: { config: ConfiguracaoImpressao }) {
       data-testid="browser-print-panel"
     >
       <div className="panel-toolbar">
-        <h2 id="browser-print-title">Impressão pelo navegador</h2>
-        <StatusBadge status="ATIVA" label="Ativa" />
+        <h2 id="browser-print-title">{t('Impressão pelo navegador')}</h2>
+        <StatusBadge status="ATIVA" label={t('Ativa')} />
       </div>
       <div className="integration-body">
         <p>
-          Selecione sua impressora na janela do sistema e confirme a impressão. O ticket usa papel
-          de {config.larguraPapelNavegadorMm ?? 80} mm.
+          {t(
+            'Selecione sua impressora na janela do sistema e confirme a impressão. O ticket usa papel de',
+          )}{' '}
+          {config.larguraPapelNavegadorMm ?? 80} {t('mm.')}
         </p>
         <p className="muted">
-          Não é necessário configurar token ou agente para este modo. No diálogo, use o tamanho
-          correto da bobina, escala de 100% e desative cabeçalhos e rodapés.
+          {t(
+            'Não é necessário configurar token ou agente para este modo. No diálogo, use o tamanho correto da bobina, escala de 100% e desative cabeçalhos e rodapés.',
+          )}
         </p>
         {nativePlatform && (
           <p className="notice" role="alert">
-            Abra o CareAuto no navegador do computador para usar esta forma de impressão.
+            {t('Abra o CareAuto no navegador do computador para usar esta forma de impressão.')}
           </p>
         )}
         <Button
@@ -253,7 +270,7 @@ function BrowserPrintPanel({ config }: { config: ConfiguracaoImpressao }) {
           disabled={nativePlatform}
           onClick={() => test.mutate()}
         >
-          Imprimir teste
+          {t('Imprimir teste')}
         </Button>
         {!!test.error && (
           <p className="form-error" role="alert">
@@ -266,6 +283,7 @@ function BrowserPrintPanel({ config }: { config: ConfiguracaoImpressao }) {
 }
 
 function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
+  const { t } = useI18n();
   const cache = useQueryClient();
   const scope = usePrintScope();
   const nativePlatform = Capacitor.isNativePlatform();
@@ -289,7 +307,7 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
             token: data.token,
           });
           setNativeStatus(status);
-          toast.success('Agente de impressão SUNMI iniciado neste terminal.');
+          toast.success(translate('Agente de impressão SUNMI iniciado neste terminal.'));
         } catch (e) {
           toast.error(describeError(e));
         }
@@ -301,15 +319,19 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
   const online = config.agenteConectado;
   async function start() {
     if (nativePlatform && !nativeStatus?.supported) {
-      toast.error('Este terminal não foi identificado como compatível com a impressora SUNMI.');
+      toast.error(
+        translate('Este terminal não foi identificado como compatível com a impressora SUNMI.'),
+      );
       return;
     }
     if (
       config.possuiTokenAgente &&
       !(await confirmAction(
-        'Gerar novo token?',
-        'Todos os agentes deste estabelecimento deixarão de imprimir até receberem o novo token.',
-        'Gerar novo token',
+        translate('Gerar novo token?'),
+        translate(
+          'Todos os agentes deste estabelecimento deixarão de imprimir até receberem o novo token.',
+        ),
+        translate('Gerar novo token'),
       ))
     )
       return;
@@ -319,25 +341,27 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
     if (!token) return;
     try {
       await navigator.clipboard.writeText(token);
-      toast.success('Token copiado.');
+      toast.success(translate('Token copiado.'));
     } catch {
-      toast.error('Não foi possível copiar. Selecione o texto e copie manualmente.');
+      toast.error(translate('Não foi possível copiar. Selecione o texto e copie manualmente.'));
     }
   }
   async function copyDeviceId() {
     if (!nativeStatus?.deviceId) return;
     try {
       await navigator.clipboard.writeText(nativeStatus.deviceId);
-      toast.success('ID do POS copiado.');
+      toast.success(translate('ID do POS copiado.'));
     } catch {
-      toast.error('Não foi possível copiar o ID. Selecione o texto e copie manualmente.');
+      toast.error(
+        translate('Não foi possível copiar o ID. Selecione o texto e copie manualmente.'),
+      );
     }
   }
   async function stop() {
     try {
       await nativePrintAgent.stop();
       setNativeStatus((current) => (current ? { ...current, running: false } : current));
-      toast.success('Agente de impressão pausado neste terminal.');
+      toast.success(translate('Agente de impressão pausado neste terminal.'));
     } catch (e) {
       toast.error(describeError(e));
     }
@@ -345,56 +369,61 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
   return (
     <section className="panel" aria-labelledby="print-agent" data-testid="print-agent">
       <div className="panel-toolbar">
-        <h2 id="print-agent">{nativePlatform ? 'Agente Android' : 'Agente de impressão'}</h2>
+        <h2 id="print-agent">{nativePlatform ? t('Agente Android') : t('Agente de impressão')}</h2>
         {!config.possuiTokenAgente ? (
-          <StatusBadge status="ENCERRADA" label="Não configurado" />
+          <StatusBadge status="ENCERRADA" label={t('Não configurado')} />
         ) : online ? (
-          <StatusBadge status="ATIVA" label="Conectado" />
+          <StatusBadge status="ATIVA" label={t('Conectado')} />
         ) : nativePlatform && nativeStatus?.running ? (
-          <StatusBadge status="PENDENTE" label="Ativo no terminal" />
+          <StatusBadge status="PENDENTE" label={t('Ativo no terminal')} />
         ) : (
-          <StatusBadge status="PENDENTE" label="Sem contato" />
+          <StatusBadge status="PENDENTE" label={t('Sem contato')} />
         )}
       </div>
       <div className="integration-body">
         {nativePlatform ? (
           <>
             <p>
-              O agente SUNMI consulta a fila em segundo plano e envia tickets com QR Code à
-              impressora térmica integrada. Compatibilidade automática é habilitada para terminais
-              SUNMI.
+              {t(
+                'O agente SUNMI consulta a fila em segundo plano e envia tickets com QR Code à impressora térmica integrada. Compatibilidade automática é habilitada para terminais SUNMI.',
+              )}
             </p>
             <p className="muted">
-              Modelo detectado: {nativeStatus?.model || 'consultando terminal'}
+              {t('Modelo detectado:')} {nativeStatus?.model || t('consultando terminal')}
               {nativeStatus && !nativeStatus.supported
-                ? ' · Este fabricante ainda não possui adaptador nativo de impressão nesta versão.'
+                ? t(
+                    ' · Este fabricante ainda não possui adaptador nativo de impressão nesta versão.',
+                  )
                 : ''}
             </p>
             <div className="integration-actions">
               <code className="agent-token">
-                {nativeStatus?.deviceId || 'ID do POS indisponível'}
+                {nativeStatus?.deviceId || t('ID do POS indisponível')}
               </code>
               <Button
                 variant="secondary"
                 disabled={!nativeStatus?.deviceId}
                 onClick={() => void copyDeviceId()}
               >
-                <Copy size={16} aria-hidden="true" /> Copiar ID do POS
+                <Copy size={16} aria-hidden="true" /> {t('Copiar ID do POS')}
               </Button>
             </div>
           </>
         ) : (
           <>
             <p>
-              Para imprimir sem abrir o diálogo do navegador, o agente instalado no computador da
-              guarita busca os tickets na fila e envia à impressora USB ou de rede.
+              {t(
+                'Para imprimir sem abrir o diálogo do navegador, o agente instalado no computador da guarita busca os tickets na fila e envia à impressora USB ou de rede.',
+              )}
             </p>
             <p className="muted">
               {config.possuiTokenAgente
                 ? config.ultimoContatoAgenteEm
-                  ? 'Último contato: ' + dateTime(config.ultimoContatoAgenteEm) + '.'
-                  : 'O agente ainda não se conectou com o token atual.'
-                : 'Gere um token e configure-o no agente local de impressão. Consulte o guia de instalação do agente.'}
+                  ? t('Último contato: {date}.', { date: dateTime(config.ultimoContatoAgenteEm) })
+                  : t('O agente ainda não se conectou com o token atual.')
+                : t(
+                    'Gere um token e configure-o no agente local de impressão. Consulte o guia de instalação do agente.',
+                  )}
             </p>
           </>
         )}
@@ -408,40 +437,43 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
           >
             {nativePlatform
               ? nativeStatus?.running
-                ? 'Reiniciar agente e token'
-                : 'Ativar agente neste POS'
+                ? t('Reiniciar agente e token')
+                : t('Ativar agente neste POS')
               : config.possuiTokenAgente
-                ? 'Gerar novo token'
-                : 'Gerar token do agente'}
+                ? t('Gerar novo token')
+                : t('Gerar token do agente')}
           </Button>
           {nativePlatform && nativeStatus?.running && (
             <Button variant="ghost" disabled={generate.isPending} onClick={() => void stop()}>
-              Pausar agente neste POS
+              {t('Pausar agente neste POS')}
             </Button>
           )}
           {!nativePlatform && config.ultimoContatoAgenteEm && (
-            <small>Último contato: {dateTime(config.ultimoContatoAgenteEm)}</small>
+            <small>
+              {t('Último contato:')} {dateTime(config.ultimoContatoAgenteEm)}
+            </small>
           )}
         </div>
       </div>
       <Modal
         open={!!token}
         onClose={() => setToken(undefined)}
-        title="Token do agente"
+        title={t('Token do agente')}
         actions={
           <>
             <Button variant="secondary" onClick={() => void copyToken()}>
-              <Copy size={16} aria-hidden="true" /> Copiar
+              <Copy size={16} aria-hidden="true" /> {t('Copiar')}
             </Button>
             <Button data-testid="agent-token-done" onClick={() => setToken(undefined)}>
-              Já copiei
+              {t('Já copiei')}
             </Button>
           </>
         }
       >
         <p role="alert" className="notice">
-          Este token aparece uma única vez. Guarde-o agora: depois de fechar, só é possível gerar
-          outro.
+          {t(
+            'Este token aparece uma única vez. Guarde-o agora: depois de fechar, só é possível gerar outro.',
+          )}
         </p>
         <code className="agent-token" data-testid="agent-token-value">
           {token}
@@ -450,18 +482,26 @@ function AgentPanel({ config }: { config: ConfiguracaoImpressao }) {
           <>
             <p className="muted">
               {nativeStatus?.running
-                ? 'O serviço nativo está ativo. O token fica protegido pelo Android Keystore neste terminal.'
-                : 'O token foi gerado, mas o agente não iniciou. Você pode copiá-lo e tentar novamente após verificar a compatibilidade do terminal.'}
+                ? t(
+                    'O serviço nativo está ativo. O token fica protegido pelo Android Keystore neste terminal.',
+                  )
+                : t(
+                    'O token foi gerado, mas o agente não iniciou. Você pode copiá-lo e tentar novamente após verificar a compatibilidade do terminal.',
+                  )}
             </p>
-            <p className="muted">ID deste POS: {nativeStatus?.deviceId || 'indisponível'}</p>
+            <p className="muted">
+              {t('ID deste POS:')} {nativeStatus?.deviceId || t('indisponível')}
+            </p>
           </>
         ) : (
           <>
-            <p className="muted">No computador da guarita, em um PowerShell como administrador:</p>
+            <p className="muted">
+              {t('No computador da guarita, em um PowerShell como administrador:')}
+            </p>
             <code className="agent-token">
               [Environment]::SetEnvironmentVariable("Agente__Token", "{token}", "Machine")
             </code>
-            <p className="muted">Depois reinicie o serviço local de impressão no Windows.</p>
+            <p className="muted">{t('Depois reinicie o serviço local de impressão no Windows.')}</p>
           </>
         )}
       </Modal>
@@ -475,6 +515,7 @@ function PrintersPanel({
   agentConfigured: boolean;
   agentConnected: boolean;
 }) {
+  const { t } = useI18n();
   const cache = useQueryClient();
   const scope = usePrintScope();
   const printers = usePrinters();
@@ -485,14 +526,14 @@ function PrintersPanel({
     onSuccess: () => {
       refresh();
       setEditing(undefined);
-      toast.success('Impressora salva.');
+      toast.success(translate('Impressora salva.'));
     },
   });
   const deactivate = useMutation({
     mutationFn: deactivatePrinter,
     onSuccess: () => {
       refresh();
-      toast.success('Impressora desativada.');
+      toast.success(translate('Impressora desativada.'));
     },
     onError: (e) => toast.error(describeError(e)),
   });
@@ -500,7 +541,7 @@ function PrintersPanel({
     mutationFn: testPrinter,
     onSuccess: () => {
       refresh();
-      toast.success('Página de teste enviada. Acompanhe em Últimas impressões.');
+      toast.success(translate('Página de teste enviada. Acompanhe em Últimas impressões.'));
     },
     onError: (e) => toast.error(describeError(e)),
   });
@@ -508,7 +549,7 @@ function PrintersPanel({
   return (
     <section className="panel" aria-labelledby="print-printers" data-testid="print-printers">
       <div className="panel-toolbar">
-        <h2 id="print-printers">Impressoras</h2>
+        <h2 id="print-printers">{t('Impressoras')}</h2>
         <Button
           data-testid="printer-new"
           onClick={() => {
@@ -516,7 +557,7 @@ function PrintersPanel({
             setEditing('new');
           }}
         >
-          <Plus size={16} aria-hidden="true" /> Nova impressora
+          <Plus size={16} aria-hidden="true" /> {t('Nova impressora')}
         </Button>
       </div>
       {printers.isPending ? (
@@ -524,18 +565,18 @@ function PrintersPanel({
       ) : printers.isError ? (
         <QueryError
           error={printers.error}
-          what="as impressoras"
+          what={t('as impressoras')}
           onRetry={() => void printers.refetch()}
         />
       ) : rows.length === 0 ? (
         <EmptyState
-          title="Nenhuma impressora cadastrada"
-          description="Cadastre a impressora da guarita para imprimir tickets com QR Code."
+          title={t('Nenhuma impressora cadastrada')}
+          description={t('Cadastre a impressora da guarita para imprimir tickets com QR Code.')}
         />
       ) : (
         <DataTable
           testId="printers-table"
-          caption="Impressoras cadastradas"
+          caption={t('Impressoras cadastradas')}
           rows={rows}
           rowKey={(p) => p.impressoraId}
           columns={[
@@ -544,7 +585,10 @@ function PrintersPanel({
               label: 'Conexão',
               render: (p) =>
                 p.tipoConexao === 'REDE_TCP'
-                  ? 'Rede · ' + p.enderecoDriverOuIp + ':' + p.portaTcp
+                  ? t('Rede · {address}:{port}', {
+                      address: p.enderecoDriverOuIp,
+                      port: p.portaTcp ?? '—',
+                    })
                   : p.tipoConexao === 'ANDROID_POS'
                     ? 'POS Android · ' + p.enderecoDriverOuIp
                     : 'USB · ' + p.enderecoDriverOuIp,
@@ -552,16 +596,16 @@ function PrintersPanel({
             {
               label: 'Função',
               render: (p) =>
-                [p.imprimeEntrada && 'Entrada', p.imprimeFechamento && 'Fechamento']
+                [p.imprimeEntrada && t('Entrada'), p.imprimeFechamento && t('Fechamento')]
                   .filter(Boolean)
-                  .join(' e '),
+                  .join(t(' e ')),
             },
             {
               label: 'Situação',
               render: (p) => (
                 <StatusBadge
                   status={p.ativo ? 'ATIVA' : 'ENCERRADA'}
-                  label={p.ativo ? 'Ativa' : 'Inativa'}
+                  label={p.ativo ? t('Ativa') : t('Inativa')}
                 />
               ),
             },
@@ -577,7 +621,7 @@ function PrintersPanel({
                       setEditing(p);
                     }}
                   >
-                    Editar
+                    {t('Editar')}
                   </Button>
                   {p.ativo && (
                     <>
@@ -587,15 +631,17 @@ function PrintersPanel({
                         disabled={!agentConfigured || !agentConnected}
                         title={
                           !agentConfigured
-                            ? 'Gere o token do agente primeiro.'
+                            ? t('Gere o token do agente primeiro.')
                             : !agentConnected
-                              ? 'Agente sem contato. Atualize o token no serviço local e reinicie-o.'
+                              ? t(
+                                  'Agente sem contato. Atualize o token no serviço local e reinicie-o.',
+                                )
                               : undefined
                         }
                         busy={test.isPending && test.variables === p.impressoraId}
                         onClick={() => test.mutate(p.impressoraId)}
                       >
-                        Imprimir teste
+                        {t('Imprimir teste')}
                       </Button>
                       <Button
                         variant="ghost"
@@ -603,15 +649,18 @@ function PrintersPanel({
                         onClick={async () => {
                           if (
                             await confirmAction(
-                              'Desativar impressora?',
-                              `${p.nome} deixará de receber tickets. Você pode reativá-la em Editar.`,
-                              'Desativar',
+                              translate('Desativar impressora?'),
+                              t(
+                                '{name} deixará de receber tickets. Você pode reativá-la em Editar.',
+                                { name: p.nome },
+                              ),
+                              translate('Desativar'),
                             )
                           )
                             deactivate.mutate(p.impressoraId);
                         }}
                       >
-                        Desativar
+                        {t('Desativar')}
                       </Button>
                     </>
                   )}
@@ -624,7 +673,7 @@ function PrintersPanel({
       <Modal
         open={!!editing}
         onClose={() => setEditing(undefined)}
-        title={editing === 'new' ? 'Nova impressora' : 'Editar impressora'}
+        title={editing === 'new' ? t('Nova impressora') : t('Editar impressora')}
         busy={save.isPending}
         actions={
           <>
@@ -633,7 +682,7 @@ function PrintersPanel({
               disabled={save.isPending}
               onClick={() => setEditing(undefined)}
             >
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button
               type="submit"
@@ -641,7 +690,7 @@ function PrintersPanel({
               data-testid="form-submit"
               busy={save.isPending}
             >
-              Salvar impressora
+              {t('Salvar impressora')}
             </Button>
           </>
         }
@@ -670,14 +719,15 @@ function PrintersPanel({
 }
 
 function JobsPanel({ browserMode = false }: { browserMode?: boolean }) {
+  const { t } = useI18n();
   const jobs = usePrintJobs(!browserMode);
   return (
     <section className="panel" aria-labelledby="print-jobs" data-testid="print-jobs">
       <div className="panel-toolbar">
-        <h2 id="print-jobs">{browserMode ? 'Histórico do agente' : 'Últimas impressões'}</h2>
+        <h2 id="print-jobs">{browserMode ? t('Histórico do agente') : t('Últimas impressões')}</h2>
         <Button
           variant="ghost"
-          aria-label="Atualizar impressões"
+          aria-label={t('Atualizar impressões')}
           busy={jobs.isFetching}
           onClick={() => void jobs.refetch()}
         >
@@ -686,24 +736,28 @@ function JobsPanel({ browserMode = false }: { browserMode?: boolean }) {
       </div>
       {browserMode && (
         <p className="printing-history-note muted" role="status">
-          Os pedidos pendentes do agente ficam pausados neste modo. Trabalhos já iniciados podem
-          terminar. O navegador abre o diálogo do sistema e não confirma a saída do papel neste
-          histórico.
+          {t(
+            'Os pedidos pendentes do agente ficam pausados neste modo. Trabalhos já iniciados podem terminar. O navegador abre o diálogo do sistema e não confirma a saída do papel neste histórico.',
+          )}
         </p>
       )}
       {jobs.isPending ? (
         <Skeleton />
       ) : jobs.isError ? (
-        <QueryError error={jobs.error} what="as impressões" onRetry={() => void jobs.refetch()} />
+        <QueryError
+          error={jobs.error}
+          what={t('as impressões')}
+          onRetry={() => void jobs.refetch()}
+        />
       ) : jobs.data.length === 0 ? (
         <EmptyState
-          title="Nenhuma impressão ainda"
-          description="Tickets e testes enviados aparecem aqui."
+          title={t('Nenhuma impressão ainda')}
+          description={t('Tickets e testes enviados aparecem aqui.')}
         />
       ) : (
         <DataTable
           testId="print-jobs-table"
-          caption="Últimas 20 impressões"
+          caption={t('Últimas 20 impressões')}
           rows={jobs.data}
           rowKey={(j) => j.impressaoId}
           columns={[
@@ -711,17 +765,25 @@ function JobsPanel({ browserMode = false }: { browserMode?: boolean }) {
             { label: 'Impressora', render: (j) => j.impressora },
             {
               label: 'Tipo',
-              render: (j) => (j.tipo === 'TESTE' ? 'Teste' : `Ticket · estadia #${j.estadiaId}`),
+              render: (j) =>
+                j.tipo === 'TESTE'
+                  ? t('Teste')
+                  : t('Ticket · estadia #{id}', { id: j.estadiaId ?? '—' }),
             },
             {
               label: 'Situação',
               render: (j) => (
-                <StatusBadge status={jobStatus[j.status].badge} label={jobStatus[j.status].label} />
+                <StatusBadge
+                  status={jobStatus[j.status].badge}
+                  label={t(jobStatus[j.status].label)}
+                />
               ),
             },
             {
               label: 'Detalhe',
-              render: (j) => j.erro ?? (j.tentativas > 1 ? `${j.tentativas} tentativas` : '—'),
+              render: (j) =>
+                j.erro ??
+                (j.tentativas > 1 ? t('{count} tentativas', { count: j.tentativas }) : '—'),
             },
           ]}
         />
@@ -731,21 +793,24 @@ function JobsPanel({ browserMode = false }: { browserMode?: boolean }) {
 }
 
 export function PrintingPage() {
+  const { t } = useI18n();
   // Atualiza a situação do agente enquanto a tela está aberta.
   const config = usePrintConfig(true, 15000);
   return (
     <>
       <PageHeader
-        eyebrow="CONFIGURAÇÕES"
-        title="Impressão"
-        description="Escolha entre o diálogo de impressão do navegador e o agente para tickets com QR Code."
+        eyebrow={t('CONFIGURAÇÕES')}
+        title={t('Impressão')}
+        description={t(
+          'Escolha entre o diálogo de impressão do navegador e o agente para tickets com QR Code.',
+        )}
       />
       {config.isPending ? (
         <Skeleton />
       ) : config.isError ? (
         <QueryError
           error={config.error}
-          what="a configuração de impressão"
+          what={t('a configuração de impressão')}
           onRetry={() => void config.refetch()}
         />
       ) : (

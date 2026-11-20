@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useEffect, useId, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,6 +60,7 @@ function GenerateForm({
   onSubmit: (input: GerarCampanhaMetaInput) => Promise<void>;
   error: unknown;
 }) {
+  const { t } = useI18n();
   const {
     register,
     control,
@@ -79,61 +81,62 @@ function GenerateForm({
   return (
     <form id={formId} className="form-grid" noValidate onSubmit={handleSubmit(onSubmit)}>
       <Field
-        label="Nome da campanha"
+        label={t('Nome da campanha')}
         data-testid="bo-meta-campaign-name"
         {...register('nome')}
-        error={errors.nome?.message}
+        error={errors.nome?.message ? t(errors.nome.message) : undefined}
       />
       <SelectField
-        label="Conversão para otimizar"
+        label={t('Conversão para otimizar')}
         data-testid="bo-meta-campaign-objective"
         {...register('objetivoConversao')}
       >
-        <option value="TRIAL_STARTED">Cadastro e início do teste (Lead)</option>
-        <option value="SUBSCRIPTION_ACTIVE">Assinatura confirmada (Purchase)</option>
+        <option value="TRIAL_STARTED">{t('Cadastro e início do teste (Lead)')}</option>
+        <option value="SUBSCRIPTION_ACTIVE">{t('Assinatura confirmada (Purchase)')}</option>
       </SelectField>
       <div className="form-span">
         <TextAreaField
-          label="Briefing para o Claude"
+          label={t('Briefing para o Claude')}
           rows={4}
-          placeholder="Público, diferencial, oferta aprovada e contexto…"
+          placeholder={t('Público, diferencial, oferta aprovada e contexto…')}
           data-testid="bo-meta-campaign-briefing"
           {...register('briefing')}
-          error={errors.briefing?.message}
+          error={errors.briefing?.message ? t(errors.briefing.message) : undefined}
         />
       </div>
       <Field
-        label="Região de comunicação"
-        hint="A segmentação da primeira versão é Brasil; a região orienta os textos do Claude."
+        label={t('Região de comunicação')}
+        hint={t('A segmentação da primeira versão é Brasil; a região orienta os textos do Claude.')}
         data-testid="bo-meta-campaign-region"
         {...register('regiao')}
-        error={errors.regiao?.message}
+        error={errors.regiao?.message ? t(errors.regiao.message) : undefined}
       />
       <Field
-        label="Página de destino (HTTPS)"
+        label={t('Página de destino (HTTPS)')}
         data-testid="bo-meta-campaign-url"
         {...register('urlFinal')}
-        error={errors.urlFinal?.message}
+        error={errors.urlFinal?.message ? t(errors.urlFinal.message) : undefined}
       />
       <Controller
         control={control}
         name="orcamentoDiario"
         render={({ field }) => (
           <MoneyField
-            label="Orçamento diário"
+            label={t('Orçamento diário')}
             data-testid="bo-meta-campaign-budget"
             name={field.name}
             ref={field.ref}
             value={field.value}
             onBlur={field.onBlur}
             onChange={(value) => field.onChange(value ?? 0)}
-            error={errors.orcamentoDiario?.message}
+            error={errors.orcamentoDiario?.message ? t(errors.orcamentoDiario.message) : undefined}
           />
         )}
       />
       <p className="muted form-span">
-        Claude sugere textos e sinônimos seguros para revisão. A Meta usa o evento de conversão para
-        otimização; não há palavras-chave de busca nesta plataforma.
+        {t(
+          'Claude sugere textos e sinônimos seguros para revisão. A Meta usa o evento de conversão para otimização; não há palavras-chave de busca nesta plataforma.',
+        )}{' '}
       </p>
       {!!error && (
         <p className="field-error form-span" role="alert">
@@ -209,6 +212,7 @@ function EditableList({
   onChange: (items: string[]) => void;
   readOnly: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <fieldset className="bo-list" data-testid={testId}>
       <legend>
@@ -229,7 +233,7 @@ function EditableList({
           {!readOnly && (
             <Button
               variant="ghost"
-              aria-label={`Remover ${label} ${index + 1}`}
+              aria-label={t('Remover {label} {index}', { label: t(label), index: index + 1 })}
               onClick={() => onChange(values.filter((_, i) => i !== index))}
             >
               <Trash2 size={16} />
@@ -243,7 +247,7 @@ function EditableList({
           data-testid={`${testId}-add`}
           onClick={() => onChange([...values, ''])}
         >
-          <Plus size={14} /> Adicionar
+          <Plus size={14} /> {t('Adicionar')}{' '}
         </Button>
       )}
     </fieldset>
@@ -251,6 +255,7 @@ function EditableList({
 }
 
 function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose: () => void }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState<Draft>(() => draftDe(campaign));
   const [errors, setErrors] = useState<string[]>([]);
   const [confirm, setConfirm] = useState(false);
@@ -294,11 +299,12 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
         confirm ? (
           <>
             <span className="modal-actions-note" role="alert">
-              Será criada a campanha, o conjunto, o criativo e o anúncio em estado PAUSADO. O
-              primeiro texto e título serão usados no criativo.
+              {t(
+                'Será criada a campanha, o conjunto, o criativo e o anúncio em estado PAUSADO. O primeiro texto e título serão usados no criativo.',
+              )}{' '}
             </span>
             <Button variant="secondary" onClick={() => setConfirm(false)}>
-              Voltar
+              {t('Voltar')}{' '}
             </Button>
             <Button
               busy={publish.isPending || save.isPending}
@@ -313,7 +319,7 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
                 setConfirm(false);
               }}
             >
-              Criar pausada
+              {t('Criar pausada')}{' '}
             </Button>
           </>
         ) : (
@@ -324,11 +330,11 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
                 busy={archive.isPending}
                 onClick={() => archive.mutate(undefined)}
               >
-                Arquivar
+                {t('Arquivar')}{' '}
               </Button>
             )}
             <Button variant="secondary" onClick={onClose}>
-              Fechar
+              {t('Fechar')}{' '}
             </Button>
             {editable && (
               <>
@@ -339,7 +345,7 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
                   data-testid="bo-meta-campaign-save"
                   onClick={() => void saveDraft()}
                 >
-                  Salvar rascunho
+                  {t('Salvar rascunho')}{' '}
                 </Button>
                 <Button
                   data-testid="bo-meta-campaign-publish"
@@ -349,7 +355,7 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
                     if (!validation.length) setConfirm(true);
                   }}
                 >
-                  Criar na Meta
+                  {t('Criar na Meta')}{' '}
                 </Button>
               </>
             )}
@@ -362,7 +368,7 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
           <span>{dateTime(campaign.criadoEm)}</span>
           <StatusBadge
             status={statusCampanha[campaign.status].badge}
-            label={statusCampanha[campaign.status].label}
+            label={t(statusCampanha[campaign.status].label)}
           />
         </div>
         {campaign.erro && (
@@ -372,26 +378,28 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
         )}
         {campaign.status === 'REVISAO_MANUAL' && (
           <p className="notice">
-            A resposta da Meta foi incerta. Confira os recursos no Gerenciador de Anúncios antes de
-            criar outra campanha.
+            {t(
+              'A resposta da Meta foi incerta. Confira os recursos no Gerenciador de Anúncios antes de criar outra campanha.',
+            )}{' '}
           </p>
         )}
         {campaign.anuncioMetaId && (
           <p className="notice">
-            Anúncio Meta {campaign.anuncioMetaId}, criado pausado. Revise e ative pelo Gerenciador
-            de Anúncios.
+            {t('Anúncio Meta {id}, criado pausado. Revise e ative pelo Gerenciador de Anúncios.', {
+              id: campaign.anuncioMetaId,
+            })}{' '}
           </p>
         )}
         <div className="form-grid">
           <Field
-            label="Nome"
+            label={t('Nome')}
             value={draft.nome}
             readOnly={!editable}
             maxLength={100}
             onChange={(event) => setDraft({ ...draft, nome: event.target.value })}
           />
           <SelectField
-            label="Conversão para otimizar"
+            label={t('Conversão para otimizar')}
             value={draft.objetivoConversao}
             disabled={!editable}
             onChange={(event) =>
@@ -401,24 +409,24 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
               })
             }
           >
-            <option value="TRIAL_STARTED">Cadastro e início do teste (Lead)</option>
-            <option value="SUBSCRIPTION_ACTIVE">Assinatura confirmada (Purchase)</option>
+            <option value="TRIAL_STARTED">{t('Cadastro e início do teste (Lead)')}</option>
+            <option value="SUBSCRIPTION_ACTIVE">{t('Assinatura confirmada (Purchase)')}</option>
           </SelectField>
           <MoneyField
-            label="Orçamento diário"
+            label={t('Orçamento diário')}
             value={draft.orcamentoDiario}
             disabled={!editable}
             onChange={(value) => editable && setDraft({ ...draft, orcamentoDiario: value ?? 0 })}
           />
           <Field
-            label="Região usada na sugestão de texto"
+            label={t('Região usada na sugestão de texto')}
             value={draft.regiao}
             readOnly={!editable}
             onChange={(event) => setDraft({ ...draft, regiao: event.target.value })}
           />
           <div className="form-span">
             <Field
-              label="Página de destino"
+              label={t('Página de destino')}
               value={draft.urlFinal}
               readOnly={!editable}
               maxLength={500}
@@ -426,11 +434,13 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
             />
           </div>
           {draft.contexto && (
-            <p className="muted form-span">Estratégia sugerida pelo Claude: {draft.contexto}</p>
+            <p className="muted form-span">
+              {t('Estratégia sugerida pelo Claude:')} {draft.contexto}
+            </p>
           )}
         </div>
         <EditableList
-          label="Texto principal"
+          label={t('Texto principal')}
           values={draft.textos}
           limit={500}
           max={5}
@@ -439,7 +449,7 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
           onChange={(textos) => setDraft({ ...draft, textos })}
         />
         <EditableList
-          label="Título"
+          label={t('Título')}
           values={draft.titulos}
           limit={40}
           max={5}
@@ -448,7 +458,7 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
           onChange={(titulos) => setDraft({ ...draft, titulos })}
         />
         <EditableList
-          label="Sinônimos e variações de linguagem (não são segmentação)"
+          label={t('Sinônimos e variações de linguagem (não são segmentação)')}
           values={draft.variacoes}
           limit={80}
           max={12}
@@ -459,7 +469,7 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
         {!!errors.length && (
           <ul className="field-error" role="alert" data-testid="bo-meta-campaign-errors">
             {errors.map((error) => (
-              <li key={error}>{error}</li>
+              <li key={error}>{t(error)}</li>
             ))}
           </ul>
         )}
@@ -469,6 +479,7 @@ function CampaignEditor({ campaign, onClose }: { campaign: MetaCampanha; onClose
 }
 
 export function BackofficeMetaAdsPage() {
+  const { t } = useI18n();
   const campaigns = useMetaCampanhas();
   const formId = useId();
   const [generating, setGenerating] = useState(false);
@@ -483,7 +494,9 @@ export function BackofficeMetaAdsPage() {
       <PageHeader
         eyebrow="CRESCIMENTO"
         title="Meta Ads"
-        description="Aquisição de novos estacionamentos com otimização para cadastro ou assinatura e eventos enviados pelo servidor. Os anúncios são criados pausados para revisão."
+        description={t(
+          'Aquisição de novos estacionamentos com otimização para cadastro ou assinatura e eventos enviados pelo servidor. Os anúncios são criados pausados para revisão.',
+        )}
         action={
           <Button
             data-testid="bo-meta-campaign-new"
@@ -492,7 +505,7 @@ export function BackofficeMetaAdsPage() {
               setGenerating(true);
             }}
           >
-            <Sparkles size={16} /> Nova campanha com Claude
+            <Sparkles size={16} /> {t('Nova campanha com Claude')}{' '}
           </Button>
         }
       />
@@ -502,57 +515,62 @@ export function BackofficeMetaAdsPage() {
         ) : campaigns.isError ? (
           <QueryError
             error={campaigns.error}
-            what="as campanhas Meta Ads"
+            what={t('as campanhas Meta Ads')}
             onRetry={() => void campaigns.refetch()}
           />
         ) : !campaigns.data.length ? (
           <EmptyState
-            title="Nenhuma campanha Meta Ads"
-            description="Conecte a Meta Ads e Claude em Integrações. Depois gere uma campanha de teste ou assinatura para revisar."
+            title={t('Nenhuma campanha Meta Ads')}
+            description={t(
+              'Conecte a Meta Ads e Claude em Integrações. Depois gere uma campanha de teste ou assinatura para revisar.',
+            )}
           />
         ) : (
           <DataTable
             testId="bo-meta-campaigns"
-            caption="Campanhas Meta Ads"
+            caption={t('Campanhas Meta Ads')}
             rows={campaigns.data}
             rowKey={(campaign) => campaign.campanhaId}
             columns={[
-              { label: 'Campanha', render: (campaign) => <strong>{campaign.nome}</strong> },
+              { label: t('Campanha'), render: (campaign) => <strong>{campaign.nome}</strong> },
               {
-                label: 'Conversão',
+                label: t('Conversão'),
                 render: (campaign) =>
                   campaign.objetivoConversao === 'TRIAL_STARTED'
-                    ? 'Lead / teste'
-                    : 'Purchase / assinatura',
+                    ? t('Lead / teste')
+                    : t('Purchase / assinatura'),
               },
               {
-                label: 'Status',
+                label: t('Status'),
                 render: (campaign) => (
                   <StatusBadge
                     status={statusCampanha[campaign.status].badge}
-                    label={statusCampanha[campaign.status].label}
+                    label={t(statusCampanha[campaign.status].label)}
                   />
                 ),
               },
               {
-                label: 'Orçamento',
-                render: (campaign) => `${money(campaign.orcamentoDiario)}/dia`,
+                label: t('Orçamento'),
+                render: (campaign) => money(campaign.orcamentoDiario) + t('/dia'),
               },
               {
-                label: 'Criativo',
+                label: t('Criativo'),
                 render: (campaign) =>
-                  `${campaign.textos.length} textos · ${campaign.variacoes.length} variações`,
+                  t('{texts} textos · {variations} variações', {
+                    texts: campaign.textos.length,
+                    variations: campaign.variacoes.length,
+                  }),
               },
-              { label: 'Atualizada', render: (campaign) => dateTime(campaign.atualizadoEm) },
+              { label: t('Atualizada'), render: (campaign) => dateTime(campaign.atualizadoEm) },
               {
-                label: 'Ações',
+                label: t('Ações'),
                 render: (campaign) => (
                   <Button
                     variant="ghost"
                     data-testid="bo-meta-campaign-open"
                     onClick={() => setOpened(campaign.campanhaId)}
                   >
-                    {campaign.status === 'RASCUNHO' ? 'Revisar' : 'Ver'}
+                    {campaign.status === 'RASCUNHO' ? t('Revisar') : t('Ver')}
                   </Button>
                 ),
               },
@@ -564,7 +582,7 @@ export function BackofficeMetaAdsPage() {
         <Modal
           open
           size="md"
-          title="Nova campanha Meta Ads com Claude"
+          title={t('Nova campanha Meta Ads com Claude')}
           busy={generate.isPending}
           onClose={() => setGenerating(false)}
           actions={
@@ -574,7 +592,7 @@ export function BackofficeMetaAdsPage() {
                 disabled={generate.isPending}
                 onClick={() => setGenerating(false)}
               >
-                Cancelar
+                {t('Cancelar')}{' '}
               </Button>
               <Button
                 type="submit"
@@ -582,7 +600,7 @@ export function BackofficeMetaAdsPage() {
                 busy={generate.isPending}
                 data-testid="bo-meta-campaign-generate"
               >
-                {generate.isPending ? 'Claude está criando…' : 'Gerar rascunho'}
+                {generate.isPending ? t('Claude está criando…') : t('Gerar rascunho')}
               </Button>
             </>
           }
@@ -604,4 +622,3 @@ export function BackofficeMetaAdsPage() {
     </>
   );
 }
-

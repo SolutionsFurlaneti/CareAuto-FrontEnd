@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { describeError } from '../../lib/describeError';
 import { useBackofficeStore } from './store';
 import * as api from './api';
+import { translate } from '../../i18n';
 
 /** Chaves com o login: trocar de usuário no backoffice nunca reaproveita cache de outro. */
 export const useBackofficeScope = () => useBackofficeStore((s) => s.session?.login ?? null);
@@ -94,7 +95,8 @@ export function useBackofficeAction<A, R>(
     mutationFn: fn,
     onSuccess: (result) => {
       void cache.invalidateQueries({ queryKey: backofficeKeys.all(scope) });
-      if (sucesso) toast.success(typeof sucesso === 'string' ? sucesso : sucesso(result));
+      if (sucesso)
+        toast.success(translate(typeof sucesso === 'string' ? sucesso : sucesso(result)));
     },
     onError: (error) => toast.error(describeError(error)),
   });

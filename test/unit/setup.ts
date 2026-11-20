@@ -1,8 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  const { useLocaleStore } = await import('../../src/stores/localeStore');
+  useLocaleStore.setState({ locale: 'pt-BR' });
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   window.localStorage.clear();

@@ -1,6 +1,7 @@
 import { MapPin } from 'lucide-react';
 import { Button } from '../../ui';
 import type { LocationConsentStatus } from './locationConsent';
+import { useI18n } from '../../i18n';
 import './locationConsent.css';
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function LocationConsentPrompt({ status, message, onRequest, onDismiss, onStop }: Props) {
+  const { t } = useI18n();
   if (status === 'unavailable') return null;
   if (status === 'dismissed' || status === 'granted' || status === 'expired')
     return (
@@ -22,11 +24,13 @@ export function LocationConsentPrompt({ status, message, onRequest, onDismiss, o
           data-testid={status === 'granted' ? 'location-consent-stop' : 'location-consent-open'}
           onClick={status === 'granted' ? onStop : onRequest}
         >
-          {status === 'granted'
-            ? 'Parar de compartilhar localização'
-            : status === 'expired'
-              ? 'Atualizar localização'
-              : 'Compartilhar localização'}
+          {t(
+            status === 'granted'
+              ? 'Parar de compartilhar localização'
+              : status === 'expired'
+                ? 'Atualizar localização'
+                : 'Compartilhar localização',
+          )}
         </Button>
       </div>
     );
@@ -40,11 +44,11 @@ export function LocationConsentPrompt({ status, message, onRequest, onDismiss, o
       <div className="location-consent-copy">
         <MapPin size={21} aria-hidden="true" />
         <div>
-          <h2 id="location-consent-title">Compartilhar sua localização?</h2>
+          <h2 id="location-consent-title">{t('Compartilhar sua localização?')}</h2>
           <p>
-            Com sua autorização, o CareAuto registra suas coordenadas e consulta um serviço de
-            localização para identificar a região e o endereço aproximado nas estatísticas de
-            acessos. Você pode continuar usando o aplicativo sem compartilhar.
+            {t(
+              'Com sua autorização, o CareAuto registra suas coordenadas e consulta um serviço de localização para identificar a região e o endereço aproximado nas estatísticas de acessos. Você pode continuar usando o aplicativo sem compartilhar.',
+            )}
           </p>
           {message && (
             <p
@@ -52,12 +56,12 @@ export function LocationConsentPrompt({ status, message, onRequest, onDismiss, o
               role="status"
               data-testid="location-consent-message"
             >
-              {message}
+              {t(message)}
             </p>
           )}
           {status === 'requesting' && (
             <p role="status" className="location-consent-message">
-              Aguardando a localização do navegador…
+              {t('Aguardando a localização do navegador…')}
             </p>
           )}
         </div>
@@ -69,11 +73,11 @@ export function LocationConsentPrompt({ status, message, onRequest, onDismiss, o
             onClick={onRequest}
             data-testid="location-consent-allow"
           >
-            {status === 'error' ? 'Tentar novamente' : 'Permitir localização'}
+            {t(status === 'error' ? 'Tentar novamente' : 'Permitir localização')}
           </Button>
         )}
         <Button variant="ghost" onClick={onDismiss} data-testid="location-consent-decline">
-          {status === 'denied' || status === 'error' ? 'Continuar sem localização' : 'Agora não'}
+          {t(status === 'denied' || status === 'error' ? 'Continuar sem localização' : 'Agora não')}
         </Button>
       </div>
     </aside>

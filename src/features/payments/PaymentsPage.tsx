@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Check, Ban } from 'lucide-react';
@@ -16,6 +17,7 @@ import { confirmAction } from '../../lib/swal';
 import { paymentSchema } from './paymentSchema';
 import { AsaasPayment } from './AsaasPayment';
 export function PaymentsPage() {
+  const { t } = useI18n();
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [params] = useSearchParams();
@@ -30,11 +32,13 @@ export function PaymentsPage() {
       render: (r) => (
         <div>
           <strong>#{r.pagamentoId}</strong>
-          <small>{r.estadiaId ? 'Estadia #' + r.estadiaId : 'Cobrança independente'}</small>
+          <small>
+            {r.estadiaId ? t('Estadia #{id}', { id: r.estadiaId }) : t('Cobrança independente')}
+          </small>
         </div>
       ),
     },
-    { label: 'Cliente', render: (r) => (r.clienteId ? '#' + r.clienteId : 'Avulso') },
+    { label: 'Cliente', render: (r) => (r.clienteId ? '#' + r.clienteId : t('Avulso')) },
     {
       label: 'Valor',
       render: (r) => <strong className="money-value">{money(r.valorCentavos / 100)}</strong>,
@@ -57,15 +61,15 @@ export function PaymentsPage() {
           <div className="row-actions">
             <Button
               variant="ghost"
-              aria-label="Confirmar recebimento"
+              aria-label={t('Confirmar recebimento')}
               data-testid="payment-confirm"
               disabled={action.isPending}
               onClick={async () => {
                 if (
                   await confirmAction(
-                    'Confirmar recebimento?',
-                    money(r.valorCentavos / 100) + ' será marcado como pago.',
-                    'Confirmar recebimento',
+                    t('Confirmar recebimento?'),
+                    t('{amount} será marcado como pago.', { amount: money(r.valorCentavos / 100) }),
+                    t('Confirmar recebimento'),
                   )
                 )
                   action.mutate({ action: r.pagamentoId + '/confirmacao' });
@@ -75,15 +79,15 @@ export function PaymentsPage() {
             </Button>
             <Button
               variant="ghost"
-              aria-label="Cancelar pagamento"
+              aria-label={t('Cancelar pagamento')}
               data-testid="payment-cancel"
               disabled={action.isPending}
               onClick={async () => {
                 if (
                   await confirmAction(
-                    'Cancelar pagamento?',
-                    'O registro será preservado no histórico.',
-                    'Cancelar pagamento',
+                    t('Cancelar pagamento?'),
+                    t('O registro será preservado no histórico.'),
+                    t('Cancelar pagamento'),
                   )
                 )
                   action.mutate({ action: r.pagamentoId + '/cancelamento' });
@@ -93,18 +97,18 @@ export function PaymentsPage() {
             </Button>
           </div>
         ) : (
-          <span className="muted">{r.asaasCobrancaId ? 'Vinculado ao Asaas' : '—'}</span>
+          <span className="muted">{r.asaasCobrancaId ? t('Vinculado ao Asaas') : '—'}</span>
         ),
     });
   return (
     <>
       <PageHeader
-        eyebrow="FINANCEIRO"
-        title="Pagamentos"
+        eyebrow={t('FINANCEIRO')}
+        title={t('Pagamentos')}
         description={
           writable
-            ? 'Acompanhe as cobranças e registre os recebimentos.'
-            : 'Consulte os pagamentos vinculados à sua conta.'
+            ? t('Acompanhe as cobranças e registre os recebimentos.')
+            : t('Consulte os pagamentos vinculados à sua conta.')
         }
         action={
           writable && (
@@ -116,29 +120,31 @@ export function PaymentsPage() {
               }}
             >
               <Plus size={18} />
-              Registrar pagamento
+              {t('Registrar pagamento')}
             </Button>
           )
         }
       />
       {writable && (
         <p className="notice">
-          Registre o pagamento e selecione Emitir no Asaas para gerar Pix, boleto ou fatura de
-          cartão. A emissão exige um cliente com CPF/CNPJ e a integração configurada pelo
-          administrador.
+          {t(
+            'Registre o pagamento e selecione Emitir no Asaas para gerar Pix, boleto ou fatura de cartão. A emissão exige um cliente com CPF/CNPJ e a integração configurada pelo administrador.',
+          )}
         </p>
       )}
       <section className="panel">
         <div className="panel-toolbar">
-          <h2>{writable ? 'Histórico de pagamentos' : 'Meus pagamentos'}</h2>
-          <span className="muted">{query.data?.total ?? '—'} registros</span>
+          <h2>{t(writable ? 'Histórico de pagamentos' : 'Meus pagamentos')}</h2>
+          <span className="muted">
+            {query.data?.total ?? '—'} {t('registros')}
+          </span>
         </div>
         {query.isPending ? (
           <Skeleton />
         ) : query.isError ? (
           <QueryError
             error={query.error}
-            what="os pagamentos"
+            what={t('os pagamentos')}
             onRetry={() => void query.refetch()}
           />
         ) : query.data.items.length ? (
@@ -147,15 +153,15 @@ export function PaymentsPage() {
             columns={columns}
             rowKey={(r) => r.pagamentoId}
             testId="payments-table"
-            caption="Pagamentos"
+            caption={t('Pagamentos')}
           />
         ) : (
           <EmptyState
-            title="Nenhum pagamento registrado"
+            title={t('Nenhum pagamento registrado')}
             description={
               writable
-                ? 'Os recebimentos registrados aparecerão aqui.'
-                : 'Seus pagamentos aparecerão aqui quando forem registrados.'
+                ? t('Os recebimentos registrados aparecerão aqui.')
+                : t('Seus pagamentos aparecerão aqui quando forem registrados.')
             }
           />
         )}
@@ -172,7 +178,7 @@ export function PaymentsPage() {
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Registrar pagamento"
+        title={t('Registrar pagamento')}
         busy={save.isPending}
         actions={
           <>
@@ -182,7 +188,7 @@ export function PaymentsPage() {
               disabled={save.isPending}
               onClick={() => setOpen(false)}
             >
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button
               type="submit"
@@ -190,7 +196,7 @@ export function PaymentsPage() {
               data-testid="form-submit"
               busy={save.isPending}
             >
-              Registrar pagamento
+              {t('Registrar pagamento')}
             </Button>
           </>
         }

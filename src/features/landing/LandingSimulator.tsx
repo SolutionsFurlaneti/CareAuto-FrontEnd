@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { integer, money } from '../../lib/format';
+import { translate, useI18n } from '../../i18n';
 import {
   calculateSimulation,
   defaultSimulationInputs,
@@ -37,17 +38,18 @@ const fieldLabels: Record<SimulationField, string> = {
 };
 
 function fieldError(key: SimulationField, raw: string) {
-  if (!raw.trim()) return 'Informe um valor para simular.';
+  if (!raw.trim()) return translate('Informe um valor para simular.');
   const value = Number(raw);
   const { min, max, integer: whole } = simulationLimits[key];
   if (!Number.isFinite(value) || value < min || value > max)
-    return `Use um valor entre ${integer(min)} e ${integer(max)}.`;
-  if (whole && !Number.isInteger(value)) return 'Use um número inteiro.';
+    return translate('Use um valor entre {min} e {max}.', { min: integer(min), max: integer(max) });
+  if (whole && !Number.isInteger(value)) return translate('Use um número inteiro.');
   return null;
 }
 
 /** Public estimates use only visitor-provided assumptions; no financial result is promised. */
 export function LandingSimulator() {
+  const { t, locale } = useI18n();
   const id = useId();
   const [scenario, setScenario] = useState<'services' | 'time'>('services');
   const [raw, setRaw] = useState<RawInputs>(
@@ -80,14 +82,14 @@ export function LandingSimulator() {
         fullWidth
         select={days}
         type={days ? undefined : 'number'}
-        label={fieldLabels[key]}
+        label={t(fieldLabels[key])}
         value={raw[key]}
         onChange={(event) => setRaw((current) => ({ ...current, [key]: event.target.value }))}
         error={Boolean(error)}
         helperText={
           error ??
           (key === 'minutesPerVehicle'
-            ? 'Sua hipótese de tempo poupado em cada atendimento.'
+            ? t('Sua hipótese de tempo poupado em cada atendimento.')
             : undefined)
         }
         slotProps={{
@@ -104,7 +106,7 @@ export function LandingSimulator() {
         {days &&
           Array.from({ length: 31 }, (_, index) => (
             <MenuItem key={index + 1} value={String(index + 1)}>
-              {index + 1} dias
+              {t('{count} dias', { count: index + 1 })}
             </MenuItem>
           ))}
       </TextField>
@@ -121,7 +123,7 @@ export function LandingSimulator() {
       <Container maxWidth="lg">
         <Stack spacing={2} sx={{ mb: 4, maxWidth: 720 }}>
           <Typography variant="overline" color="primary.main" sx={{ fontWeight: 700 }}>
-            Simulador
+            {t('Simulador')}
           </Typography>
           <Typography
             id={`${id}-title`}
@@ -132,11 +134,12 @@ export function LandingSimulator() {
               letterSpacing: '-.035em',
             }}
           >
-            Explore o potencial da sua operação
+            {t('Explore o potencial da sua operação')}
           </Typography>
           <Typography color="text.secondary">
-            Ajuste os números à realidade do seu negócio. Compare uma hipótese de serviços
-            adicionais ou de tempo disponível para a equipe.
+            {t(
+              'Ajuste os números à realidade do seu negócio. Compare uma hipótese de serviços adicionais ou de tempo disponível para a equipe.',
+            )}
           </Typography>
         </Stack>
         <Paper
@@ -147,7 +150,7 @@ export function LandingSimulator() {
           <Tabs
             value={scenario}
             onChange={(_, value: 'services' | 'time') => setScenario(value)}
-            aria-label="Cenário da simulação"
+            aria-label={t('Cenário da simulação')}
             variant="scrollable"
             allowScrollButtonsMobile
             sx={{
@@ -158,14 +161,14 @@ export function LandingSimulator() {
             }}
           >
             <Tab
-              label="Serviços adicionais"
+              label={t('Serviços adicionais')}
               value="services"
               id={`${id}-services-tab`}
               aria-controls={`${id}-panel`}
               data-testid="lp-simulator-services-tab"
             />
             <Tab
-              label="Tempo operacional"
+              label={t('Tempo operacional')}
               value="time"
               id={`${id}-time-tab`}
               aria-controls={`${id}-panel`}
@@ -187,7 +190,7 @@ export function LandingSimulator() {
                 </Grid>
                 <Box sx={{ px: 1 }}>
                   <Slider
-                    aria-label="Ajustar veículos por dia"
+                    aria-label={t('Ajustar veículos por dia')}
                     min={0}
                     max={Math.max(
                       300,
@@ -210,7 +213,7 @@ export function LandingSimulator() {
                     data-testid="lp-simulator-volume-slider"
                   />
                   <Typography variant="body2" color="text.secondary">
-                    Arraste para ajustar o movimento diário.
+                    {t('Arraste para ajustar o movimento diário.')}
                   </Typography>
                 </Box>
                 <Grid container spacing={2}>
@@ -221,9 +224,11 @@ export function LandingSimulator() {
                   ))}
                 </Grid>
                 <Typography variant="body2" color="text.secondary">
-                  {scenario === 'services'
-                    ? 'Cálculo: veículos/dia × dias × percentual de adesão (arredondado para serviços inteiros) × valor por serviço.'
-                    : 'Cálculo: veículos/dia × dias × minutos por veículo ÷ 60 × valor da hora.'}
+                  {t(
+                    scenario === 'services'
+                      ? 'Cálculo: veículos/dia × dias × percentual de adesão (arredondado para serviços inteiros) × valor por serviço.'
+                      : 'Cálculo: veículos/dia × dias × minutos por veículo ÷ 60 × valor da hora.',
+                  )}
                 </Typography>
               </Stack>
             </Grid>
@@ -239,21 +244,23 @@ export function LandingSimulator() {
                 }}
               >
                 <Chip
-                  label="Cenário ilustrativo"
+                  label={t('Cenário ilustrativo')}
                   variant="outlined"
                   sx={{ alignSelf: 'flex-start' }}
                 />
                 <Box aria-live="polite" aria-atomic="true" data-testid="lp-simulator-result">
                   {invalid ? (
                     <Alert severity="info">
-                      Ajuste os campos indicados para calcular o cenário.
+                      {t('Ajuste os campos indicados para calcular o cenário.')}
                     </Alert>
                   ) : (
                     <Stack spacing={1}>
                       <Typography variant="body1" color="text.secondary">
-                        {scenario === 'services'
-                          ? 'Receita bruta estimada por mês'
-                          : 'Valor estimado do tempo por mês'}
+                        {t(
+                          scenario === 'services'
+                            ? 'Receita bruta estimada por mês'
+                            : 'Valor estimado do tempo por mês',
+                        )}
                       </Typography>
                       <Typography
                         variant="h3"
@@ -270,17 +277,27 @@ export function LandingSimulator() {
                       </Typography>
                       <Typography color="text.secondary">
                         {scenario === 'services'
-                          ? `${integer(result.monthlyServices)} serviços em ${integer(result.monthlyVehicles)} atendimentos/mês.`
-                          : `${result.hoursAvailable.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} horas disponíveis em ${integer(result.monthlyVehicles)} atendimentos/mês.`}
+                          ? t('{services} serviços em {vehicles} atendimentos/mês.', {
+                              services: integer(result.monthlyServices),
+                              vehicles: integer(result.monthlyVehicles),
+                            })
+                          : t('{hours} horas disponíveis em {vehicles} atendimentos/mês.', {
+                              hours: result.hoursAvailable.toLocaleString(locale, {
+                                maximumFractionDigits: 1,
+                              }),
+                              vehicles: integer(result.monthlyVehicles),
+                            })}
                       </Typography>
                     </Stack>
                   )}
                 </Box>
                 <Divider />
                 <Typography variant="body2" color="text.secondary">
-                  {scenario === 'services'
-                    ? 'Receita bruta não é lucro. O cenário não desconta custos, impostos, taxas ou o plano CareAuto. O sistema ajuda a registrar os serviços; a adesão depende dos seus clientes.'
-                    : 'Tempo disponível não representa redução automática de despesas. A estimativa usa o tempo informado por você e não é uma medição de desempenho do CareAuto.'}
+                  {t(
+                    scenario === 'services'
+                      ? 'Receita bruta não é lucro. O cenário não desconta custos, impostos, taxas ou o plano CareAuto. O sistema ajuda a registrar os serviços; a adesão depende dos seus clientes.'
+                      : 'Tempo disponível não representa redução automática de despesas. A estimativa usa o tempo informado por você e não é uma medição de desempenho do CareAuto.',
+                  )}
                 </Typography>
                 <Button
                   href="#planos"
@@ -289,7 +306,7 @@ export function LandingSimulator() {
                   data-testid="lp-simulator-cta"
                   sx={{ mt: 'auto', textTransform: 'none', fontWeight: 700 }}
                 >
-                  Conhecer os planos
+                  {t('Conhecer os planos')}
                 </Button>
               </Stack>
             </Grid>

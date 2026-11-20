@@ -1,8 +1,9 @@
+import { translate, useI18n } from '../../i18n';
 import { ResourcePage, type ResourceSpec } from '../../components/ResourcePage';
 import type { Tabela } from '../../lib/types';
 import { pricesSchema } from './pricesSchema';
 import { StatusBadge } from '../../ui';
-import { money } from '../../lib/format';
+import { money, integer } from '../../lib/format';
 import { label } from '../../lib/labels';
 
 const spec: ResourceSpec<Tabela> = {
@@ -20,13 +21,13 @@ const spec: ResourceSpec<Tabela> = {
     { label: 'Hora', render: (r) => money(r.valorHora) },
     { label: 'Diária', render: (r) => money(r.valorDiaria) },
     { label: 'Mensalidade', render: (r) => money(r.valorMensalidade) },
-    { label: 'Tolerância', render: (r) => r.toleranciaMinutos + ' min' },
+    { label: 'Tolerância', render: (r) => integer(r.toleranciaMinutos) + ' min' },
     {
       label: 'Situação',
       render: (r) => (
         <StatusBadge
           status={r.ativo ? 'ATIVA' : 'ENCERRADA'}
-          label={r.ativo ? 'Ativo' : 'Inativo'}
+          label={r.ativo ? translate('Ativo') : translate('Inativo')}
         />
       ),
     },
@@ -65,5 +66,6 @@ const spec: ResourceSpec<Tabela> = {
   },
 };
 export function PricesPage() {
+  useI18n();
   return <ResourcePage spec={spec} />;
 }

@@ -72,6 +72,83 @@ async function completeForm() {
 }
 
 describe('plan selection at signup', () => {
+  it('preserves entered values and translates existing validation errors when changing language', async () => {
+    const user = userEvent.setup();
+    const fetcher = open('/primeiro-acesso');
+    await user.type(await screen.findByTestId('field-estacionamento'), 'Estacionamento São José');
+    await user.type(screen.getByTestId('field-nome'), 'Marina da Silva');
+
+    await user.selectOptions(screen.getByTestId('language-selector'), 'en-US');
+
+    expect(
+      screen.getByRole('heading', { name: 'Your parking business starts here.' }),
+    ).toBeVisible();
+    expect(screen.getByTestId('setup-progress')).toHaveTextContent('Step 1 of 3');
+    expect(screen.getByRole('textbox', { name: 'Parking business name' })).toHaveValue(
+      'Estacionamento São José',
+    );
+    expect(screen.getByRole('textbox', { name: 'Owner’s name' })).toHaveValue('Marina da Silva');
+    expect(screen.getByRole('button', { name: 'Create my account' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Create my account' }));
+
+    expect(await screen.findByText('Enter a valid email address.')).toBeVisible();
+    expect(screen.getByText('Enter a CPF or CNPJ using digits only.')).toBeVisible();
+    expect(screen.getByTestId('setup-progress')).toHaveTextContent('Step 1 of 3');
+    expect(fetcher.mock.calls.some(([url]) => url.endsWith('/configuracao-inicial'))).toBe(false);
+
+    await user.selectOptions(screen.getByTestId('language-selector'), 'pt-BR');
+
+    expect(screen.getByTestId('setup-progress')).toHaveTextContent('Etapa 1 de 3');
+    expect(screen.getByRole('textbox', { name: 'Nome do estacionamento' })).toHaveValue(
+      'Estacionamento São José',
+    );
+    expect(screen.getByRole('textbox', { name: 'Nome do dono' })).toHaveValue('Marina da Silva');
+    expect(screen.getByText('Informe um e-mail válido.')).toBeVisible();
+    expect(screen.getByText('Informe CPF ou CNPJ somente com dígitos.')).toBeVisible();
+    expect(fetcher.mock.calls.some(([url]) => url.endsWith('/configuracao-inicial'))).toBe(false);
+  });
+
+  it('keeps the signup API contract and selected plan when submitting in English', async () => {
+    const user = userEvent.setup();
+    const fetcher = open('/primeiro-acesso?planId=7');
+    await screen.findByTestId('setup-selected-plan');
+    await user.selectOptions(screen.getByTestId('language-selector'), 'en-US');
+    expect(screen.getByRole('button', { name: 'Create my account' })).toBeVisible();
+
+    await completeForm();
+
+    const call = fetcher.mock.calls.find(([url]) => url.endsWith('/configuracao-inicial'));
+    const payload = JSON.parse(String(call?.[1]?.body));
+    expect(payload).toMatchObject({
+      planoId: 7,
+      estacionamento: 'CareAuto Centro',
+      tipoPessoa: 'PJ',
+      documento: '12345678000199',
+      nome: 'Marina',
+      email: 'marina@example.test',
+      senha: 'Dono12',
+    });
+    expect(payload).not.toHaveProperty('confirmarSenha');
+    expect(payload).not.toHaveProperty('businessName');
+  });
+
+  it('keeps the first step visible and blocks signup while required fields are invalid', async () => {
+    const user = userEvent.setup();
+    const fetcher = open('/primeiro-acesso');
+    expect(await screen.findByTestId('setup-progress')).toHaveTextContent('Etapa 1 de 3');
+    expect(screen.getByText(/Não pedimos cartão de crédito\./)).toBeVisible();
+
+    await user.click(screen.getByTestId('form-submit'));
+
+    expect(await screen.findByText('Informe seu nome.')).toBeVisible();
+    expect(screen.getByTestId('field-email')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByTestId('setup-progress')).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByTestId('setup-progress')).toHaveTextContent('Etapa 1 de 3');
+    expect(screen.queryByText('Painel operacional')).not.toBeInTheDocument();
+    expect(fetcher.mock.calls.some(([url]) => url.endsWith('/configuracao-inicial'))).toBe(false);
+  });
+
   it('shows the published selection and submits its ID to the existing signup endpoint', async () => {
     const fetcher = open('/primeiro-acesso?planId=7');
     expect(await screen.findByTestId('setup-selected-plan')).toHaveTextContent('Mensal publicado');

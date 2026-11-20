@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { ANDROID_APK_URL, isAndroidDevice, isNativeApp } from '../../lib/device';
+import { useI18n } from '../../i18n';
 
 const autoDownloadKey = `autocare-apk-auto-download:${ANDROID_APK_URL}`;
 function markAutomaticDownloadAttempt() {
@@ -18,6 +19,7 @@ function markAutomaticDownloadAttempt() {
  * Fica oculto dentro do próprio app Android.
  */
 export function AndroidDownload() {
+  const { t } = useI18n();
   const nativeApp = isNativeApp();
   const android = isAndroidDevice();
 
@@ -42,11 +44,13 @@ export function AndroidDownload() {
     >
       <Download size={20} aria-hidden="true" />
       <span>
-        <strong>Baixar para Android</strong>
+        <strong>{t('Baixar para Android')}</strong>
         <small>
-          {android
-            ? 'Se o download não iniciar automaticamente, toque aqui. O Android pedirá confirmação para instalar.'
-            : 'APK para celular e maquininha (Smart POS)'}
+          {t(
+            android
+              ? 'Se o download não iniciar automaticamente, toque aqui. O Android pedirá confirmação para instalar.'
+              : 'APK para celular e maquininha (Smart POS)',
+          )}
         </small>
       </span>
     </a>

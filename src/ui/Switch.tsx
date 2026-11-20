@@ -1,4 +1,5 @@
 import { forwardRef, useId, type ButtonHTMLAttributes } from 'react';
+import { useI18n } from '../i18n';
 
 /** Chave liga/desliga acessível (role="switch"). O rótulo inteiro é clicável. */
 export const Switch = forwardRef<
@@ -10,6 +11,7 @@ export const Switch = forwardRef<
     onChange: (checked: boolean) => void;
   }
 >(({ label, description, checked, onChange, disabled, id: supplied, ...props }, ref) => {
+  const { t } = useI18n();
   const uid = useId();
   const id = supplied || uid;
   return (
@@ -29,10 +31,10 @@ export const Switch = forwardRef<
         <span className="switch-thumb" aria-hidden="true" />
       </button>
       <div>
-        <label htmlFor={id}>{label}</label>
+        <label htmlFor={id}>{t(label)}</label>
         {description && (
           <span id={id + '-help'} className="field-hint">
-            {description}
+            {t(description)}
           </span>
         )}
       </div>

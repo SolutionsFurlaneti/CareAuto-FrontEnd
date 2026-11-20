@@ -9,6 +9,7 @@ import { MaterialTheme } from './components/MaterialTheme';
 import { queryClient } from './lib/queryClient';
 import { BASE_PATH } from './lib/basePath';
 import { applyTheme } from './stores/themeStore';
+import { applyLocale } from './stores/localeStore';
 import {
   bindNativeBackButton,
   keepFocusedFieldVisible,
@@ -17,6 +18,7 @@ import {
 import './styles/global.css';
 import './styles/tailwind.css';
 applyTheme();
+applyLocale();
 keepFocusedFieldVisible();
 void bindNativeBackButton();
 registerPwaServiceWorker();

@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useI18n } from '../i18n';
 
 export interface TabItem {
   id: string;
@@ -30,6 +31,7 @@ export function Tabs({
   label: string;
   idPrefix: string;
 }) {
+  const { t } = useI18n();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const current = items.findIndex((t) => t.id === value);
@@ -54,7 +56,7 @@ export function Tabs({
     refs.current[next]?.focus();
   }
   return (
-    <div className="icon-tabs" role="tablist" aria-label={label} onKeyDown={onKeyDown}>
+    <div className="icon-tabs" role="tablist" aria-label={t(label)} onKeyDown={onKeyDown}>
       {items.map((item, index) => {
         const selected = item.id === value;
         const ids = tabIds(idPrefix, item.id);
@@ -79,7 +81,7 @@ export function Tabs({
                 {item.icon}
               </span>
             ) : null}
-            {item.label}
+            {t(item.label)}
           </button>
         );
       })}

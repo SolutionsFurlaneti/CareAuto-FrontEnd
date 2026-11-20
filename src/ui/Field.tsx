@@ -6,6 +6,7 @@ import {
   type TextareaHTMLAttributes,
 } from 'react';
 import { m, useReducedMotion } from 'motion/react';
+import { useI18n } from '../i18n';
 interface Shared {
   label: string;
   error?: string;
@@ -13,17 +14,19 @@ interface Shared {
 }
 export const Field = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & Shared>(
   ({ label, error, hint, id: supplied, ...props }, ref) => {
+    const { t } = useI18n();
     const uid = useId();
     const reduced = useReducedMotion();
     const id = supplied || uid;
     return (
       <div className="field">
         <label htmlFor={id}>
-          {label}
+          {t(label)}
           {props.required && <span aria-hidden="true"> *</span>}
         </label>
         <input
           {...props}
+          placeholder={props.placeholder ? t(props.placeholder) : undefined}
           id={id}
           ref={ref}
           aria-invalid={!!error}
@@ -41,7 +44,7 @@ export const Field = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
             }
             transition={{ duration: reduced ? 0 : 0.16, ease: [0.2, 0, 0, 1] }}
           >
-            {error || hint}
+            {t(error || hint || '')}
           </m.span>
         )}
       </div>
@@ -53,13 +56,14 @@ export const SelectField = forwardRef<
   HTMLSelectElement,
   SelectHTMLAttributes<HTMLSelectElement> & Shared
 >(({ label, error, hint, id: supplied, children, ...props }, ref) => {
+  const { t } = useI18n();
   const uid = useId();
   const reduced = useReducedMotion();
   const id = supplied || uid;
   return (
     <div className="field">
       <label htmlFor={id}>
-        {label}
+        {t(label)}
         {props.required && <span aria-hidden="true"> *</span>}
       </label>
       <select
@@ -81,7 +85,7 @@ export const SelectField = forwardRef<
           animate={error && !reduced ? { opacity: 1, x: [0, -3, 2, -1, 0] } : { opacity: 1, x: 0 }}
           transition={{ duration: reduced ? 0 : 0.16, ease: [0.2, 0, 0, 1] }}
         >
-          {error || hint}
+          {t(error || hint || '')}
         </m.span>
       )}
     </div>
@@ -92,17 +96,19 @@ export const TextAreaField = forwardRef<
   HTMLTextAreaElement,
   TextareaHTMLAttributes<HTMLTextAreaElement> & Shared
 >(({ label, error, id: supplied, ...props }, ref) => {
+  const { t } = useI18n();
   const uid = useId();
   const reduced = useReducedMotion();
   const id = supplied || uid;
   return (
     <div className="field">
       <label htmlFor={id}>
-        {label}
+        {t(label)}
         {props.required && <span aria-hidden="true"> *</span>}
       </label>
       <textarea
         {...props}
+        placeholder={props.placeholder ? t(props.placeholder) : undefined}
         ref={ref}
         id={id}
         aria-invalid={!!error}
@@ -118,7 +124,7 @@ export const TextAreaField = forwardRef<
           animate={reduced ? { opacity: 1 } : { opacity: 1, x: [0, -3, 2, -1, 0] }}
           transition={{ duration: reduced ? 0 : 0.16, ease: [0.2, 0, 0, 1] }}
         >
-          {error}
+          {t(error)}
         </m.span>
       )}
     </div>

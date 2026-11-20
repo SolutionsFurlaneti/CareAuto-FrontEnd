@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { OrigemIntegracoesControle } from './OrigemIntegracoes';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -26,6 +27,7 @@ export function IntegrationDetailPage() {
 }
 
 function IntegrationDetail({ def }: { def: IntegrationDefinition }) {
+  const { t } = useI18n();
   const [params, setParams] = useSearchParams();
   const tab = resolveTab(def, params.get('tab'));
   const goTo = (next: IntegrationTab) => setParams({ tab: next }, { replace: true });
@@ -44,45 +46,51 @@ function IntegrationDetail({ def }: { def: IntegrationDefinition }) {
     <>
       <Link to="/integracoes" className="back-link" data-testid="integrations-back">
         <ArrowLeft size={16} aria-hidden="true" />
-        Integrações
+        {t('Integrações')}
       </Link>
       <header className="integration-header" data-testid="integration-header">
         <span className="integration-icon" aria-hidden="true">
           <Icon size={28} />
         </span>
         <div>
-          <p className="eyebrow">INTEGRAÇÕES</p>
-          <h1 data-testid="page-title">{def.title}</h1>
-          <p className="page-description">{def.description}</p>
+          <p className="eyebrow">{t('INTEGRAÇÕES')}</p>
+          <h1 data-testid="page-title">{t(def.title)}</h1>
+          <p className="page-description">{t(def.description)}</p>
         </div>
         {query.data && <ActiveBadge active={query.data.disponivel ?? query.data.ativo} />}
       </header>
       <OrigemIntegracoesControle />
       <p className="notice" data-testid="integration-origin">
         {query.data?.origem === 'PLATAFORMA'
-          ? `Usando a integração da plataforma.${def.slug === 'asaas' ? ' Os recebimentos ficam na conta da plataforma; o repasse é realizado pela gestão.' : ''}`
+          ? t('Usando a integração da plataforma.') +
+            (def.slug === 'asaas'
+              ? ' ' +
+                t(
+                  'Os recebimentos ficam na conta da plataforma; o repasse é realizado pela gestão.',
+                )
+              : '')
           : query.data?.origem === 'PROPRIA' && query.data?.disponivel
-            ? 'Usando a integração própria do estabelecimento.'
-            : 'Nenhuma integração disponível no momento.'}{' '}
+            ? t('Usando a integração própria do estabelecimento.')
+            : t('Nenhuma integração disponível no momento.')}{' '}
         {def.slug === 'asaas' && query.data?.ambienteEfetivo === 'PRODUCAO' && (
-          <strong>Ambiente em produção: cobranças reais. </strong>
+          <strong>{t('Ambiente em produção: cobranças reais.')} </strong>
         )}
-        Para usar credenciais próprias, configure e ative esta integração.
+        {t('Para usar credenciais próprias, configure e ative esta integração.')}
       </p>
       <section
         className="panel integration-panel"
         data-testid={`integration-${def.slug}`}
-        aria-label={def.title}
+        aria-label={t(def.title)}
       >
         <Tabs
-          label={`Seções de ${def.title}`}
+          label={t('Seções de {name}', { name: t(def.title) })}
           idPrefix={prefix}
           value={tab}
           onChange={(next) => goTo(next as IntegrationTab)}
           items={def.tabs.map((id) => {
             const meta = tabMeta[id];
             const TabIcon = meta.icon;
-            return { id, label: meta.label, icon: <TabIcon size={16} /> };
+            return { id, label: t(meta.label), icon: <TabIcon size={16} /> };
           })}
         />
         <div
@@ -97,7 +105,7 @@ function IntegrationDetail({ def }: { def: IntegrationDefinition }) {
           ) : query.isError ? (
             <QueryError
               error={query.error}
-              what={`a integração ${def.title}`}
+              what={t('a integração {name}', { name: t(def.title) })}
               onRetry={() => void query.refetch()}
             />
           ) : def.slug === 'asaas' ? (

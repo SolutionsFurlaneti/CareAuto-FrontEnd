@@ -1,6 +1,7 @@
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, IconButton } from '@mui/material';
 import { X } from 'lucide-react';
+import { useI18n } from '../i18n';
 export function Modal({
   open,
   onClose,
@@ -19,6 +20,7 @@ export function Modal({
   /** Largura máxima: sm para formulários, lg para telas com desenho (checklist). */
   size?: 'sm' | 'md' | 'lg';
 }) {
+  const { t } = useI18n();
   const id = useId();
   const [viewport, setViewport] = useState<{ height: number; top: number }>();
   useEffect(() => {
@@ -54,7 +56,7 @@ export function Modal({
       <DialogTitle id={id} component="h2">
         {title}
         <IconButton
-          aria-label="Fechar formulário"
+          aria-label={t('Fechar formulário')}
           data-testid="modal-close"
           disabled={busy}
           onClick={onClose}

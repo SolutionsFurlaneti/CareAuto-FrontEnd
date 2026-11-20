@@ -1,8 +1,9 @@
+import { useI18n } from '../../i18n';
 import { ResourcePage, type ResourceSpec } from '../../components/ResourcePage';
 import type { PrecoServico } from '../../lib/types';
 import { servicepricesSchema } from './servicepricesSchema';
 import { ReferenceLabel } from '../../components/ReferenceLabel';
-import { money } from '../../lib/format';
+import { money, integer } from '../../lib/format';
 
 const spec: ResourceSpec<PrecoServico> = {
   endpoint: 'precos-servicos',
@@ -39,7 +40,7 @@ const spec: ResourceSpec<PrecoServico> = {
     { label: 'Valor', render: (r) => <strong>{money(r.valor)}</strong> },
     {
       label: 'Previsão',
-      render: (r) => (r.tempoEstimadoMinutos ? r.tempoEstimadoMinutos + ' min' : '—'),
+      render: (r) => (r.tempoEstimadoMinutos ? integer(r.tempoEstimadoMinutos) + ' min' : '—'),
     },
   ],
   form: {
@@ -67,5 +68,6 @@ const spec: ResourceSpec<PrecoServico> = {
   },
 };
 export function ServicePricesPage() {
+  useI18n();
   return <ResourcePage spec={spec} />;
 }

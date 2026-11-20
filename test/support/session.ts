@@ -46,11 +46,7 @@ export const test = base.extend<{ authenticated: Page; state: TestState; role: R
 });
 export { expect };
 export async function openNav(page: Page, testId: string) {
-  const temporaryMenu = page.getByTestId('nav-open');
-  if (
-    (await temporaryMenu.count()) > 0 &&
-    (await temporaryMenu.getAttribute('aria-expanded')) === 'false'
-  )
-    await page.getByRole('button', { name: /^Abrir menu:/ }).click();
+  // This title remains available while the responsive drawer changes variants.
+  await page.getByRole('button', { name: /^(Abrir menu|Open menu):/ }).click();
   await page.getByTestId(testId).click();
 }

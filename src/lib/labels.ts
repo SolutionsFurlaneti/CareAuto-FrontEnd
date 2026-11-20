@@ -1,3 +1,5 @@
+import { translate } from '../i18n';
+
 export const labels: Record<string, string> = {
   EM_ANDAMENTO: 'Em andamento',
   CONCLUIDO: 'Concluída',
@@ -22,4 +24,4 @@ export const labels: Record<string, string> = {
   DINHEIRO: 'Dinheiro',
   BOLETO: 'Boleto',
 };
-export const label = (v: string) => labels[v] || v;
+export const label = (v: string) => translate(labels[v] || v);

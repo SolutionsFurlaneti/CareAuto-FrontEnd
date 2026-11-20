@@ -1,10 +1,12 @@
 import { useMemo, type ReactNode } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { ptBR } from '@mui/material/locale';
+import { enUS, ptBR } from '@mui/material/locale';
 import { domAnimation, LazyMotion, MotionConfig } from 'motion/react';
 import { useThemeStore } from '../stores/themeStore';
+import { useLocaleStore } from '../stores/localeStore';
 export function MaterialTheme({ children }: { children: ReactNode }) {
   const mode = useThemeStore((s) => s.theme);
+  const locale = useLocaleStore((s) => s.locale);
   const theme = useMemo(
     () =>
       createTheme(
@@ -34,9 +36,9 @@ export function MaterialTheme({ children }: { children: ReactNode }) {
             MuiButtonBase: { styleOverrides: { root: { minHeight: 48 } } },
           },
         },
-        ptBR,
+        locale === 'en-US' ? enUS : ptBR,
       ),
-    [mode],
+    [mode, locale],
   );
   return (
     <ThemeProvider theme={theme}>

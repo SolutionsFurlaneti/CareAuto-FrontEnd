@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { useState } from 'react';
 import type { Consulta } from '../../lib/types';
 import { useRecords } from '../shared/hooks';
@@ -8,18 +9,20 @@ import { QueryError } from '../../components/QueryError';
 import { Skeleton, EmptyState, StatusBadge } from '../../ui';
 import { dateTime } from '../../lib/format';
 export function ConsultationsPage() {
+  useI18n();
   const [page, setPage] = useState(1);
   const query = useRecords<Consulta>('consultas-placa', page);
   return (
     <>
       <PageHeader
-        eyebrow="OPERAÇÃO"
-        title="Consultas de placa"
-        description="Histórico das consultas já registradas no sistema."
+        eyebrow={translate('OPERAÇÃO')}
+        title={translate('Consultas de placa')}
+        description={translate('Histórico das consultas já registradas no sistema.')}
       />
       <p className="notice">
-        A consulta em um provedor externo ainda não está disponível. Nenhuma nova consulta é
-        realizada nesta tela.
+        {translate(
+          'A consulta em um provedor externo ainda não está disponível. Nenhuma nova consulta é realizada nesta tela.',
+        )}
       </p>
       <section className="panel">
         {query.isPending ? (
@@ -27,7 +30,7 @@ export function ConsultationsPage() {
         ) : query.isError ? (
           <QueryError
             error={query.error}
-            what="as consultas"
+            what={translate('as consultas')}
             onRetry={() => void query.refetch()}
           />
         ) : query.data.items.length ? (
@@ -35,7 +38,7 @@ export function ConsultationsPage() {
             rows={query.data.items}
             rowKey={(r) => r.consultaId}
             testId="consultations-table"
-            caption="Histórico de consultas"
+            caption={translate('Histórico de consultas')}
             columns={[
               { label: 'Placa', render: (r) => <span className="plate">{r.placa}</span> },
               { label: 'Data', render: (r) => dateTime(r.consultadoEm) },
@@ -44,7 +47,7 @@ export function ConsultationsPage() {
                 render: (r) => (
                   <StatusBadge
                     status={r.sucesso ? 'CONCLUIDO' : 'CANCELADO'}
-                    label={r.sucesso ? 'Sucesso' : 'Falha'}
+                    label={r.sucesso ? translate('Sucesso') : translate('Falha')}
                   />
                 ),
               },
@@ -52,8 +55,10 @@ export function ConsultationsPage() {
           />
         ) : (
           <EmptyState
-            title="Nenhuma consulta registrada"
-            description="O histórico ficará disponível quando uma integração registrar consultas."
+            title={translate('Nenhuma consulta registrada')}
+            description={translate(
+              'O histórico ficará disponível quando uma integração registrar consultas.',
+            )}
           />
         )}
         {query.data && (

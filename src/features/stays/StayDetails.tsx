@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStay, useStayServices } from './hooks';
@@ -6,7 +7,7 @@ import { Button, Modal, Skeleton, StatusBadge } from '../../ui';
 import { QueryError } from '../../components/QueryError';
 import { RecordForm } from '../../components/RecordForm';
 import { ReferenceLabel } from '../../components/ReferenceLabel';
-import { dateTime, money } from '../../lib/format';
+import { dateTime, money, integer } from '../../lib/format';
 import { label } from '../../lib/labels';
 import { stayServiceSchema } from './staySchema';
 import { useAuthStore } from '../../stores/authStore';
@@ -19,11 +20,12 @@ const calcDuration = (entrada: string, saida?: string | null) => {
   const diffMinutes = Math.max(0, Math.floor((end - start) / 60000));
   const hours = Math.floor(diffMinutes / 60);
   const mins = diffMinutes % 60;
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins} min`;
+  if (hours > 0) return `${integer(hours)}h ${integer(mins)}m`;
+  return `${integer(mins)} min`;
 };
 
 export function StayDetails({ id, onClose }: { id: number; onClose: () => void }) {
+  useI18n();
   const stay = useStay(id);
   const services = useStayServices(id);
   const mutation = useCommand('estadias');
@@ -38,7 +40,7 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
     <Modal
       open
       onClose={onClose}
-      title={'Estadia #' + id}
+      title={translate('Estadia #{id}', { id })}
       busy={mutation.isPending}
       actions={
         row?.status === 'EM_ANDAMENTO' ? (
@@ -50,7 +52,7 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
                 disabled={mutation.isPending}
                 data-testid="stay-back"
               >
-                Voltar
+                {translate('Voltar')}
               </Button>
               <Button
                 variant={intent === 'cancel' ? 'danger' : 'primary'}
@@ -63,13 +65,13 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
                   )
                 }
               >
-                Confirmar {intent === 'exit' ? 'saída' : 'cancelamento'}
+                {translate(intent === 'exit' ? 'Confirmar saída' : 'Confirmar cancelamento')}
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" data-testid="stay-cancel" onClick={() => setIntent('cancel')}>
-                Cancelar estadia
+                {translate('Cancelar estadia')}
               </Button>
               {printing.data?.impressaoEntradaDisponivel && (
                 <Button
@@ -78,17 +80,17 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
                   busy={print.isPending}
                   onClick={() => print.mutate(id)}
                 >
-                  Imprimir ticket
+                  {translate('Imprimir ticket')}
                 </Button>
               )}
               <Button data-testid="stay-exit" onClick={() => setIntent('exit')}>
-                Registrar saída
+                {translate('Registrar saída')}
               </Button>
             </>
           )
         ) : (
           <Button variant="secondary" data-testid="stay-close" onClick={onClose}>
-            Fechar
+            {translate('Fechar')}
           </Button>
         )
       }
@@ -96,7 +98,11 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
       {stay.isPending ? (
         <Skeleton />
       ) : stay.isError ? (
-        <QueryError error={stay.error} what="a estadia" onRetry={() => void stay.refetch()} />
+        <QueryError
+          error={stay.error}
+          what={translate('a estadia')}
+          onRetry={() => void stay.refetch()}
+        />
       ) : (
         row && (
           <>
@@ -113,38 +119,47 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
             </div>
             <dl className="detail-grid">
               <div>
-                <dt>Entrada</dt>
+                <dt>{translate('Entrada')}</dt>
                 <dd>{dateTime(row.dataEntrada)}</dd>
               </div>
               <div>
-                <dt>Permanência</dt>
-                <dd style={{ fontWeight: 650, color: row.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink)' }}>
+                <dt>{translate('Permanência')}</dt>
+                <dd
+                  style={{
+                    fontWeight: 650,
+                    color: row.status === 'EM_ANDAMENTO' ? 'var(--ok)' : 'var(--ink)',
+                  }}
+                >
                   {calcDuration(row.dataEntrada, row.dataSaida)}
                 </dd>
               </div>
               <div>
-                <dt>Estacionamento</dt>
+                <dt>{translate('Estacionamento')}</dt>
                 <dd>{money(row.valorEstacionamento)}</dd>
               </div>
               <div>
-                <dt>Serviços</dt>
+                <dt>{translate('Serviços')}</dt>
                 <dd>{money(row.valorServicos)}</dd>
               </div>
             </dl>
             {row.observacao && <p className="detail-note">{row.observacao}</p>}
             <div className="checklist-summary" data-testid="stay-checklist-summary">
               <div>
-                <strong>Checklist veicular</strong>
+                <strong>{translate('Checklist veicular')}</strong>
                 <small>
                   {checklist.isPending
-                    ? 'Carregando…'
+                    ? translate('Carregando…')
                     : checklist.isError
-                      ? 'Não foi possível carregar.'
+                      ? translate('Não foi possível carregar.')
                       : checklist.data.checkList
-                        ? `Realizado por ${checklist.data.checkList.atendente} · ${dateTime(checklist.data.checkList.atualizadoEm)} · ${checklist.data.checkList.avarias.length} avaria(s)`
+                        ? translate('Realizado por {name} · {date} · {count} avaria(s)', {
+                            name: checklist.data.checkList.atendente,
+                            date: dateTime(checklist.data.checkList.atualizadoEm),
+                            count: integer(checklist.data.checkList.avarias.length),
+                          })
                         : row.status === 'EM_ANDAMENTO'
-                          ? 'Pendente. Pode ser feito agora ou durante a estadia.'
-                          : 'Não realizado.'}
+                          ? translate('Pendente. Pode ser feito agora ou durante a estadia.')
+                          : translate('Não realizado.')}
                 </small>
               </div>
               {checklist.data && (checklist.data.checkList || checklist.data.editavel) && (
@@ -153,7 +168,9 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
                   data-testid="stay-checklist"
                   onClick={() => setChecklistOpen(true)}
                 >
-                  {checklist.data.checkList ? 'Ver checklist' : 'Realizar checklist'}
+                  {checklist.data.checkList
+                    ? translate('Ver checklist')
+                    : translate('Realizar checklist')}
                 </Button>
               )}
             </div>
@@ -163,23 +180,27 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
             {intent && (
               <p className="notice" role="status">
                 {intent === 'exit'
-                  ? 'A saída será registrada agora e o servidor calculará o valor da estadia. Todos os serviços precisam estar finalizados.'
-                  : 'O histórico será preservado. Serviços iniciados e pagamentos impedem o cancelamento.'}
+                  ? translate(
+                      'A saída será registrada agora e o servidor calculará o valor da estadia. Todos os serviços precisam estar finalizados.',
+                    )
+                  : translate(
+                      'O histórico será preservado. Serviços iniciados e pagamentos impedem o cancelamento.',
+                    )}
               </p>
             )}
             <div className="section-label">
-              <h3>Serviços da estadia</h3>
+              <h3>{translate('Serviços da estadia')}</h3>
             </div>
             {services.isPending ? (
               <Skeleton />
             ) : services.isError ? (
               <QueryError
                 error={services.error}
-                what="os serviços"
+                what={translate('os serviços')}
                 onRetry={() => void services.refetch()}
               />
             ) : !services.data.length ? (
-              <p className="muted">Nenhum serviço adicionado.</p>
+              <p className="muted">{translate('Nenhum serviço adicionado.')}</p>
             ) : (
               services.data.map((s) => (
                 <div className="service-line" key={s.estadiaServicoId}>
@@ -209,7 +230,7 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
                         })
                       }
                     >
-                      {s.status === 'PENDENTE' ? 'Iniciar' : 'Finalizar'}
+                      {s.status === 'PENDENTE' ? translate('Iniciar') : translate('Finalizar')}
                     </Button>
                   )}
                 </div>
@@ -217,7 +238,7 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
             )}
             {row.status === 'EM_ANDAMENTO' && !intent && (
               <div className="inset-form">
-                <h3>Adicionar um cuidado</h3>
+                <h3>{translate('Adicionar um cuidado')}</h3>
                 <RecordForm
                   spec={{
                     schema: stayServiceSchema,
@@ -242,19 +263,19 @@ export function StayDetails({ id, onClose }: { id: number; onClose: () => void }
             {mutation.error && intent && (
               <QueryError
                 error={mutation.error}
-                what="a operação"
+                what={translate('a operação')}
                 onRetry={() => mutation.reset()}
               />
             )}
             {row.valorTotal !== null && (
               <div className="total-line">
-                <span>Total da estadia</span>
+                <span>{translate('Total da estadia')}</span>
                 <strong>{money(row.valorTotal)}</strong>
               </div>
             )}
             {row.status === 'CONCLUIDO' && roles.includes('Admin') && (
               <Link className="text-link" to={'/pagamentos?estadia=' + id} onClick={onClose}>
-                Ir para pagamentos →
+                {translate('Ir para pagamentos →')}
               </Link>
             )}
           </>

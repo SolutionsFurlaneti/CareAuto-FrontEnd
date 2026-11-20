@@ -11,6 +11,7 @@ import { QueryError } from './QueryError';
 import { RecordForm, type FormSpec } from './RecordForm';
 import { confirmAction } from '../lib/swal';
 import type { FormValues } from '../features/shared/schema';
+import { useI18n } from '../i18n';
 export interface ResourceSpec<T extends Entity> {
   endpoint: string;
   id: keyof T & string;
@@ -24,6 +25,7 @@ export interface ResourceSpec<T extends Entity> {
   softDelete?: boolean;
 }
 export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T> }) {
+  const { t, locale } = useI18n();
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState('');
   const [editing, setEditing] = useState<T | 'new' | null>(null);
@@ -36,8 +38,8 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
     query.data?.items.filter((x) =>
       Object.values(x).some((v) =>
         String(v ?? '')
-          .toLocaleLowerCase('pt-BR')
-          .includes(filter.toLocaleLowerCase('pt-BR')),
+          .toLocaleLowerCase(locale)
+          .includes(filter.toLocaleLowerCase(locale)),
       ),
     ) || [];
   const initial =
@@ -60,7 +62,7 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
               <div className="row-actions">
                 <Button
                   variant="ghost"
-                  aria-label={'Editar ' + spec.singular}
+                  aria-label={t('Editar {record}', { record: t(spec.singular) })}
                   data-testid="record-edit"
                   onClick={() => open(row)}
                 >
@@ -69,13 +71,13 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
                 {spec.softDelete && row.ativo === true && (
                   <Button
                     variant="ghost"
-                    aria-label={'Desativar ' + spec.singular}
+                    aria-label={t('Desativar {record}', { record: t(spec.singular) })}
                     data-testid="record-deactivate"
                     disabled={deactivate.isPending}
                     onClick={async () => {
                       if (
                         await confirmAction(
-                          'Desativar ' + spec.singular + '?',
+                          t('Desativar {record}?', { record: t(spec.singular) }),
                           'O histórico será preservado e o registro deixará de aceitar novas operações.',
                           'Desativar',
                         )
@@ -102,7 +104,7 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
           writable && (
             <Button data-testid="record-new" onClick={() => open('new')}>
               <Plus size={18} />
-              Adicionar {spec.singular}
+              {t('Adicionar {record}', { record: t(spec.singular) })}
             </Button>
           )
         }
@@ -110,8 +112,12 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
       <section className="panel">
         <div className="panel-toolbar">
           <div>
-            <h2>{spec.title}</h2>
-            <span>{query.data?.total ?? '—'} registros</span>
+            <h2>{t(spec.title)}</h2>
+            <span>
+              {t(query.data?.total === 1 ? '{count} registro' : '{count} registros', {
+                count: query.data?.total ?? '—',
+              })}
+            </span>
           </div>
           <div className="search-field">
             <Search size={17} />
@@ -132,7 +138,7 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
         ) : query.isError ? (
           <QueryError
             error={query.error}
-            what={spec.title.toLowerCase()}
+            what={t(spec.title).toLocaleLowerCase(locale)}
             onRetry={() => void query.refetch()}
           />
         ) : rows.length ? (
@@ -170,7 +176,9 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
         open={editing !== null}
         onClose={() => setEditing(null)}
         busy={save.isPending}
-        title={(editing === 'new' ? 'Adicionar ' : 'Editar ') + spec.singular}
+        title={t(editing === 'new' ? 'Adicionar {record}' : 'Editar {record}', {
+          record: t(spec.singular),
+        })}
         actions={
           <>
             <Button
@@ -179,7 +187,7 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
               disabled={save.isPending}
               onClick={() => setEditing(null)}
             >
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button
               type="submit"
@@ -187,7 +195,7 @@ export function ResourcePage<T extends Entity>({ spec }: { spec: ResourceSpec<T>
               data-testid="form-submit"
               busy={save.isPending}
             >
-              Salvar {spec.singular}
+              {t('Salvar {record}', { record: t(spec.singular) })}
             </Button>
           </>
         }

@@ -44,6 +44,8 @@ import {
   X,
 } from 'lucide-react';
 import { useThemeStore } from '../../stores/themeStore';
+import { useI18n } from '../../i18n';
+import { LanguageSelector } from '../../components/LanguageSelector';
 import { destaques, funcionalidades, gruposFuncionalidades, perguntas } from './content';
 import { LandingPlans } from './LandingPlans';
 import { LandingSimulator } from './LandingSimulator';
@@ -54,9 +56,6 @@ const TITULO = 'CareAuto | Sistema para estacionamento e lava-rápido · 7 dias 
 const DESCRICAO =
   'Controle entradas e saídas, leia placas por foto com IA, imprima tickets com QR Code, faça checklist de avarias e receba por Pix, boleto e cartão. Teste grátis por 7 dias.';
 const CADASTRO = '/primeiro-acesso';
-const WHATSAPP_HREF =
-  'https://wa.me/5511978504405?text=' +
-  encodeURIComponent('Quero mais informações sobre o CareAuto');
 const links = [
   ['#como-funciona', 'Como funciona'],
   ['#funcionalidades', 'Funcionalidades'],
@@ -66,6 +65,7 @@ const links = [
 ] as const;
 
 function useSeo() {
+  const { t, locale } = useI18n();
   useEffect(() => {
     const titulo = document.title;
     let meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
@@ -76,17 +76,18 @@ function useSeo() {
       document.head.appendChild(meta);
     }
     const descricao = meta.content;
-    document.title = TITULO;
-    meta.content = DESCRICAO;
+    document.title = t(TITULO);
+    meta.content = t(DESCRICAO);
     return () => {
       document.title = titulo;
       if (criada) meta.remove();
       else meta.content = descricao;
     };
-  }, []);
+  }, [t, locale]);
 }
 
 function LandingHeader() {
+  const { t } = useI18n();
   const [menu, setMenu] = useState(false);
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('lg'));
@@ -96,7 +97,7 @@ function LandingHeader() {
   const themeControl = (
     <IconButton
       onClick={toggle}
-      aria-label={mode === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+      aria-label={t(mode === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro')}
       data-testid="lp-theme-toggle"
       sx={{ width: 48 }}
     >
@@ -126,7 +127,7 @@ function LandingHeader() {
             direction="row"
             spacing={1}
             alignItems="center"
-            aria-label="CareAuto, início"
+            aria-label={t('CareAuto, início')}
             sx={{ mr: 'auto', color: 'text.primary' }}
           >
             <Avatar
@@ -147,17 +148,18 @@ function LandingHeader() {
             </Typography>
           </Stack>
           {desktop && (
-            <Stack component="nav" aria-label="Seções" direction="row" spacing={0.5}>
+            <Stack component="nav" aria-label={t('Seções')} direction="row" spacing={0.5}>
               {links.map(([href, nome]) => (
                 <Button key={href} href={href} color="inherit" sx={{ fontSize: '.875rem', px: 1 }}>
-                  {nome}
+                  {t(nome)}
                 </Button>
               ))}
               <Button component={Link} to="/login" color="inherit">
-                Entrar
+                {t('Entrar')}
               </Button>
             </Stack>
           )}
+          {!compact && <LanguageSelector />}
           {!compact && themeControl}
           <Button
             component={Link}
@@ -166,11 +168,11 @@ function LandingHeader() {
             data-testid="lp-header-cta"
             sx={{ px: { xs: 1.25, sm: 2 }, flexShrink: 0, fontSize: { xs: '.875rem', sm: '1rem' } }}
           >
-            Criar conta
+            {t('Criar conta')}
           </Button>
           {!desktop && (
             <IconButton
-              aria-label="Abrir menu"
+              aria-label={t('Abrir menu')}
               aria-expanded={menu}
               aria-controls={menu ? 'landing-menu' : undefined}
               onClick={() => setMenu(true)}
@@ -190,25 +192,26 @@ function LandingHeader() {
           slotProps={{ paper: { sx: { width: 'min(320px, 100vw)', p: 2 } } }}
         >
           <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">Explore o CareAuto</Typography>
-            <IconButton aria-label="Fechar menu" onClick={() => setMenu(false)}>
+            <Typography variant="h6">{t('Explore o CareAuto')}</Typography>
+            <IconButton aria-label={t('Fechar menu')} onClick={() => setMenu(false)}>
               <SvgIcon component={X} inheritViewBox />
             </IconButton>
           </Stack>
-          <List component="nav" id="landing-menu" aria-label="Seções">
+          <List component="nav" id="landing-menu" aria-label={t('Seções')}>
             {links.map(([href, nome]) => (
               <ListItemButton key={href} component="a" href={href} onClick={() => setMenu(false)}>
-                <ListItemText primary={nome} />
+                <ListItemText primary={t(nome)} />
               </ListItemButton>
             ))}
             <Divider sx={{ my: 1 }} />
             <ListItemButton component={Link} to="/login">
-              <ListItemText primary="Entrar na minha conta" />
+              <ListItemText primary={t('Entrar na minha conta')} />
             </ListItemButton>
           </List>
+          {compact && <LanguageSelector />}
           {compact && (
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography>Tema da página</Typography>
+              <Typography>{t('Tema da página')}</Typography>
               {themeControl}
             </Stack>
           )}
@@ -219,6 +222,7 @@ function LandingHeader() {
 }
 
 function DashboardPreview() {
+  const { t, locale } = useI18n();
   const activity = [
     { icon: CarFront, title: 'Entrada registrada', description: 'BRA2E19 · categoria passeio' },
     {
@@ -232,7 +236,7 @@ function DashboardPreview() {
     <Paper
       component="figure"
       variant="outlined"
-      aria-label="Exemplo ilustrativo do painel do CareAuto"
+      aria-label={t('Exemplo ilustrativo do painel do CareAuto')}
       sx={{
         m: 0,
         p: { xs: 2.5, md: 3.5 },
@@ -242,25 +246,37 @@ function DashboardPreview() {
     >
       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 3 }}>
         <SvgIcon component={CarFront} inheritViewBox color="primary" />
-        <Typography fontWeight={700}>Visão geral</Typography>
-        <Chip label="Demonstração" size="small" variant="outlined" sx={{ ml: 'auto !important' }} />
+        <Typography fontWeight={700}>{t('Visão geral')}</Typography>
+        <Chip
+          label={t('Demonstração')}
+          size="small"
+          variant="outlined"
+          sx={{ ml: 'auto !important' }}
+        />
       </Stack>
       <Typography variant="h3" sx={{ mb: 1 }}>
-        Seu dia, sob controle.
+        {t('Seu dia, sob controle.')}
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Do primeiro veículo ao último recebimento.
+        {t('Do primeiro veículo ao último recebimento.')}
       </Typography>
       <Grid container spacing={1.5}>
         {[
           ['No pátio', '18'],
           ['Entradas hoje', '42'],
-          ['Recebido', 'R$ 1.284'],
+          [
+            'Recebido',
+            new Intl.NumberFormat(locale, {
+              style: 'currency',
+              currency: 'BRL',
+              maximumFractionDigits: 0,
+            }).format(1284),
+          ],
         ].map(([label, value]) => (
           <Grid key={label} size={{ xs: 12, sm: 4 }}>
             <Box sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                {label}
+                {t(label)}
               </Typography>
               <Typography sx={{ fontWeight: 750, fontSize: '1.4rem', whiteSpace: 'nowrap' }}>
                 {value}
@@ -277,22 +293,23 @@ function DashboardPreview() {
               <SvgIcon component={Icon} inheritViewBox />
             </Avatar>
             <Box>
-              <Typography fontWeight={650}>{title}</Typography>
+              <Typography fontWeight={650}>{t(title)}</Typography>
               <Typography variant="body2" color="text.secondary">
-                {description}
+                {t(description)}
               </Typography>
             </Box>
           </Stack>
         ))}
       </Stack>
       <Typography component="figcaption" variant="body2" color="text.secondary" sx={{ mt: 3 }}>
-        Exemplo ilustrativo com dados fictícios.
+        {t('Exemplo ilustrativo com dados fictícios.')}
       </Typography>
     </Paper>
   );
 }
 
 function Features() {
+  const { t } = useI18n();
   return (
     <Box
       component="section"
@@ -302,13 +319,13 @@ function Features() {
     >
       <Container maxWidth="lg">
         <Typography variant="overline" color="primary">
-          Funcionalidades
+          {t('Funcionalidades')}
         </Typography>
         <Typography variant="h2" id="lp-func-title" sx={{ maxWidth: 700 }}>
-          Feito para a rotina de quem cuida de veículos
+          {t('Feito para a rotina de quem cuida de veículos')}
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 2, mb: 4, maxWidth: 650 }}>
-          Menos papel e menos digitação na guarita. Mais controle do pátio e do dinheiro.
+          {t('Menos papel e menos digitação na guarita. Mais controle do pátio e do dinheiro.')}
         </Typography>
         <Grid container spacing={2.5} sx={{ mb: 6 }}>
           {destaques.map(({ icone: Icone, titulo, texto }) => (
@@ -320,17 +337,17 @@ function Features() {
                       <SvgIcon component={Icone} inheritViewBox />
                     </Avatar>
                   }
-                  title={titulo}
+                  title={t(titulo)}
                   slotProps={{ title: { component: 'h3', variant: 'h6' } }}
                 />
                 <CardContent sx={{ pt: 0 }}>
                   <Chip
                     size="small"
-                    label="Incluído em todos os planos"
+                    label={t('Incluído em todos os planos')}
                     variant="outlined"
                     sx={{ mb: 2, maxWidth: '100%' }}
                   />
-                  <Typography color="text.secondary">{texto}</Typography>
+                  <Typography color="text.secondary">{t(texto)}</Typography>
                 </CardContent>
               </Card>
             </Grid>
@@ -340,7 +357,7 @@ function Features() {
           {gruposFuncionalidades.map(({ id, titulo }) => (
             <Box key={id}>
               <Typography variant="h3" sx={{ mb: 2 }}>
-                {titulo}
+                {t(titulo)}
               </Typography>
               <Grid container spacing={2}>
                 {funcionalidades
@@ -354,13 +371,13 @@ function Features() {
                       >
                         <CardHeader
                           avatar={<SvgIcon component={Icone} inheritViewBox color="primary" />}
-                          title={nome}
+                          title={t(nome)}
                           slotProps={{
                             title: { component: 'h4', variant: 'h6', sx: { fontSize: '1rem' } },
                           }}
                         />
                         <CardContent sx={{ pt: 0 }}>
-                          <Typography color="text.secondary">{texto}</Typography>
+                          <Typography color="text.secondary">{t(texto)}</Typography>
                         </CardContent>
                       </Card>
                     </Grid>
@@ -375,7 +392,11 @@ function Features() {
 }
 
 export function AboutPage() {
+  const { t } = useI18n();
   useSeo();
+  const whatsappHref =
+    'https://wa.me/5511978504405?text=' +
+    encodeURIComponent(t('Quero mais informações sobre o CareAuto'));
   return (
     <Box
       className="landing-home"
@@ -411,7 +432,7 @@ export function AboutPage() {
           '&:focus': { top: 8 },
         }}
       >
-        Pular para o conteúdo
+        {t('Pular para o conteúdo')}
       </Button>
       <LandingHeader />
       <Box component="main" id="conteudo">
@@ -434,7 +455,7 @@ export function AboutPage() {
                   color="primary"
                   sx={{ letterSpacing: '.1em', lineHeight: 1.7, display: 'block', mb: 2 }}
                 >
-                  Sistema para estacionamento e lava-rápido
+                  {t('Sistema para estacionamento e lava-rápido')}
                 </Typography>
                 <Typography
                   variant="h1"
@@ -447,9 +468,9 @@ export function AboutPage() {
                     mb: 3,
                   }}
                 >
-                  Do portão ao caixa,
+                  {t('Do portão ao caixa,')}
                   <Box component="span" sx={{ color: 'primary.main', display: 'block' }}>
-                    tudo sob controle.
+                    {t('tudo sob controle.')}
                   </Box>
                 </Typography>
                 <Typography
@@ -458,9 +479,9 @@ export function AboutPage() {
                   color="text.secondary"
                   sx={{ fontSize: '1.125rem', lineHeight: 1.75, mb: 3.5 }}
                 >
-                  O CareAuto registra entradas e saídas, lê a placa por foto, imprime o ticket, faz
-                  o checklist de avarias e cobra por Pix, boleto ou cartão. Tudo num só lugar, no
-                  celular ou no computador.
+                  {t(
+                    'O CareAuto registra entradas e saídas, lê a placa por foto, imprime o ticket, faz o checklist de avarias e cobra por Pix, boleto ou cartão. Tudo num só lugar, no celular ou no computador.',
+                  )}
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                   <Button
@@ -470,7 +491,7 @@ export function AboutPage() {
                     to={CADASTRO}
                     data-testid="lp-hero-cta"
                   >
-                    Começar 7 dias grátis
+                    {t('Começar 7 dias grátis')}
                   </Button>
                   <Button
                     variant="outlined"
@@ -478,7 +499,7 @@ export function AboutPage() {
                     href="#como-funciona"
                     startIcon={<SvgIcon component={Play} inheritViewBox />}
                   >
-                    Ver demonstração
+                    {t('Ver demonstração')}
                   </Button>
                 </Stack>
                 <List dense sx={{ mt: 2 }}>
@@ -492,7 +513,7 @@ export function AboutPage() {
                         <SvgIcon component={Check} inheritViewBox sx={{ fontSize: 18 }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary={text}
+                        primary={t(text)}
                         slotProps={{ primary: { variant: 'body2', color: 'text.secondary' } }}
                       />
                     </ListItem>
@@ -518,10 +539,10 @@ export function AboutPage() {
         >
           <Container maxWidth="md">
             <Typography variant="overline" color="primary">
-              Dúvidas
+              {t('Dúvidas')}
             </Typography>
             <Typography variant="h2" id="lp-faq-title" sx={{ mb: 4 }}>
-              Perguntas frequentes
+              {t('Perguntas frequentes')}
             </Typography>
             {perguntas.map((q, i) => (
               <Accordion
@@ -541,11 +562,11 @@ export function AboutPage() {
                   aria-controls={`lp-faq-answer-${i}`}
                 >
                   <Typography component="span" fontWeight={650}>
-                    {q.pergunta}
+                    {t(q.pergunta)}
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails id={`lp-faq-answer-${i}`}>
-                  <Typography color="text.secondary">{q.resposta}</Typography>
+                  <Typography color="text.secondary">{t(q.resposta)}</Typography>
                 </AccordionDetails>
               </Accordion>
             ))}
@@ -558,10 +579,10 @@ export function AboutPage() {
         >
           <Container maxWidth="md">
             <Typography variant="h2" id="lp-final-title">
-              Pronto para organizar seu estacionamento?
+              {t('Pronto para organizar seu estacionamento?')}
             </Typography>
             <Typography color="text.secondary" sx={{ my: 3 }}>
-              Cadastre-se agora e use o CareAuto completo por 7 dias, sem custo.
+              {t('Cadastre-se agora e use o CareAuto completo por 7 dias, sem custo.')}
             </Typography>
             <Button
               component={Link}
@@ -570,7 +591,7 @@ export function AboutPage() {
               size="large"
               data-testid="lp-final-cta"
             >
-              Criar minha conta grátis
+              {t('Criar minha conta grátis')}
             </Button>
           </Container>
         </Box>
@@ -586,17 +607,17 @@ export function AboutPage() {
             © {new Date().getFullYear()} CareAuto · Furlaneti Consultoria
           </Typography>
           <Button component={Link} to="/login">
-            Já sou cliente: entrar
+            {t('Já sou cliente: entrar')}
           </Button>
         </Stack>
       </Container>
       <Fab
         component="a"
-        href={WHATSAPP_HREF}
+        href={whatsappHref}
         target="_blank"
         rel="noopener noreferrer"
         color="primary"
-        aria-label="Conversar com o CareAuto pelo WhatsApp"
+        aria-label={t('Conversar com o CareAuto pelo WhatsApp')}
         data-testid="lp-whatsapp"
         sx={{
           position: 'fixed',

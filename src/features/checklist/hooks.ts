@@ -1,3 +1,4 @@
+import { translate } from '../../i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { sessionScope, useAuthStore } from '../../stores/authStore';
@@ -21,7 +22,7 @@ export function useSaveChecklist(estadiaId: number) {
     mutationFn: (data: ChecklistInput) => saveChecklist(estadiaId, data),
     onSuccess: (result) => {
       cache.setQueryData(key(scope, estadiaId), result);
-      toast.success('Checklist salvo.');
+      toast.success(translate('Checklist salvo.'));
     },
   });
 }

@@ -1,3 +1,4 @@
+import { getLocale } from '../../../i18n';
 export type MonitoringPeriod = 'today' | '7' | '30' | 'custom';
 const brasiliaDate = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Sao_Paulo',
@@ -40,4 +41,7 @@ export function monitoringDateRange(start: string, end: string) {
     endDate: new Date(last.getTime() + 86400000).toISOString(),
   };
 }
-export const displayDate = (date: string) => date.split('-').reverse().join('/');
+export const displayDate = (date: string) => {
+  const [year, month, day] = date.split('-');
+  return getLocale() === 'en-US' ? `${month}/${day}/${year}` : `${day}/${month}/${year}`;
+};

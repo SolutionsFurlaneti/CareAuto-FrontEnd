@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { RequireAuth } from './components/RequireAuth';
 import { AppShell } from './components/AppShell';
@@ -9,6 +9,7 @@ import { Skeleton } from './ui';
 import { RequireBackoffice } from './features/backoffice/RequireBackoffice';
 import { PageViewTracker } from './features/monitoring/PageViewTracker';
 import { isNativeApp } from './lib/device';
+import { useI18n } from './i18n';
 const UsersPage = lazy(() =>
   import('./features/users/UsersPage').then((m) => ({ default: m.UsersPage })),
 );
@@ -113,6 +114,12 @@ function LegacyHomeRedirect() {
   return <Navigate to={{ pathname: '/', search, hash: '#sobre' }} replace />;
 }
 export function App() {
+  const { t } = useI18n();
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (pathname !== '/')
+      document.title = t('CareAuto | Sistema para estacionamento e lava-rápido · 7 dias grátis');
+  }, [pathname, t]);
   return (
     <Suspense fallback={<Skeleton />}>
       <PageViewTracker />

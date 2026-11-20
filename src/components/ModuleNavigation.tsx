@@ -25,6 +25,8 @@ import {
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import type { Session, Role } from '../stores/authStore';
+import { useI18n } from '../i18n';
+import { LanguageSelector } from './LanguageSelector';
 
 export type NavigationGroup = 'ACESSO' | 'PRINCIPAL' | 'FINANCEIRO' | 'CONFIGURAÇÕES';
 export type MenuMode = 'grid' | 'sidebar';
@@ -193,6 +195,7 @@ const roleLabel = (role: Role) =>
   role === 'Admin' ? 'Administrador' : role === 'Operador' ? 'Operador' : role;
 
 function ProfileFooter({ session, onLogout }: { session: Session | null; onLogout: () => void }) {
+  const { t } = useI18n();
   if (!session) return null;
   return (
     <div className="flex min-w-0 items-center gap-2 border-t border-app-line px-3 py-2.5">
@@ -204,14 +207,14 @@ function ProfileFooter({ session, onLogout }: { session: Session | null; onLogou
           {session.userName}
         </strong>
         <span className="block truncate text-[9px] leading-tight text-app-faint">
-          {session.roles.map(roleLabel).join(' · ')}
+          {session.roles.map((role) => t(roleLabel(role))).join(' · ')}
         </span>
       </div>
       {session.authMode === 'password' && (
         <NavLink
           to="/trocar-senha"
-          aria-label="Alterar minha senha"
-          title="Alterar minha senha"
+          aria-label={t('Alterar minha senha')}
+          title={t('Alterar minha senha')}
           className="grid size-9 shrink-0 place-items-center rounded-xl text-app-faint transition hover:bg-app-muted hover:text-app-ink"
         >
           <KeyRound size={15} />
@@ -220,8 +223,8 @@ function ProfileFooter({ session, onLogout }: { session: Session | null; onLogou
       <button
         type="button"
         onClick={onLogout}
-        aria-label="Sair da conta"
-        title="Sair da conta"
+        aria-label={t('Sair da conta')}
+        title={t('Sair da conta')}
         data-testid="logout"
         className="grid size-9 shrink-0 place-items-center rounded-xl text-app-faint transition hover:bg-app-muted hover:text-app-ink"
       >
@@ -244,6 +247,7 @@ export function GridModuleMenu({
   onSwitchMode: () => void;
   onLogout: () => void;
 }) {
+  const { t, locale } = useI18n();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<NavigationGroup | 'TODOS'>('TODOS');
   const filters: { label: string; value: NavigationGroup | 'TODOS' }[] = [
@@ -256,10 +260,10 @@ export function GridModuleMenu({
   const allItems = sections.flatMap((section) => section.items);
   const filteredItems = allItems.filter((item) => {
     const matchesFilter = filter === 'TODOS' || item.group === filter;
-    const normalizedSearch = search.trim().toLocaleLowerCase('pt-BR');
+    const normalizedSearch = search.trim().toLocaleLowerCase(locale);
     const matchesSearch =
       !normalizedSearch ||
-      `${item.text} ${item.description}`.toLocaleLowerCase('pt-BR').includes(normalizedSearch);
+      `${t(item.text)} ${t(item.description)}`.toLocaleLowerCase(locale).includes(normalizedSearch);
     return matchesFilter && matchesSearch;
   });
 
@@ -273,33 +277,33 @@ export function GridModuleMenu({
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <h2 className="truncate text-sm font-bold leading-tight text-app-ink">
-                Menu do CareAuto POS
+                {t('Menu do CareAuto POS')}
               </h2>
               <span
                 data-testid="estabelecimento-atual"
                 className="hidden max-w-32 truncate rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-semibold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 min-[360px]:inline"
               >
-                {session?.estabelecimentoNome || 'Estacionamento'}
+                {session?.estabelecimentoNome || t('Estacionamento')}
               </span>
             </div>
             <p className="m-0 text-[10px] leading-tight text-app-faint">
-              Toque no ícone desejado para abrir rapidamente
+              {t('Toque no ícone desejado para abrir rapidamente')}
             </p>
           </div>
           <button
             type="button"
             onClick={onSwitchMode}
-            aria-label="Alternar para o menu lateral"
-            title="Menu lateral"
+            aria-label={t('Alternar para o menu lateral')}
+            title={t('Menu lateral')}
             className="hidden h-9 shrink-0 items-center gap-1.5 rounded-lg border border-app-line px-2 text-[10px] font-semibold text-app-dim transition hover:bg-app-muted sm:inline-flex"
           >
             <Menu size={13} />
-            <span>Menu lateral</span>
+            <span>{t('Menu lateral')}</span>
           </button>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fechar menu"
+            aria-label={t('Fechar menu')}
             className="grid size-9 shrink-0 place-items-center rounded-lg text-app-faint transition hover:bg-app-muted hover:text-app-ink"
           >
             <X size={17} />
@@ -315,12 +319,12 @@ export function GridModuleMenu({
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar funcionalidade ou serviço..."
-            aria-label="Buscar funcionalidade ou serviço"
+            placeholder={t('Buscar funcionalidade ou serviço...')}
+            aria-label={t('Buscar funcionalidade ou serviço')}
             className="h-10 w-full rounded-xl border border-app-line bg-app-bg pr-3 pl-9 text-xs text-app-ink placeholder:text-app-faint focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           />
         </label>
-        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5" aria-label="Filtrar módulos">
+        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5" aria-label={t('Filtrar módulos')}>
           {filters.map((item) => (
             <button
               key={item.value}
@@ -333,7 +337,7 @@ export function GridModuleMenu({
                   : 'bg-app-muted text-app-dim hover:text-app-ink'
               }`}
             >
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </div>
@@ -363,16 +367,16 @@ export function GridModuleMenu({
                   </span>
                   {item.badge && (
                     <span className="max-w-14 truncate rounded-md bg-emerald-400 px-1.5 py-0.5 text-[8px] font-bold leading-tight text-emerald-950">
-                      {item.badge}
+                      {t(item.badge)}
                     </span>
                   )}
                 </div>
                 <span className="block min-w-0">
                   <strong className="block truncate text-[11px] font-bold leading-tight text-app-ink">
-                    {item.text}
+                    {t(item.text)}
                   </strong>
                   <span className="mt-0.5 line-clamp-2 block text-[9px] leading-tight text-app-faint">
-                    {item.description}
+                    {t(item.description)}
                   </span>
                 </span>
               </NavLink>
@@ -380,9 +384,12 @@ export function GridModuleMenu({
           </div>
         ) : (
           <div className="grid min-h-32 place-items-center px-6 text-center text-xs text-app-faint">
-            Nenhuma funcionalidade encontrada.
+            {t('Nenhuma funcionalidade encontrada.')}
           </div>
         )}
+      </div>
+      <div className="shrink-0 px-3 py-2">
+        <LanguageSelector />
       </div>
       <ProfileFooter session={session} onLogout={onLogout} />
     </div>
@@ -402,6 +409,7 @@ export function SidebarNavigation({
   onSwitchMode: () => void;
   onLogout: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex h-full min-h-0 flex-col bg-app-surface px-3 py-5 text-app-ink">
       <div className="flex items-center gap-3 px-2 pb-4">
@@ -411,14 +419,14 @@ export function SidebarNavigation({
         <div className="min-w-0 flex-1">
           <strong className="block text-lg font-bold tracking-tight text-app-ink">CareAuto</strong>
           <span className="block text-[9px] font-semibold tracking-[0.16em] text-app-faint">
-            GESTÃO AUTOMOTIVA
+            {t('GESTÃO AUTOMOTIVA')}
           </span>
         </div>
         <button
           type="button"
           onClick={onSwitchMode}
-          aria-label="Alternar para a grade PDV"
-          title="Grade PDV"
+          aria-label={t('Alternar para a grade PDV')}
+          title={t('Grade PDV')}
           className="grid size-9 shrink-0 place-items-center rounded-lg border border-app-line text-app-dim transition hover:bg-app-muted"
         >
           <LayoutGrid size={16} />
@@ -428,14 +436,14 @@ export function SidebarNavigation({
         data-testid="estabelecimento-atual"
         className="mb-3 rounded-xl border border-app-line bg-app-bg px-3 py-2 text-xs font-semibold text-app-ink"
       >
-        {session?.estabelecimentoNome || 'Estacionamento'}
+        {session?.estabelecimentoNome || t('Estacionamento')}
       </div>
-      <nav aria-label="Navegação principal" className="min-h-0 flex-1 overflow-y-auto">
+      <nav aria-label={t('Navegação principal')} className="min-h-0 flex-1 overflow-y-auto">
         {sections.map((section) =>
           section.items.length ? (
             <div className="mb-4" key={section.title}>
               <h3 className="mb-1.5 px-3 text-[9px] font-bold tracking-[0.16em] text-app-faint">
-                {section.title}
+                {t(section.title)}
               </h3>
               <div className="space-y-0.5">
                 {section.items.map((item) => (
@@ -456,7 +464,7 @@ export function SidebarNavigation({
                     }
                   >
                     <item.icon size={17} aria-hidden="true" />
-                    <span className="truncate">{item.text}</span>
+                    <span className="truncate">{t(item.text)}</span>
                   </NavLink>
                 ))}
               </div>
@@ -464,6 +472,9 @@ export function SidebarNavigation({
           ) : null,
         )}
       </nav>
+      <div className="shrink-0 px-3 py-2">
+        <LanguageSelector />
+      </div>
       <ProfileFooter session={session} onLogout={onLogout} />
     </div>
   );

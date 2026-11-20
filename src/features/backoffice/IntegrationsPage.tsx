@@ -1,3 +1,4 @@
+import { translate, useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, type FieldValues, type Path } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,6 +43,7 @@ function IntegrationPanel<T extends FieldValues & { ativo: boolean }>({
 }: {
   spec: PanelSpec<T>;
 }) {
+  const { t } = useI18n();
   const {
     register,
     control,
@@ -73,16 +75,19 @@ function IntegrationPanel<T extends FieldValues & { ativo: boolean }>({
     >
       <div className="panel-toolbar">
         <div>
-          <h2 id={'bo-int-' + spec.provedor}>{spec.titulo}</h2>
+          <h2 id={'bo-int-' + spec.provedor}>{t(spec.titulo)}</h2>
           <span>
             {spec.meta.atualizadoEm
-              ? `Atualizado em ${dateTime(spec.meta.atualizadoEm)} por ${spec.meta.atualizadoPor}`
-              : 'Ainda não configurado'}
+              ? t('Atualizado em {date} por {name}', {
+                  date: dateTime(spec.meta.atualizadoEm),
+                  name: spec.meta.atualizadoPor ?? '—',
+                })
+              : t('Ainda não configurado')}
           </span>
         </div>
         <StatusBadge
           status={spec.meta.ativo ? 'ATIVA' : 'ENCERRADA'}
-          label={spec.meta.ativo ? 'Ativa' : 'Inativa'}
+          label={spec.meta.ativo ? t('Ativa') : t('Inativa')}
         />
       </div>
       <form
@@ -90,37 +95,41 @@ function IntegrationPanel<T extends FieldValues & { ativo: boolean }>({
         noValidate
         onSubmit={handleSubmit((v) => salvar.mutate(spec.body(v as T, false)))}
       >
-        <p>{spec.descricao}</p>
+        <p>{t(spec.descricao)}</p>
         <div className="form-grid">
           {spec.campos.map((c) =>
             c.type === 'select' ? (
               <SelectField
                 key={c.name}
-                label={c.label}
-                hint={c.hint}
+                label={t(c.label)}
+                hint={c.hint ? t(c.hint) : undefined}
                 data-testid={`bo-${spec.provedor}-${c.name}`}
                 {...register(c.name as Path<T>)}
               >
                 {c.options!.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {t(o.label)}
                   </option>
                 ))}
               </SelectField>
             ) : (
               <Field
                 key={c.name}
-                label={c.label}
+                label={t(c.label)}
                 type={c.type ?? 'text'}
                 autoComplete="off"
-                placeholder={c.salvo ? '•••••• salvo (deixe em branco para manter)' : undefined}
-                hint={c.hint}
+                placeholder={c.salvo ? t('•••••• salvo (deixe em branco para manter)') : undefined}
+                hint={c.hint ? t(c.hint) : undefined}
                 data-testid={`bo-${spec.provedor}-${c.name}`}
                 {...register(
                   c.name as Path<T>,
                   c.type === 'number' ? { valueAsNumber: true } : undefined,
                 )}
-                error={errors[c.name]?.message as string | undefined}
+                error={
+                  typeof errors[c.name]?.message === 'string'
+                    ? t(String(errors[c.name]?.message))
+                    : undefined
+                }
               />
             ),
           )}
@@ -129,9 +138,9 @@ function IntegrationPanel<T extends FieldValues & { ativo: boolean }>({
             name={'ativo' as Path<T>}
             render={({ field }) => (
               <Switch
-                label="Integração ativa"
+                label={t('Integração ativa')}
                 description={
-                  spec.credenciaisCompletas ? undefined : 'Informe as credenciais para ativar.'
+                  spec.credenciaisCompletas ? undefined : t('Informe as credenciais para ativar.')
                 }
                 checked={!!field.value}
                 onChange={field.onChange}
@@ -148,10 +157,10 @@ function IntegrationPanel<T extends FieldValues & { ativo: boolean }>({
         {confirmarRemocao ? (
           <div className="bo-actions">
             <span className="modal-actions-note" role="alert">
-              As credenciais serão apagadas e a integração desativada.
+              {t('As credenciais serão apagadas e a integração desativada.')}{' '}
             </span>
             <Button variant="secondary" onClick={() => setConfirmarRemocao(false)}>
-              Voltar
+              {t('Voltar')}{' '}
             </Button>
             <Button
               variant="danger"
@@ -163,7 +172,7 @@ function IntegrationPanel<T extends FieldValues & { ativo: boolean }>({
                 })
               }
             >
-              Remover credenciais
+              {t('Remover credenciais')}{' '}
             </Button>
           </div>
         ) : (
@@ -174,7 +183,7 @@ function IntegrationPanel<T extends FieldValues & { ativo: boolean }>({
               disabled={!isDirty}
               data-testid={`bo-${spec.provedor}-save`}
             >
-              Salvar
+              {t('Salvar')}{' '}
             </Button>
             {spec.provedor !== 'consulta-placa' && (
               <Button
@@ -184,12 +193,12 @@ function IntegrationPanel<T extends FieldValues & { ativo: boolean }>({
                 data-testid={`bo-${spec.provedor}-test`}
                 onClick={() => testar.mutate(undefined)}
               >
-                Testar conexão
+                {t('Testar conexão')}{' '}
               </Button>
             )}
             {spec.credenciaisCompletas && (
               <Button variant="ghost" onClick={() => setConfirmarRemocao(true)}>
-                Remover credenciais
+                {t('Remover credenciais')}{' '}
               </Button>
             )}
           </div>
@@ -363,10 +372,15 @@ function panels(d: Integracoes) {
     descricao: [
       'Conta onde as campanhas de Pesquisa são criadas (sempre pausadas). O refresh token precisa ser emitido com os escopos adwords e datamanager; se foi criado só com adwords, gere outro após autorizar os dois. Salve as credenciais e use Testar para validar o acesso e criar as ações de conversão.',
       g.trialConversionActionId && g.subscriptionConversionActionId
-        ? `Ações configuradas — Trial started: ${g.trialConversionActionId}; Subscription active: ${g.subscriptionConversionActionId}.`
+        ? translate(
+            'Ações configuradas — Trial started: {trial}; Subscription active: {subscription}.',
+            { trial: g.trialConversionActionId, subscription: g.subscriptionConversionActionId },
+          )
         : 'As ações ainda serão criadas ao testar a conexão.',
       'Os envios começam em novos trials/assinaturas pagos e exigem consentimento do estabelecimento. A conta também precisa aceitar os termos de dados do cliente e ativar Enhanced Conversions for Leads no Google Ads.',
-    ].join(' '),
+    ]
+      .map((text) => translate(text))
+      .join(' '),
     schema: googleSchema,
     defaults: {
       ativo: g.ativo,
@@ -492,21 +506,24 @@ function panels(d: Integracoes) {
 }
 
 export function BackofficeIntegrationsPage() {
+  const { t } = useI18n();
   const integracoes = useIntegracoes();
   const p = integracoes.data ? panels(integracoes.data) : null;
   return (
     <>
       <PageHeader
         eyebrow="PLATAFORMA"
-        title="Integrações"
-        description="Credenciais da plataforma, criptografadas no servidor. As respostas nunca trazem as chaves."
+        title={t('Integrações')}
+        description={t(
+          'Credenciais da plataforma, criptografadas no servidor. As respostas nunca trazem as chaves.',
+        )}
       />
       {integracoes.isPending ? (
         <Skeleton />
       ) : integracoes.isError ? (
         <QueryError
           error={integracoes.error}
-          what="as integrações"
+          what={t('as integrações')}
           onRetry={() => void integracoes.refetch()}
         />
       ) : (
@@ -523,4 +540,3 @@ export function BackofficeIntegrationsPage() {
     </>
   );
 }
-

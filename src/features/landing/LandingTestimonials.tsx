@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { MessageSquareQuote } from 'lucide-react';
+import { useI18n } from '../../i18n';
 import { depoimentos, type DepoimentoPublico } from './contentMedia';
 
 export function iniciais(nome: string) {
@@ -24,6 +25,7 @@ export function iniciais(nome: string) {
 }
 
 export function TestimonialCard({ depoimento }: { depoimento: DepoimentoPublico }) {
+  const { t } = useI18n();
   const [fotoFalhou, setFotoFalhou] = useState(false);
   return (
     <Card
@@ -42,10 +44,13 @@ export function TestimonialCard({ depoimento }: { depoimento: DepoimentoPublico 
             )}
             precision={0.5}
             readOnly
-            getLabelText={(value) => `${value} de 5 estrelas`}
+            getLabelText={(value) => t('{value} de 5 estrelas', { value })}
             sx={{ color: 'primary.main' }}
           />
-          <Typography component="blockquote" sx={{ m: 0, fontSize: '1rem', lineHeight: 1.8, overflowWrap: 'anywhere' }}>
+          <Typography
+            component="blockquote"
+            sx={{ m: 0, fontSize: '1rem', lineHeight: 1.8, overflowWrap: 'anywhere' }}
+          >
             “{depoimento.relato}”
           </Typography>
           <Stack direction="row" spacing={1.5} alignItems="center">
@@ -73,6 +78,7 @@ export function TestimonialCard({ depoimento }: { depoimento: DepoimentoPublico 
 }
 
 export function LandingTestimonials() {
+  const { t } = useI18n();
   return (
     <Box
       component="section"
@@ -83,14 +89,14 @@ export function LandingTestimonials() {
       <Container maxWidth="lg">
         <Stack spacing={2} sx={{ mb: 4, maxWidth: 680 }}>
           <Typography variant="overline" color="primary.main" fontWeight={700}>
-            DEPOIMENTOS
+            {t('DEPOIMENTOS')}
           </Typography>
           <Typography
             id="lp-testimonials-title"
             variant="h2"
             sx={{ fontSize: { xs: '1.9rem', md: '2.6rem' }, fontWeight: 650 }}
           >
-            Quem usa tem uma história para contar
+            {t('Quem usa tem uma história para contar')}
           </Typography>
         </Stack>
         {depoimentos.length ? (
@@ -119,15 +125,16 @@ export function LandingTestimonials() {
               />
               <Box sx={{ flex: 1 }}>
                 <Typography variant="h3" sx={{ fontSize: '1.25rem', fontWeight: 650, mb: 1 }}>
-                  Relatos de clientes em breve
+                  {t('Relatos de clientes em breve')}
                 </Typography>
                 <Typography color="text.secondary">
-                  Enquanto preparamos esta seção, conheça os recursos e experimente o CareAuto na
-                  rotina do seu estabelecimento.
+                  {t(
+                    'Enquanto preparamos esta seção, conheça os recursos e experimente o CareAuto na rotina do seu estabelecimento.',
+                  )}
                 </Typography>
               </Box>
               <Button href="#planos" variant="outlined" sx={{ flexShrink: 0, minHeight: 48 }}>
-                Conhecer os planos
+                {t('Conhecer os planos')}
               </Button>
             </Stack>
           </Paper>
