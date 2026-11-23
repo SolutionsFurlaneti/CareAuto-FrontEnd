@@ -38,9 +38,22 @@ jobs:
         run: npm run test:coverage
 
       - name: Build web
-        run: npm run build
+        run: |
+          node <<'NODE'
+          try {
+            const url = new URL(process.env.VITE_API_BASE_URL);
+            if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
+              throw new Error('URL inválida');
+            }
+          } catch {
+            console.error('::error::Configure a variable VITE_API_BASE_URL no repositório com a URL HTTPS pública da API, sem credenciais, query ou fragmento.');
+            process.exit(1);
+          }
+          NODE
+          npm run build
         env:
-          VITE_API_BASE_URL: https://www.furlaneti.com.br/autocare-api
+          VITE_BASE_PATH: /
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
 
       - name: Build Storybook
         run: npm run build-storybook

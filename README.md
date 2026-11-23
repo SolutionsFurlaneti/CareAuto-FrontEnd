@@ -87,6 +87,23 @@ Para hospedar em `/AutoCareManager/`, defina `VITE_BASE_PATH=/AutoCareManager/` 
 
 Variáveis `VITE_*` são públicas e incorporadas ao bundle: nunca coloque senhas, connection strings, client secrets ou chaves Asaas nelas. Aplique HTTPS na infraestrutura de produção. O host `backend/test/AutoCareManager.BrowserHost` serve exclusivamente aos testes e não deve ser publicado.
 
+### Azure Static Web Apps — careauto.online
+
+O repositório `SolutionsFurlaneti/CareAuto-FrontEnd` publica a branch `main` no recurso `AutoCareManager`, grupo `ResourceGroupAutoCareManager`, assinatura `8e42d3ab-9d48-4227-bd7f-39cb97fb7d8e`. Os endereços são `https://careauto.online` e `https://witty-water-09c1cb21e.3.azurestaticapps.net`.
+
+Em **Settings → Secrets and variables → Actions**, configure:
+
+- **Secret** `AZURE_STATIC_WEB_APPS_API_TOKEN_WITTY_WATER_09C1CB21E`: token de implantação desse Static Web App, obtido no Azure em **Manage deployment token**. Uploads e encerramento dos ambientes de pull request usam o mesmo token.
+- **Variable** `VITE_API_BASE_URL`: `https://api.careauto.online`, URL pública definida para a API na VM `autocaremanager`, mantida em repositório separado. Informe somente a origem e eventual prefixo de hospedagem, sem `/api/v1`; o cliente já acrescenta o caminho dos endpoints. O build web não utiliza mais a API antiga de `www.furlaneti.com.br`. Os pacotes Android e iOS mantêm suas configurações próprias em `mobile.yml` e `vite.config.ts`.
+
+O CI verifica essa variável antes de compilar e fixa `VITE_BASE_PATH=/`, pois o site é servido na raiz do domínio. Variáveis Vite são incorporadas durante o build; alterá-las exige uma nova execução do CD.
+
+Somente `.github/workflows/cd.yml` executa o deploy. Ele reutiliza o artefato `autocaremanager-web` gerado e aprovado pelo CI em `dist/`, com `skip_app_build` e `skip_api_build`, sem recompilar nem publicar o backend. O workflow gerado pelo portal foi removido para evitar dois deploys concorrentes e a busca incorreta pela pasta `build/`. Pull requests usam ambientes de prévia e seu fechamento remove o ambiente correspondente. Produção usa `main`.
+
+O arquivo `public/staticwebapp.config.json` é copiado para `dist/` pelo Vite e mantém o fallback de rotas da SPA. Antes da migração em produção, crie no provedor DNS o registro `A` de `api.careauto.online` para `20.38.33.172`, publique a API na VM e configure seu certificado TLS. O proxy de desenvolvimento do Vite não existe no Static Web Apps: a API precisa permitir no CORS `https://careauto.online` e, se utilizado, `https://witty-water-09c1cb21e.3.azurestaticapps.net`. Ambientes de prévia têm origens próprias; autorize somente as origens necessárias no backend. O pipeline do frontend não publica nem configura a VM ou o backend.
+
+Os gates atuais incluem lint, tipos, unitários com cobertura, build, Storybook e testes da Release. Playwright e cobertura combinada dependem do BrowserHost e do schema do backend, e ainda não são executados por este CI separado.
+
 ### Release automática de produção
 
 Em cada push para `main`, o CD executa CI, pacotes mobile e deploy no Azure Static Web Apps. A Release web é criada somente quando esses três jobs terminam com sucesso, na branch principal do repositório. Pull requests e jobs com falha, cancelados ou ignorados não publicam Release.
