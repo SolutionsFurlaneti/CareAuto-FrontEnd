@@ -81,6 +81,10 @@ Neste computador, caso o comando `npm` aponte para uma instalação antiga, use 
 
 ## Publicação
 
+### Cabeçalhos e security.txt
+
+O frontend aplica a política de segurança por `public/staticwebapp.config.json`; a API usa snippets próprios no Nginx. Recursos inexistentes e caminhos privados retornam 404, preservando o fallback das rotas React. O canal de reporte fica em `/.well-known/security.txt`; `/security.txt` redireciona para esse arquivo. Consulte [SEC-CAR-035](test/SEC-CAR-035.md) para as origens CSP autorizadas, expiração do contato, revisão dos 23 apontamentos e comandos de validação após o deploy.
+
 `npm run build` gera `dist/`. O servidor deve servir arquivos estáticos e retornar `index.html` nas rotas da SPA. Encaminhe `/api` ao backend; o proxy do Vite só existe em desenvolvimento. Alternativamente, configure `VITE_API_BASE_URL` com a origem da API e autorize a origem do frontend no CORS do backend.
 
 Para hospedar em `/AutoCareManager/`, defina `VITE_BASE_PATH=/AutoCareManager/` **antes do build**. No modo External, registre também o callback `https://seu-dominio/AutoCareManager/auth/callback` no provedor. O caminho da API é independente do basename da SPA.

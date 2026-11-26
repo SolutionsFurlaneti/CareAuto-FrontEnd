@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { isSpaNavigation, productionSecurityHeaders, rejectPrivateFiles } from './server/webSecurity';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,6 +10,18 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 3000;
 const HOST = '0.0.0.0';
+
+app.disable('x-powered-by');
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 'loopback');
+  app.use(productionSecurityHeaders);
+}
+app.use(rejectPrivateFiles);
+app.get('/security.txt', (_req, res) => res.redirect(301, '/.well-known/security.txt'));
+app.get('/.well-known/security.txt', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('text/plain; charset=utf-8').sendFile(path.resolve(__dirname, 'public/.well-known/security.txt'));
+});
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
@@ -951,7 +964,11 @@ app.post('/api/v1/integracoes/:provider/teste', (_req, res) => {
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (_req, res) => {
+    app.get('/{*spaPath}', (req, res) => {
+      if (!isSpaNavigation(req.path)) {
+        res.status(404).type('text/plain').send('Not found');
+        return;
+      }
       res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
     });
   } else {

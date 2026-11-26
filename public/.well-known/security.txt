@@ -1,0 +1,5 @@
+# Canal de atendimento ja divulgado publicamente pelo CareAuto.
+Contact: https://wa.me/5511978504405
+Expires: 2027-05-26T23:59:59Z
+Canonical: https://careauto.online/.well-known/security.txt
+Preferred-Languages: pt-BR, en
